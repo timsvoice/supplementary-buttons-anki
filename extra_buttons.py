@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 # Written by Stefan van den Akker in 2014 <srvandenakker@gmail.com>
+# License: GNU GPLv3 or later; https://www.gnu.org/licenses/gpl.html
 #
 # TO DO:
-# - prevent QActions from hiding after they are clicked
+# - prevent QActions from hiding after they are triggered
 
 import os
 
@@ -83,7 +84,7 @@ class ExtraButtons_Options(QtGui.QMenu):
 
     def setup_extra_buttons_options(self):
 
-        sub_menu = mw.form.menuTools.addMenu("&Extra buttons add-on (options)")
+        sub_menu = mw.form.menuTools.addMenu("&Supplementary buttons add-on (options)")
 
         # go through all the keys in the preferences and make QActions for them
         for option in sorted(prefs.keys()):

@@ -1,31 +1,42 @@
-This add-on adds the following buttons to Anki:
+This add-on adds the following supplementary formatting buttons to Anki:
 
-<ul>
-<li>a <b>code</b> button that will wrap selected text in a <code>&lt;code&gt;</code> element (shortcut: <b>Ctrl+,</b>). You can specify the CSS class you want to use in combination with <code>&lt;code&gt;</code>. For example, we have a CSS class named <code>c</code> defined in the <i>Styling</i> section of <i>Cards</i>:
-<br /><br />
-<code>.c {<br />
- font-family: droid sans mono;<br />
- background-color: #f2f2f2;<br />
- padding-left: 5px;<br />
- padding-right: 5px;<br />
-}</code>
-<br /><br />
-In the options we can specify the class name, so that our <code>&lt;code&gt;</code> elements will be automatically transformed to <code>&lt;code class="c"&gt;</code>.</li>
-<li>an <b>unordered list</b> button (shortcut <b>Ctrl+[</b>):
-<br /><br />
-<ul><li>One</li><li>Two</li><li>Three</li></ul>
-<br /></li>
-<li>an <b>ordered list</b> button (shortcut <b>Ctrl+]</b>):
-<br /><br />
-<ol><li>One</li><li>Two</li><li>Three</li></ol></li>
-<br />
-<li>an <b>indent</b> button (shortcut <b>Ctrl+Shift+I</b>) to indent text or lists:
-<br /><br />
-<ol><li>One</li><ul><li>Two</li><ol><li>Three</li></ol></ul></ol>
-<br />
-<li>a <b>strikethrough</b> button (shortcut <b>Alt+Shift+5</b>):
-<br /><br />
-<ul><s>strikethrough text example</s></ul>
-<br />
-<li>a <b>code block</b> button (shortcut <b>Ctrl+.</b>) that creates a <code>&lt;pre&gt;</code> block element around the selected element
-<li>a <b>horizontal rule</b> button (shortcut <b>Ctrl+H</b>) that inserts a horizontal rule after the current position of the cursor
+* a **code** button that will wrap selected text in a `<code>` (shortcut: **Ctrl+,**). You can specify the CSS class you want to use in combination with `<code>`. For example, we have a CSS class named `c` defined in the *Styling* section of *Cards*:
+
+        .c {
+            font-family: droid sans mono;
+            background-color: #f2f2f2;
+            padding-left: 5px;
+            padding-right: 5px;
+        }
+
+    In the options *Tools &gt; Supplementary buttons add-on (options) &gt; Alter &lt;code&gt; CSS...* we can specify the class name, so that our `<code>` elements will be automatically transformed to `<code class="c">`.
+
+* an **unordered list** button (shortcut **Ctrl+[**):
+
+    * One
+    * Two
+    * Three
+
+* an **ordered list** button (shortcut **Ctrl+]**):
+
+    1. One
+    2. Two
+    3. Three
+
+* an **indent** button (shortcut **Ctrl+Shift+I**) to indent text or lists:
+
+    1. One
+        * Two
+            1. Three
+
+* a **strikethrough** button (shortcut **Alt+Shift+5**):
+
+    ~~strikethrough text example~~
+
+* a **code block** button (shortcut **Ctrl+.**) that creates a `<pre>` block element around the selected element
+
+* a **horizontal rule** button (shortcut **Ctrl+H**) that inserts a horizontal rule after the current position of the cursor
+
+The buttons can be enabled or disabled individually in *Tools > Supplementary buttons add-on (options)*, so feel free to disable the buttons you don't use.
+
+To add this add-on to Anki, copy the file `extra_buttons.py` to your Anki add-on folder, by default on Linux `$HOME/Anki/addon`.

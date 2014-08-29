@@ -139,9 +139,7 @@ def mySetupButtons(self):
 def toggleCode(self):
     # if a custom name for the CSS governing <code> is given, use it
     if prefs["class_name"]:
-        # the individable separator &#8291 was added to solve difficulties
-        # where the wrap wouldn't work right after a <div> element
-        self.web.eval("wrap('&#8291;<code class={}>', '</code>');".format(
+        self.web.eval("wrap('<code class={}>', '</code>');".format(
             prefs["class_name"]))
     else:
         self.web.eval("wrap('&#8291;<code>', '</code>');")

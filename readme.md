@@ -29,6 +29,8 @@ This add-on adds the following supplementary formatting buttons to Anki:
         * Two
             1. Three
 
+* an **outdent** button (shortcut **Ctrl+Shift+O**) to outdent text or lists
+
 * a **strikethrough** button (shortcut **Alt+Shift+5**):
 
     ~~strikethrough text example~~

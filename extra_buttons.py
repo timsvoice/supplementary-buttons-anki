@@ -4,6 +4,8 @@
 #
 # TO DO:
 # - prevent QActions from hiding after they are triggered
+# - solve problem with <div><code>
+# - outdent button
 
 import os
 
@@ -28,7 +30,8 @@ default_conf = {"class_name": "",
                 "Show strikethrough button": True,
                 "Show code block button": True,
                 "Show horizontal rule button": True,
-                "Show indent button": True}
+                "Show indent button": True,
+                "Show outdent button": True}
 
 try:
     with open(addon_path, "r") as f:
@@ -61,6 +64,7 @@ def get_class_name(self):
 
 class ExtraButtons_Options(QtGui.QMenu):
     "Displays the various options in the main menu."
+
     def __init__(self, mw):
         super(ExtraButtons_Options, self).__init__()
         self.mw = mw
@@ -84,7 +88,8 @@ class ExtraButtons_Options(QtGui.QMenu):
 
     def setup_extra_buttons_options(self):
 
-        sub_menu = mw.form.menuTools.addMenu("&Supplementary buttons add-on (options)")
+        sub_menu_title = "&Supplementary buttons add-on (options)"
+        sub_menu = mw.form.menuTools.addMenu(sub_menu_title)
 
         # go through all the keys in the preferences and make QActions for them
         for option in sorted(prefs.keys()):
@@ -136,13 +141,50 @@ def mySetupButtons(self):
         self._addButton("indent", self.toggleIndent, _("Ctrl+Shift+i"),
             _("Indent text or list (Ctrl+Shift+I)"), check=False, text=u">>")
 
+    if prefs["Show outdent button"]:
+        self._addButton("outdent", self.toggleOutdent, _("Ctrl+Shift+o"),
+            _("Outdent text or list (Ctrl+Shift+O)"), check=False, text=u"<<")
+
 def toggleCode(self):
+    # FIX ME: if an <div> element appears before the selected text
+    # the wrap will not work; as a workaround I check for <div>s before the
+    # selected text and create a recognizable pattern @%* that is put before
+    # every <code> element, and subsequently delete it
+
+    selection = self.web.selectedText()
+
+    # check whether we are dealing with a new or existing note; if the 
+    # currentField is empty, the note did not yet exist prior to editing
+    html = self.note.fields[self.currentField]
+    # check if the current selected is preceded by a <div> element
+    b = "<div>" + selection in html
+    if b:
+        pattern = "@%*"
+    else:
+        pattern = ""
+    
     # if a custom name for the CSS governing <code> is given, use it
     if prefs["class_name"]:
-        self.web.eval("wrap('<code class={}>', '</code>');".format(
-            prefs["class_name"]))
+        self.web.eval("document.execCommand('insertHTML', false, %s);"
+            % json.dumps("{0}<code class={1}>".format(pattern, prefs["class_name"]) + 
+                selection + "</code>"))
     else:
-        self.web.eval("wrap('&#8291;<code>', '</code>');")
+        self.web.eval("wrap('{0}<code>', '</code>');".format(pattern))
+
+    if b:
+        self.saveNow()
+        html = self.note.fields[self.currentField]
+        html = html.replace("@%*", "")
+
+        # cleanup HTML: change all non-breakable spaces to normal spaces
+        html = html.replace("&nbsp;", " ")
+
+        # delete the current HTML and replace it by our new & improved one
+        self.web.eval("setFormat('selectAll')")
+        self.web.eval("setFormat('delete')")
+        self.web.eval("document.execCommand('insertHTML', false, %s);"
+                % json.dumps(html))
+        self.saveNow()
 
 def toggleUnorderedList(self):
     self.web.eval("setFormat('insertUnorderedList')")
@@ -162,6 +204,9 @@ def toggleHorizontalLine(self):
 def toggleIndent(self):
     self.web.eval("setFormat('indent')")
 
+def toggleOutdent(self):
+    self.web.eval("setFormat('outdent')")
+
 
 editor.Editor.toggleCode = toggleCode
 editor.Editor.toggleOrderedList = toggleOrderedList
@@ -170,6 +215,7 @@ editor.Editor.toggleStrikeThrough = toggleStrikeThrough
 editor.Editor.togglePre = togglePre
 editor.Editor.toggleHorizontalLine = toggleHorizontalLine
 editor.Editor.toggleIndent = toggleIndent
+editor.Editor.toggleOutdent = toggleOutdent
 editor.Editor.setupButtons = wrap(editor.Editor.setupButtons, mySetupButtons)
 
 mw.ExtraButtons_Options = ExtraButtons_Options(mw)

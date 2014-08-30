@@ -155,10 +155,10 @@ def toggleCode(self):
     # currentField is empty, the note did not yet exist prior to editing
     self.saveNow()
     html = self.note.fields[self.currentField]
-    print html
+
     # check if the current selected is preceded by a <div> element
     b = "<div>" + selection in html or selection + "</div>" in html
-    print b
+
     if b:
         pattern = "@%*"
     else:
@@ -181,13 +181,11 @@ def toggleCode(self):
     
     if b:
         html = self.note.fields[self.currentField]
-        print html
 
         html = html.replace("@%*", "")
 
         # cleanup HTML: change all non-breakable spaces to normal spaces
         html = html.replace("&nbsp;", " ")
-        print html
 
         # delete the current HTML and replace it by our new & improved one
         self.web.eval("setFormat('selectAll')")

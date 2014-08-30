@@ -4,8 +4,6 @@
 #
 # TO DO:
 # - prevent QActions from hiding after they are triggered
-# - solve problem with <div><code>
-# - outdent button
 
 import os
 
@@ -155,9 +153,12 @@ def toggleCode(self):
 
     # check whether we are dealing with a new or existing note; if the 
     # currentField is empty, the note did not yet exist prior to editing
+    self.saveNow()
     html = self.note.fields[self.currentField]
+    print html
     # check if the current selected is preceded by a <div> element
-    b = "<div>" + selection in html
+    b = "<div>" + selection in html or selection + "</div>" in html
+    print b
     if b:
         pattern = "@%*"
     else:
@@ -170,21 +171,36 @@ def toggleCode(self):
                 selection + "</code>"))
     else:
         self.web.eval("wrap('{0}<code>', '</code>');".format(pattern))
+    
+    # focus the field, so that changes are saved
+    # this causes the cursor to go to the end of the field
+    self.web.setFocus()
+    self.web.eval("focusField(%d);" % self.currentField)
 
+    self.saveNow()
+    
     if b:
-        self.saveNow()
         html = self.note.fields[self.currentField]
+        print html
+
         html = html.replace("@%*", "")
 
         # cleanup HTML: change all non-breakable spaces to normal spaces
         html = html.replace("&nbsp;", " ")
+        print html
 
         # delete the current HTML and replace it by our new & improved one
         self.web.eval("setFormat('selectAll')")
         self.web.eval("setFormat('delete')")
         self.web.eval("document.execCommand('insertHTML', false, %s);"
                 % json.dumps(html))
-        self.saveNow()
+
+    # focus the field, so that changes are saved
+    self.saveNow()
+    
+    self.web.setFocus()
+    self.web.eval("focusField(%d);" % self.currentField)
+    
 
 def toggleUnorderedList(self):
     self.web.eval("setFormat('insertUnorderedList')")

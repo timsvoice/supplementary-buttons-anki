@@ -47,9 +47,9 @@ This add-on adds the following supplementary formatting buttons to Anki:
 
 * a **list** button (shortcut **Ctrl+T**):
 
-    header|header
-    -|-
-    content|content
+    header | header
+    --- | ---
+    content | content
 
 The buttons can be enabled or disabled individually in *Tools > Supplementary buttons add-on (options)*, so feel free to disable the buttons you don't use.
 

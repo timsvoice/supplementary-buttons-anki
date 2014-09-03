@@ -4,6 +4,7 @@
 #
 # TO DO:
 # - prevent QActions from hiding after they are triggered
+# - escape from <dl> block
 
 import os
 
@@ -236,7 +237,7 @@ def toggleOutdent(self):
 def toggleDefList(self):
     self.web.eval("document.execCommand('insertHTML', false, %s);"
         % json.dumps("<dl><dt><b>{change me}</b></dt><dd>" + 
-            self.web.selectedText() + "</dd></dl>"))
+            self.web.selectedText() + "</dd></dl><br />"))
 
 def toggleTable(self):
     "Set the number of columns and rows for a new table."

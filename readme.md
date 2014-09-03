@@ -41,7 +41,7 @@ This add-on adds the following supplementary formatting buttons to Anki:
 
 * a **definition list** button (shortcut **Ctrl+Shift+D**):
 
-    <dl><dt><i>definition term</i></dt><dd>definition data</dd>
+    <dl><dt>definition term</dt><dd>definition data</dd>
 
     To use this function, select the text you want to be the definition data, click the button and change the header for the definition term.
 

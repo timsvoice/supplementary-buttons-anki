@@ -39,6 +39,18 @@ This add-on adds the following supplementary formatting buttons to Anki:
 
 * a **horizontal rule** button (shortcut **Ctrl+H**) that inserts a horizontal rule after the current position of the cursor
 
+* a **definition list** button (shortcut **Ctrl+Shift+D**):
+
+    <dl><dt><i>definition term</i></dt><dd>definition data</dd>
+
+    To use this function, select the text you want to be the definition data, click the button and change the header for the definition term.
+
+* a **list** button (shortcut **Ctrl+T**):
+
+    header|header
+    -|-
+    content|content
+
 The buttons can be enabled or disabled individually in *Tools > Supplementary buttons add-on (options)*, so feel free to disable the buttons you don't use.
 
 To add this add-on to Anki, copy the file `extra_buttons.py` to your Anki add-on folder, by default on Linux `$HOME/Anki/addon`.

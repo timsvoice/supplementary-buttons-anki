@@ -29,7 +29,9 @@ default_conf = {"class_name": "",
                 "Show code block button": True,
                 "Show horizontal rule button": True,
                 "Show indent button": True,
-                "Show outdent button": True}
+                "Show outdent button": True,
+                "Show definition list button": True,
+                "Show table button": True}
 
 try:
     with open(addon_path, "r") as f:
@@ -44,7 +46,7 @@ def save_prefs():
         json.dump(prefs, f)
 
 def get_class_name(self):
-    """Sets the CSS styling for the <code> and <pre> tags"""
+    "Sets the CSS styling for the <code> and <pre> tags."
 
     current_text = prefs.get("class_name", "")
 
@@ -143,6 +145,16 @@ def mySetupButtons(self):
         self._addButton("outdent", self.toggleOutdent, _("Ctrl+Shift+o"),
             _("Outdent text or list (Ctrl+Shift+O)"), check=False, text=u"<<")
 
+    # FIX ME: better symbol for <dl>
+    if prefs["Show definition list button"]:
+        self._addButton("deflist", self.toggleDefList, _("Ctrl+Shift+d"),
+            _("Create definition list (Ctrl+Shift+D)"), check=False, text=u"dl")
+
+    # FIX ME: better symbol for <table>
+    if prefs["Show table button"]:
+        self._addButton("table", self.toggleTable, _("Ctrl+t"),
+            _("Create a table (Ctrl+T)"), check=False, text=u"#")
+
 def toggleCode(self):
     # FIX ME: if an <div> element appears before the selected text
     # the wrap will not work; as a workaround I check for <div>s before the
@@ -221,6 +233,67 @@ def toggleIndent(self):
 def toggleOutdent(self):
     self.web.eval("setFormat('outdent')")
 
+def toggleDefList(self):
+    self.web.eval("document.execCommand('insertHTML', false, %s);"
+        % json.dumps("<dl><dt><b>{change me}</b></dt><dd>" + 
+            self.web.selectedText() + "</dd></dl>"))
+
+def toggleTable(self):
+    "Set the number of columns and rows for a new table."
+
+    dialog = QtGui.QDialog(self.parentWindow)
+    dialog.setWindowTitle("Enter columns and rows")
+
+    form = QtGui.QFormLayout()
+    form.addRow(QtGui.QLabel("Enter the number of columns and rows"))
+    
+    columnSpinBox = QtGui.QSpinBox(dialog)
+    columnSpinBox.setMinimum(1)
+    columnSpinBox.setMaximum(10)
+    columnSpinBox.setValue(2)
+    columnLabel = QtGui.QLabel("Number of columns:")
+    form.addRow(columnLabel, columnSpinBox)
+
+    rowSpinBox = QtGui.QSpinBox(dialog)
+    rowSpinBox.setMinimum(1)
+    rowSpinBox.setMaximum(20)
+    rowSpinBox.setValue(3)
+    rowLabel = QtGui.QLabel("Number of rows:")
+    form.addRow(rowLabel, rowSpinBox)
+
+    buttonBox = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok |
+        QtGui.QDialogButtonBox.Cancel, QtCore.Qt.Horizontal, dialog)
+
+    buttonBox.accepted.connect(dialog.accept)
+    buttonBox.rejected.connect(dialog.reject)
+
+    form.addRow(buttonBox)
+
+    dialog.setLayout(form)
+
+    if dialog.exec_() == QtGui.QDialog.Accepted:
+
+        num_columns = columnSpinBox.value()
+        num_rows = rowSpinBox.value() - 1
+
+        header_column = "<th>&nbsp;</th>" * num_columns
+        body_column = "<td>&nbsp;</td>" * num_columns
+        body_row = "<tr>{}</tr>".format(body_column) * num_rows
+
+        html = """<table border="1">
+            <thead>
+                <tr style="background-color: grey">
+                    {0}
+                </tr>
+            </thead>
+            <tbody>
+                {1}
+            </tbody>
+        </table>""".format(header_column, body_row)
+
+        self.web.eval("document.execCommand('insertHTML', false, %s);"
+            % json.dumps(html))
+
 
 editor.Editor.toggleCode = toggleCode
 editor.Editor.toggleOrderedList = toggleOrderedList
@@ -230,6 +303,8 @@ editor.Editor.togglePre = togglePre
 editor.Editor.toggleHorizontalLine = toggleHorizontalLine
 editor.Editor.toggleIndent = toggleIndent
 editor.Editor.toggleOutdent = toggleOutdent
+editor.Editor.toggleDefList = toggleDefList
+editor.Editor.toggleTable = toggleTable
 editor.Editor.setupButtons = wrap(editor.Editor.setupButtons, mySetupButtons)
 
 mw.ExtraButtons_Options = ExtraButtons_Options(mw)

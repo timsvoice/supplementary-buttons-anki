@@ -4,7 +4,8 @@
 #
 # TO DO:
 # - prevent QActions from hiding after they are triggered
-# - escape from <dl> block
+# - improve icons
+# - incorperate <pre> into <code>
 
 import os
 
@@ -130,7 +131,7 @@ def mySetupButtons(self):
 
     if prefs["Show code block button"]:
         # FIX ME: think of better symbol to represent a <pre> block
-        self._addButton("text_pre", self.togglePre, _("Ctrl-."),
+        self._addButton("text_pre", self.togglePre, _("Ctrl+."),
             tip=_("Create a code block (Ctrl-.)"), check=False, text=u"{}")
 
     if prefs["Show horizontal rule button"]:
@@ -153,8 +154,8 @@ def mySetupButtons(self):
 
     # FIX ME: better symbol for <table>
     if prefs["Show table button"]:
-        self._addButton("table", self.toggleTable, _("Ctrl+t"),
-            _("Create a table (Ctrl+T)"), check=False, text=u"#")
+        self._addButton("table", self.toggleTable, _("Ctrl+Shift+3"),
+            _("Create a table (Ctrl+Shift+3)"), check=False, text=u"#")
 
 def toggleCode(self):
     # FIX ME: if an <div> element appears before the selected text
@@ -163,6 +164,17 @@ def toggleCode(self):
     # every <code> element, and subsequently delete it
 
     selection = self.web.selectedText()
+
+    # escape HTML characters
+    html_escape_table = {
+        "&": "&amp;",
+        '"': "&quot;",
+        "'": "&apos;",
+        ">": "&gt;",
+        "<": "&lt;",
+    }
+
+    selection = "".join(html_escape_table.get(c, c) for c in selection)
 
     # check whether we are dealing with a new or existing note; if the 
     # currentField is empty, the note did not yet exist prior to editing

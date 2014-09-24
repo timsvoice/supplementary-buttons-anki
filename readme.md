@@ -45,7 +45,7 @@ This add-on adds the following supplementary formatting buttons to Anki:
 
     To use this function, select the text you want to be the definition data, click the button and change the header for the definition term.
 
-* a **list** button (shortcut <kbd>Ctrl</kbd> + <kbd>Shift</kbd>) + <kbd>3</kbd>:
+* a **list** button (shortcut <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>3</kbd>):
 
     header | header
     --- | ---

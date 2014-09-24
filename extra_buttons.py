@@ -14,6 +14,16 @@ from aqt import editor, mw
 from anki.hooks import wrap
 from PyQt4 import QtGui, QtCore
 
+# Helper functions
+##################################################
+
+def counter(start=0, step=1):
+    "Generator to create infinite numbers."
+    n = start
+    while True:
+        yield n
+        n += step
+
 
 # Preferences
 ##################################################
@@ -129,8 +139,8 @@ def mySetupButtons(self):
             _("Alt+Shift+5"), _("Strikethrough text (Alt+Shift+5)"), check=True,
             text=u"Z\u0336")
 
+    # FIX ME: think of better symbol to represent a <pre> block
     if prefs["Show code block button"]:
-        # FIX ME: think of better symbol to represent a <pre> block
         self._addButton("text_pre", self.togglePre, _("Ctrl+."),
             tip=_("Create a code block (Ctrl-.)"), check=False, text=u"{}")
 
@@ -158,7 +168,7 @@ def mySetupButtons(self):
             _("Create a table (Ctrl+Shift+3)"), check=False, text=u"#")
 
 def toggleCode(self):
-    # FIX ME: if an <div> element appears before the selected text
+    # FIX ME: if a <div> element appears before the selected text
     # the wrap will not work; as a workaround I check for <div>s before the
     # selected text and create a recognizable pattern @%* that is put before
     # every <code> element, and subsequently delete it
@@ -246,10 +256,76 @@ def toggleIndent(self):
 def toggleOutdent(self):
     self.web.eval("setFormat('outdent')")
 
+class DefList(QtGui.QDialog):
+    "Creates a definition list with one or more terms and descriptions."
+    def __init__(self, other, parentWindow):
+        super(DefList, self).__init__()
+        # other is whatever self is in the other methods
+        self.other = other
+        self.parentWindow = parentWindow
+        self.data = dict()
+        self.setupUI()
+
+    def setupUI(self):
+        self.widget = QtGui.QDialog(self.parentWindow)
+        # self.widget.resize(500, 300)
+        self.widget.setWindowTitle("Add a definition list")
+
+        self.dt_part = QtGui.QLineEdit(self.widget)
+        self.dt_part.setPlaceholderText("definition term")
+        dl_part_label = QtGui.QLabel("Definition term:")
+
+        self.dd_part = QtGui.QTextEdit(self.widget)
+        self.dd_part.setAcceptRichText(False)
+        dd_part_label = QtGui.QLabel("Definition description:")
+
+        addButton = QtGui.QPushButton("Add more", self.widget)
+        addButton.clicked.connect(self.addMore)
+
+        buttonBox = QtGui.QDialogButtonBox(self.widget)
+        buttonBox.addButton(addButton, QtGui.QDialogButtonBox.ActionRole)
+        buttonBox.addButton(QtGui.QDialogButtonBox.Ok)
+        buttonBox.addButton(QtGui.QDialogButtonBox.Cancel)
+
+        buttonBox.accepted.connect(self.widget.accept)
+        buttonBox.rejected.connect(self.widget.reject)
+
+        vbox = QtGui.QVBoxLayout(self.widget)
+        vbox.addWidget(dl_part_label)
+        vbox.addWidget(self.dt_part)
+        vbox.addWidget(dd_part_label)
+        vbox.addWidget(self.dd_part)
+        vbox.addWidget(buttonBox)
+
+        self.widget.setLayout(vbox)
+
+        if self.widget.exec_() == QtGui.QDialog.Accepted:
+            # we won't allow any empty terms
+            if not self.dt_part.text() == "":
+                self.data[self.dt_part.text()] = self.dd_part.toPlainText()
+
+            # create all the terms and descriptions
+            result = "<dl>"
+            for key, value in self.data.items():
+                result = result + "<dt><b>" + key + "</b></dt><dd>" + \
+                    value + "</dd>"
+
+            # we need the break <br /> at the end to "get out" of <dl>
+            result = result + "</dl><br />"
+
+            self.other.web.eval("document.execCommand('insertHTML', false, %s);"
+                % json.dumps(result))
+
+    def addMore(self):
+        "Adds a new definition term and description."
+        if not self.dt_part.text() == "":
+            self.data[self.dt_part.text()] = self.dd_part.toPlainText()
+        self.dt_part.clear()
+        self.dd_part.clear()
+        self.dt_part.setFocus()
+
 def toggleDefList(self):
-    self.web.eval("document.execCommand('insertHTML', false, %s);"
-        % json.dumps("<dl><dt><b>{change me}</b></dt><dd>" + 
-            self.web.selectedText() + "</dd></dl><br />"))
+    dl = DefList(self, self.parentWindow)    
 
 def toggleTable(self):
     "Set the number of columns and rows for a new table."
@@ -289,19 +365,21 @@ def toggleTable(self):
         num_columns = columnSpinBox.value()
         num_rows = rowSpinBox.value() - 1
 
-        header_column = "<th>&nbsp;</th>" * num_columns
-        body_column = "<td>&nbsp;</td>" * num_columns
+        num_header = counter(start=1, step=1)
+        num_data = counter(start=1, step=1)
+
+        header_column = "".join("<th align=\"left\" style=\"padding: 5px;"
+            "border-bottom: 2px solid #00B3FF\">header{}</th>".format(
+                next(num_header)) for _ in xrange(num_columns))
+        body_column = "".join("<td style=\"padding: 5px; border-bottom:"
+            "1px solid #B0B0B0\">data{}</td>".format(next(num_data))
+            for _ in xrange(num_columns))
         body_row = "<tr>{}</tr>".format(body_column) * num_rows
 
-        html = """<table border="1">
-            <thead>
-                <tr style="background-color: grey">
-                    {0}
-                </tr>
-            </thead>
-            <tbody>
-                {1}
-            </tbody>
+        html = """
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead><tr>{0}</tr></thead>
+            <tbody>{1}</tbody>
         </table>""".format(header_column, body_row)
 
         self.web.eval("document.execCommand('insertHTML', false, %s);"

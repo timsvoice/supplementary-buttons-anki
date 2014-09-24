@@ -29,7 +29,7 @@ This add-on adds the following supplementary formatting buttons to Anki:
         * Two
             1. Three
 
-* an **outdent** button (shortcut <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>+<kbd>O</kbd>) to outdent text or lists
+* an **outdent** button (shortcut <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>O</kbd>) to outdent text or lists
 
 * a **strikethrough** button (shortcut <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>5</kbd>):
 

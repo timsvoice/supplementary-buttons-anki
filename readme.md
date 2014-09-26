@@ -42,15 +42,17 @@ This add-on adds the following supplementary formatting buttons to Anki:
 
 * a **definition list** button (shortcut <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>D</kbd>):
 
-    <dl><dt>definition term</dt><dd>definition data</dd>
+    <dl><dt>definition term</dt><dd>definition description</dd>
 
-    To use this function, select the text you want to be the definition data, click the button and change the header for the definition term.
+    Upon clicking the button, a popup will appear where you can enter your terms and descriptions.
 
 * a **list** button (shortcut <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>3</kbd>):
 
     header | header
     --- | ---
     content | content
+    
+    You can select the number of columns and rows.
 
 The buttons can be enabled or disabled individually in *Tools > Supplementary buttons add-on (options)*, so feel free to disable the buttons you don't use.
 

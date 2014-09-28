@@ -7,6 +7,7 @@
 # - create icons
 # - incorperate <pre> into <code>
 # - create package
+# - don't add empty <dls>
 
 import os
 
@@ -316,13 +317,17 @@ class DefList(QtGui.QDialog):
             if not self.dt_part.text() == "":
                 self.data.append((self.dt_part.text(), self.dd_part.toPlainText()))
 
+            # if OK button pressed, but empty self.data list
+            if not self.data:
+                return
+
             # create all the terms and descriptions
             result = "<dl>"
             for key, value in self.data:
                 result = result + "<dt><b>" + key + "</b></dt><dd>" + \
                     value + "</dd>"
 
-            # we need the break <br /> at the end to "get out" of <dl>
+            # we need the break <br /> at the end to "get out" of the <dl>
             result = result + "</dl><br />"
 
             self.other.web.eval("document.execCommand('insertHTML', false, %s);"

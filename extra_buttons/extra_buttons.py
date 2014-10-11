@@ -1,11 +1,24 @@
 # -*- coding: utf-8 -*-
-# Written by Stefan van den Akker in 2014 <srvandenakker@gmail.com>
-# License: GNU GPLv3 or later; https://www.gnu.org/licenses/gpl.html
 #
+# Copyright 2014 Stefan van den Akker <srvandenakker@gmail.com>
+#
+# This file is part of Supplementary Buttons for Anki.
+#
+# Supplementary Buttons for Anki is free software: you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+# 
+# Supplementary Buttons for Anki is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+# Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with Supplementary Buttons for Anki. If not, see http://www.gnu.org/licenses/.
+
 # TO DO:
 # - prevent QActions from hiding after they are triggered
-# - incorperate <pre> into <code>
-# - BUG: dot disappears after <code> element
 
 import os
 
@@ -127,13 +140,13 @@ class ExtraButtons_Options(QtGui.QMenu):
 def mySetupButtons(self):
 
     if prefs["Show <code> button"]:
-        b = self._addButton("text_code", self.toggleCode, _("Ctrl+,"),
-            _("Code format text (Ctrl+,)"), check=False)
+        b = self._addButton("text_code", lambda: self.wrapInTags("code"),
+            _("Ctrl+,"), _("Code format text (Ctrl+,)"), check=False)
         set_icon(b, "text_code")
 
     if prefs["Show unordered list button"]:
-        b = self._addButton("unordered_list", self.toggleUnorderedList, _("Ctrl+["),
-            _("Create unordered list (Ctrl+[)"), check=False)
+        b = self._addButton("unordered_list", self.toggleUnorderedList,
+            _("Ctrl+["), _("Create unordered list (Ctrl+[)"), check=False)
         set_icon(b, "unordered_list")
 
     if prefs["Show ordered list button"]:
@@ -148,8 +161,8 @@ def mySetupButtons(self):
 
     # FIX ME: think of better symbol to represent a <pre> block
     if prefs["Show code block button"]:
-        b = self._addButton("text_pre", self.togglePre, _("Ctrl+."),
-            tip=_("Create a code block (Ctrl-.)"), check=False)
+        b = self._addButton("text_pre", lambda: self.wrapInTags("pre"),
+            _("Ctrl+."), tip=_("Create a code block (Ctrl-.)"), check=False)
         set_icon(b, "text_pre")
 
     if prefs["Show horizontal rule button"]:
@@ -178,8 +191,8 @@ def mySetupButtons(self):
             _("Create a table (Ctrl+Shift+3)"), check=False)
         set_icon(b, "table")
 
-def toggleCode(self):
-    """Wrap selected text in code tags."""
+def wrapInTags(self, tag):
+    """Wrap selected text in selected a tag."""
     selection = self.web.selectedText()
 
     # escape HTML characters in selection
@@ -203,18 +216,19 @@ def toggleCode(self):
 
     self.saveNow()
     
-    # if not b:
     html = self.note.fields[self.currentField]
 
-    code_string_begin = ("<code class='{}'>".format(prefs["class_name"]) if
-        prefs["class_name"] else "<code>")
-    code_string_end = "</code>"
+    code_string_begin = ("<{0} class='{1}'>".format(tag, prefs["class_name"]) if
+        prefs["class_name"] else "<{0}>".format(tag))
+    code_string_end = "</{0}>".format(tag)
 
     begin = html.find(pattern)
     end = html.find(pattern[::-1], begin)
 
     html = (html[:begin] + code_string_begin + selection + code_string_end +
         html[end+3:])
+
+    print "RESULT:", html
 
     # cleanup HTML: change all non-breakable spaces to normal spaces
     html = html.replace("&nbsp;", " ")
@@ -385,7 +399,7 @@ def toggleTable(self):
             % json.dumps(html))
 
 
-editor.Editor.toggleCode = toggleCode
+editor.Editor.wrapInTags = wrapInTags
 editor.Editor.toggleOrderedList = toggleOrderedList
 editor.Editor.toggleUnorderedList = toggleUnorderedList
 editor.Editor.toggleStrikeThrough = toggleStrikeThrough

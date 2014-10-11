@@ -4,10 +4,8 @@
 #
 # TO DO:
 # - prevent QActions from hiding after they are triggered
-# - create icons
 # - incorperate <pre> into <code>
-# - create package
-# - don't add empty <dls>
+# - BUG: dot disappears after <code> element
 
 import os
 
@@ -181,14 +179,10 @@ def mySetupButtons(self):
         set_icon(b, "table")
 
 def toggleCode(self):
-    # FIX ME: if a <div> element appears before the selected text
-    # the wrap will not work; as a workaround I check for <div>s before the
-    # selected text and create a recognizable pattern @%* that is put before
-    # every <code> element, and subsequently delete it
-
+    """Wrap selected text in code tags."""
     selection = self.web.selectedText()
 
-    # escape HTML characters
+    # escape HTML characters in selection
     html_escape_table = {
         "&": "&amp;",
         '"': "&quot;",
@@ -199,26 +193,8 @@ def toggleCode(self):
 
     selection = "".join(html_escape_table.get(c, c) for c in selection)
 
-    # check whether we are dealing with a new or existing note; if the 
-    # currentField is empty, the note did not yet exist prior to editing
-    self.saveNow()
-    html = self.note.fields[self.currentField]
-
-    # check if the current selected is preceded by a <div> element
-    b = "<div>" + selection in html or selection + "</div>" in html
-
-    if b:
-        pattern = "@%*"
-    else:
-        pattern = ""
-    
-    # if a custom name for the CSS governing <code> is given, use it
-    if prefs["class_name"]:
-        self.web.eval("document.execCommand('insertHTML', false, %s);"
-            % json.dumps("{0}<code class={1}>".format(pattern, prefs["class_name"]) + 
-                selection + "</code>"))
-    else:
-        self.web.eval("wrap('{0}<code>', '</code>');".format(pattern))
+    pattern = "@%*"
+    self.web.eval("wrap('{0}', '{1}')".format(pattern, pattern[::-1]))
     
     # focus the field, so that changes are saved
     # this causes the cursor to go to the end of the field
@@ -227,26 +203,32 @@ def toggleCode(self):
 
     self.saveNow()
     
-    if b:
-        html = self.note.fields[self.currentField]
+    # if not b:
+    html = self.note.fields[self.currentField]
 
-        html = html.replace("@%*", "")
+    code_string_begin = ("<code class='{}'>".format(prefs["class_name"]) if
+        prefs["class_name"] else "<code>")
+    code_string_end = "</code>"
 
-        # cleanup HTML: change all non-breakable spaces to normal spaces
-        html = html.replace("&nbsp;", " ")
+    begin = html.find(pattern)
+    end = html.find(pattern[::-1], begin)
 
-        # delete the current HTML and replace it by our new & improved one
-        self.web.eval("setFormat('selectAll')")
-        self.web.eval("setFormat('delete')")
-        self.web.eval("document.execCommand('insertHTML', false, %s);"
-                % json.dumps(html))
+    html = (html[:begin] + code_string_begin + selection + code_string_end +
+        html[end+3:])
+
+    # cleanup HTML: change all non-breakable spaces to normal spaces
+    html = html.replace("&nbsp;", " ")
+
+    # delete the current HTML and replace it by our new & improved one
+    self.web.eval("setFormat('selectAll')")
+    self.web.eval("document.execCommand('insertHTML', false, %s);"
+            % json.dumps(html))
 
     # focus the field, so that changes are saved
     self.saveNow()
     
     self.web.setFocus()
-    self.web.eval("focusField(%d);" % self.currentField)
-    
+    self.web.eval("focusField(%d);" % self.currentField)    
 
 def toggleUnorderedList(self):
     self.web.eval("setFormat('insertUnorderedList')")

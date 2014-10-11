@@ -36,7 +36,7 @@ This add-on adds the following supplementary formatting buttons to Anki:
 
     ~~strikethrough text example~~
 
-* a **code block** button (shortcut <kbd>Ctrl</kbd> + <kbd>.</kbd>) that creates a `<pre>` block element around the selected element
+* a **code block** button (shortcut <kbd>Ctrl</kbd> + <kbd>.</kbd>) that creates a `<pre>` block element around the selected element. This works the same way the code button works. You can specify the CSS class you want to use in combination with <code>&lt;pre&gt;</code> by going to <i>Tools &gt; Supplementary buttons add-on (options) &gt; Alter &lt;code&gt; CSS...</i>
 
 * a **horizontal rule** button (shortcut <kbd>Ctrl</kbd> + <kbd>H</kbd>) that inserts a horizontal rule after the current position of the cursor
 

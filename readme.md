@@ -24,13 +24,13 @@ This add-on adds the following supplementary formatting buttons to Anki:
     2. Two
     3. Three
 
-* an **indent** button (shortcut <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>I</kbd>) to indent text or lists:
+* an **indent** button (shortcut <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>]</kbd>) to indent text or lists:
 
     1. One
         * Two
             1. Three
 
-* an **outdent** button (shortcut <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>O</kbd>) to outdent text or lists
+* an **outdent** button (shortcut <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>[</kbd>) to outdent text or lists
 
 * a **strikethrough** button (shortcut <kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>5</kbd>):
 

@@ -128,7 +128,7 @@ class ExtraButtons_Options(QtGui.QMenu):
                 action = self.create_action(option, mw)
                 sub_menu.addAction(action)
 
-        custom_css = QtGui.QAction("&Alter <code> CSS...", mw)
+        custom_css = QtGui.QAction("&Alter <code> and <pre> CSS...", mw)
         custom_css.triggered.connect(get_class_name)
         
         sub_menu.addAction(custom_css)
@@ -171,13 +171,13 @@ def mySetupButtons(self):
         set_icon(b, "hor_rule")
 
     if prefs["Show indent button"]:
-        b = self._addButton("indent", self.toggleIndent, _("Ctrl+Shift+i"),
-            _("Indent text or list (Ctrl+Shift+I)"), check=False)
+        b = self._addButton("indent", self.toggleIndent, _("Ctrl+Shift+]"),
+            _("Indent text or list (Ctrl+Shift+])"), check=False)
         set_icon(b, "indent")
 
     if prefs["Show outdent button"]:
-        b = self._addButton("outdent", self.toggleOutdent, _("Ctrl+Shift+o"),
-            _("Outdent text or list (Ctrl+Shift+O)"), check=False)
+        b = self._addButton("outdent", self.toggleOutdent, _("Ctrl+Shift+["),
+            _("Outdent text or list (Ctrl+Shift+[)"), check=False)
         set_icon(b, "outdent")
 
     # FIX ME: better symbol for <dl>
@@ -227,8 +227,6 @@ def wrapInTags(self, tag):
 
     html = (html[:begin] + code_string_begin + selection + code_string_end +
         html[end+3:])
-
-    print "RESULT:", html
 
     # cleanup HTML: change all non-breakable spaces to normal spaces
     html = html.replace("&nbsp;", " ")

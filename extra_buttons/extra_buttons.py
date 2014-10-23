@@ -19,6 +19,9 @@
 
 # TO DO:
 # - prevent QActions from hiding after they are triggered
+# - automatic URLs
+# - tables: get selection, split selection, build automatic table
+# - <kbd>
 
 import os
 

@@ -19,11 +19,12 @@
 
 # TO DO:
 # - prevent QActions from hiding after they are triggered
-# - automatic URLs
 # - tables: get selection, split selection, build automatic table
-# - <kbd>
+# - add icons for URLS and kbd
+# - have a look at remove formatting
 
 import os
+import re
 
 from anki.utils import json
 from aqt import editor, mw
@@ -32,8 +33,6 @@ from PyQt4 import QtGui, QtCore
 
 # Helper functions
 ##################################################
-
-this breaks everything
 
 def counter(start=0, step=1):
     "Generator to create infinite numbers."
@@ -47,10 +46,23 @@ def set_icon(button, name):
         "extra_buttons/icons/{}.png".format(name))
     button.setIcon(QtGui.QIcon(icon_path))
 
+def escape_html_chars(s):
+    """Escape HTML characters in a string. Return a safe string."""
+    html_escape_table = {
+        "&": "&amp;",
+        '"': "&quot;",
+        "'": "&apos;",
+        ">": "&gt;",
+        "<": "&lt;",
+    }
+
+    return "".join(html_escape_table.get(c, c) for c in s)
+
 # Preferences
 ##################################################
 
 def addons_folder():
+    """Return the addon folder used by Anki."""
     return mw.pm.addonFolder()
 
 addon_path = os.path.join(addons_folder(), "extra_buttons/.extra_buttons_prefs")
@@ -65,7 +77,9 @@ default_conf = {"class_name": "",
                 "Show indent button": True,
                 "Show outdent button": True,
                 "Show definition list button": True,
-                "Show table button": True}
+                "Show table button": True,
+                "Show create button button": True,
+                "Show create link button": True}
 
 try:
     with open(addon_path, "r") as f:
@@ -76,11 +90,12 @@ except IOError:
         json.dump(prefs, f)
 
 def save_prefs():
+    """Save the preferences to disk."""
     with open(addon_path, "w") as f:
         json.dump(prefs, f)
 
 def get_class_name(self):
-    "Sets the CSS styling for the <code> and <pre> tags."
+    """Sets the CSS styling for the <code> and <pre> tags."""
 
     current_text = prefs.get("class_name", "")
 
@@ -97,7 +112,7 @@ def get_class_name(self):
 ##################################################
 
 class ExtraButtons_Options(QtGui.QMenu):
-    "Displays the various options in the main menu."
+    """Display the various options in the main menu."""
 
     def __init__(self, mw):
         super(ExtraButtons_Options, self).__init__()
@@ -145,8 +160,9 @@ class ExtraButtons_Options(QtGui.QMenu):
 def mySetupButtons(self):
 
     if prefs["Show <code> button"]:
-        b = self._addButton("text_code", lambda: self.wrapInTags("code"),
-            _("Ctrl+,"), _("Code format text (Ctrl+,)"), check=False)
+        b = self._addButton("text_code", lambda: self.wrapInTags("code",
+            prefs["class_name"]), _("Ctrl+,"), _("Code format text (Ctrl+,)"),
+            check=False)
         set_icon(b, "text_code")
 
     if prefs["Show unordered list button"]:
@@ -166,8 +182,9 @@ def mySetupButtons(self):
 
     # FIX ME: think of better symbol to represent a <pre> block
     if prefs["Show code block button"]:
-        b = self._addButton("text_pre", lambda: self.wrapInTags("pre"),
-            _("Ctrl+."), tip=_("Create a code block (Ctrl-.)"), check=False)
+        b = self._addButton("text_pre", lambda: self.wrapInTags("pre",
+            prefs["class_name"]), _("Ctrl+."),
+            tip=_("Create a code block (Ctrl-.)"), check=False)
         set_icon(b, "text_pre")
 
     if prefs["Show horizontal rule button"]:
@@ -196,20 +213,24 @@ def mySetupButtons(self):
             _("Create a table (Ctrl+Shift+3)"), check=False)
         set_icon(b, "table")
 
-def wrapInTags(self, tag):
+    if prefs["Show create button button"]:
+        b = self._addButton("kbd", lambda: self.wrapInTags("kbd"),
+            _("Ctrl+Shift+k"), _("Create a mimic button (Ctrl+Shift+K)"),
+            check=False)
+        # TODO ICON
+        # set_icon(b, "kbd")
+
+    if prefs["Show create link button"]:
+        b = self._addButton("anchor", self.create_hyperlink, _("Ctrl+Shift+h"),
+            _("Insert link (Ctrl+Shift+H)"), check=False)
+        # TODO ICON
+        # set_icon(b, "anchor")
+
+def wrapInTags(self, tag, class_name=None):
     """Wrap selected text in selected a tag."""
     selection = self.web.selectedText()
 
-    # escape HTML characters in selection
-    html_escape_table = {
-        "&": "&amp;",
-        '"': "&quot;",
-        "'": "&apos;",
-        ">": "&gt;",
-        "<": "&lt;",
-    }
-
-    selection = "".join(html_escape_table.get(c, c) for c in selection)
+    selection = escape_html_chars(selection)
 
     pattern = "@%*"
     self.web.eval("wrap('{0}', '{1}')".format(pattern, pattern[::-1]))
@@ -223,14 +244,14 @@ def wrapInTags(self, tag):
     
     html = self.note.fields[self.currentField]
 
-    code_string_begin = ("<{0} class='{1}'>".format(tag, prefs["class_name"]) if
-        prefs["class_name"] else "<{0}>".format(tag))
-    code_string_end = "</{0}>".format(tag)
+    tag_string_begin = ("<{0} class='{1}'>".format(tag, class_name) if
+        class_name else "<{0}>".format(tag))
+    tag_string_end = "</{0}>".format(tag)
 
     begin = html.find(pattern)
     end = html.find(pattern[::-1], begin)
 
-    html = (html[:begin] + code_string_begin + selection + code_string_end +
+    html = (html[:begin] + tag_string_begin + selection + tag_string_end +
         html[end+3:])
 
     # cleanup HTML: change all non-breakable spaces to normal spaces
@@ -246,6 +267,79 @@ def wrapInTags(self, tag):
     
     self.web.setFocus()
     self.web.eval("focusField(%d);" % self.currentField)    
+
+def create_hyperlink(self):
+    dialog = QtGui.QDialog(self.parentWindow)
+    dialog.setWindowTitle("Create a hyperlink")
+    dialog.resize(350, 200)
+
+    ok_button_anchor = QtGui.QPushButton("&OK", dialog)
+    ok_button_anchor.setEnabled(False)
+    ok_button_anchor.clicked.connect(lambda: self.insert_anchor(
+        str(url_edit.text()), str(urltext_edit.text())))
+    ok_button_anchor.clicked.connect(dialog.hide)
+
+    ok_button_anchor.setAutoDefault(True)
+
+    cancel_button_anchor = QtGui.QPushButton("&Cancel", dialog)
+    cancel_button_anchor.clicked.connect(dialog.hide)
+    cancel_button_anchor.setAutoDefault(True)
+
+    url_label = QtGui.QLabel("Link to:")
+    url_edit = QtGui.QLineEdit()
+    url_edit.setPlaceholderText("URL")
+    url_edit.textChanged.connect(lambda: self.enable_ok_button(ok_button_anchor,
+        str(url_edit.text()), str(urltext_edit.text())))
+
+    urltext_label = QtGui.QLabel("Text to display:")
+    urltext_edit = QtGui.QLineEdit()
+    urltext_edit.setPlaceholderText("Text")
+    urltext_edit.textChanged.connect(lambda: self.enable_ok_button(
+        ok_button_anchor, str(url_edit.text()), str(urltext_edit.text())))
+
+    # if user already selected text, put it in urltext_edit
+    selection = self.web.selectedText()
+    if selection:
+        urltext_edit.setText(selection)
+    
+    button_box = QtGui.QHBoxLayout()
+    button_box.addStretch(1)
+    button_box.addWidget(cancel_button_anchor)
+    button_box.addWidget(ok_button_anchor)
+
+    dialog_vbox = QtGui.QVBoxLayout()
+    dialog_vbox.addWidget(url_label)
+    dialog_vbox.addWidget(url_edit)
+    dialog_vbox.addWidget(urltext_label)
+    dialog_vbox.addWidget(urltext_edit)
+    dialog_vbox.addLayout(button_box)
+
+    dialog.setLayout(dialog_vbox)
+
+    # give url_edit focus
+    url_edit.setFocus()
+
+    dialog.exec_()
+
+def insert_anchor(self, url, text):
+    # check for valid URL
+    pattern = re.compile("(?i)https?://")
+    match = re.match(pattern, text)
+    if not match:
+        url = "http://" + url
+
+    text = escape_html_chars(text)
+
+    replacement = "<a href=\"{0}\">{1}</a>".format(url, text)
+
+    self.web.eval("document.execCommand('insertHTML', false, %s);"
+        % json.dumps(replacement))
+
+def enable_ok_button(self, button, url, text):
+    if url and text:
+        button.setEnabled(True)
+    else:
+        button.setEnabled(False)
 
 def toggleUnorderedList(self):
     self.web.eval("setFormat('insertUnorderedList')")
@@ -269,7 +363,7 @@ def toggleOutdent(self):
     self.web.eval("setFormat('outdent')")
 
 class DefList(QtGui.QDialog):
-    "Creates a definition list with one or more terms and descriptions."
+    """Creates a definition list with one or more terms and descriptions."""
     def __init__(self, other, parentWindow):
         super(DefList, self).__init__()
         # other is whatever self is in the other methods
@@ -333,7 +427,7 @@ class DefList(QtGui.QDialog):
                 % json.dumps(result))
 
     def addMore(self):
-        "Adds a new definition term and description."
+        """Adds a new definition term and description."""
         if not self.dt_part.text() == "":
             self.data.append((self.dt_part.text(), self.dd_part.toPlainText()))
         self.dt_part.clear()
@@ -401,7 +495,10 @@ def toggleTable(self):
         self.web.eval("document.execCommand('insertHTML', false, %s);"
             % json.dumps(html))
 
-
+# editor.Editor.ok_button_anchor = None
+editor.Editor.enable_ok_button = enable_ok_button
+editor.Editor.insert_anchor = insert_anchor
+editor.Editor.create_hyperlink = create_hyperlink
 editor.Editor.wrapInTags = wrapInTags
 editor.Editor.toggleOrderedList = toggleOrderedList
 editor.Editor.toggleUnorderedList = toggleUnorderedList

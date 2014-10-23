@@ -33,6 +33,8 @@ from PyQt4 import QtGui, QtCore
 # Helper functions
 ##################################################
 
+this breaks everything
+
 def counter(start=0, step=1):
     "Generator to create infinite numbers."
     n = start

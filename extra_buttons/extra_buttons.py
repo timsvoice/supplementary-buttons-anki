@@ -18,10 +18,9 @@
 # with Supplementary Buttons for Anki. If not, see http://www.gnu.org/licenses/.
 
 # TO DO:
-# - prevent QActions from hiding after they are triggered
-# - tables: get selection, split selection, build automatic table
-# - add icons for URLS and kbd
+# - build new options
 # - have a look at remove formatting
+# - improve 
 
 import os
 import re
@@ -35,7 +34,7 @@ from PyQt4 import QtGui, QtCore
 ##################################################
 
 def counter(start=0, step=1):
-    "Generator to create infinite numbers."
+    """Generator that creates infinite numbers."""
     n = start
     while True:
         yield n
@@ -215,16 +214,16 @@ def mySetupButtons(self):
 
     if prefs["Show create button button"]:
         b = self._addButton("kbd", lambda: self.wrapInTags("kbd"),
-            _("Ctrl+Shift+k"), _("Create a mimic button (Ctrl+Shift+K)"),
+            _("Ctrl+Shift+k"), _("Create a keyboard button (Ctrl+Shift+K)"),
             check=False)
         # TODO ICON
-        # set_icon(b, "kbd")
+        set_icon(b, "kbd")
 
     if prefs["Show create link button"]:
         b = self._addButton("anchor", self.create_hyperlink, _("Ctrl+Shift+h"),
             _("Insert link (Ctrl+Shift+H)"), check=False)
         # TODO ICON
-        # set_icon(b, "anchor")
+        set_icon(b, "anchor")
 
 def wrapInTags(self, tag, class_name=None):
     """Wrap selected text in selected a tag."""
@@ -437,8 +436,72 @@ class DefList(QtGui.QDialog):
 def toggleDefList(self):
     dl = DefList(self, self.parentWindow)    
 
+def create_table_from_selection(self):
+    selection = self.web.selectedText()
+    print repr(selection)
+
+    # there is no text to make a table from
+    if not selection:
+        return False
+
+    # there is a single line of text
+    if not selection.count("\n"):
+        return False
+
+    # split on newlines
+    first = filter(None, selection.split("\n"))
+
+    # split on pipes
+    second = list()
+    for elem in first[:]:
+        new_elem = [x.strip() for x in elem.split("|")]
+        second.append(new_elem)
+
+    # create a table
+    head_row = ""
+    for elem in second[0]:
+        head_row += ("<th align=\"left\" style=\"padding: 5px;"
+            "border-bottom: 2px solid #00B3FF\">{0}</th>".format(elem))
+
+    # check for "-|-|-"
+    if all(x == "-" for x in second[1]):
+        start = 2
+    else:
+        start = 1
+
+    body_rows = ""
+    for row in second[start:]:
+        body_rows += "<tr>"
+        for elem in row:
+            body_rows += ("<td style=\"padding: 5px; border-bottom:"
+            "1px solid #B0B0B0\">{0}</td>".format(elem))
+        body_rows += "</tr>"
+
+    html = """
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr>
+                {0}
+            </tr>
+        </thead>
+        <tbody>
+            {1}
+        </tbody>
+    </table>""".format(head_row, body_rows)
+
+    self.web.eval("document.execCommand('insertHTML', false, %s);"
+        % json.dumps(html))
+
+    return None
+
 def toggleTable(self):
-    "Set the number of columns and rows for a new table."
+    """Set the number of columns and rows for a new table."""
+
+    # if the user has selected text, try to make a table out of it
+    if self.web.selectedText():
+        ret = self.create_table_from_selection()
+        if ret != False:
+            return None
 
     dialog = QtGui.QDialog(self.parentWindow)
     dialog.setWindowTitle("Enter columns and rows")
@@ -495,7 +558,7 @@ def toggleTable(self):
         self.web.eval("document.execCommand('insertHTML', false, %s);"
             % json.dumps(html))
 
-# editor.Editor.ok_button_anchor = None
+editor.Editor.create_table_from_selection = create_table_from_selection
 editor.Editor.enable_ok_button = enable_ok_button
 editor.Editor.insert_anchor = insert_anchor
 editor.Editor.create_hyperlink = create_hyperlink

@@ -17,10 +17,6 @@
 # You should have received a copy of the GNU General Public License along
 # with Supplementary Buttons for Anki. If not, see http://www.gnu.org/licenses/.
 
-# TO DO:
-# - build new options
-# - have a look at remove formatting
-# - improve 
 
 import os
 import re
@@ -77,7 +73,7 @@ default_conf = {"class_name": "",
                 "Show outdent button": True,
                 "Show definition list button": True,
                 "Show table button": True,
-                "Show create button button": True,
+                "Show keyboard button": True,
                 "Show create link button": True}
 
 try:
@@ -117,41 +113,71 @@ class ExtraButtons_Options(QtGui.QMenu):
         super(ExtraButtons_Options, self).__init__()
         self.mw = mw
 
-    def button_switch(self):
-        "Puts a button either on or off. Reverses current state."
+    def button_switch(self, state):
+        """Puts a button either on or off. Reverses current state."""
         source = self.sender()
         name = source.text()
         current_state = prefs[name]
-        prefs[name] = not current_state
+        if bool(state) != current_state:
+            prefs[name] = not current_state
         save_prefs()
 
-    def create_action(self, name, mw, checkable=True):
-        action = QtGui.QAction(name, mw)
-        if checkable:
-            action.setCheckable(True)
-            if prefs[name]:
-                action.setChecked(True)
-        action.toggled.connect(self.button_switch)
-        return action
+    def create_checkbox(self, name, mw):
+        checkbox = QtGui.QCheckBox(name, self)
+        if prefs[name]:
+            checkbox.setChecked(True)
+        checkbox.stateChanged.connect(self.button_switch)
+        return checkbox
 
     def setup_extra_buttons_options(self):
 
         sub_menu_title = "&Supplementary buttons add-on (options)"
         sub_menu = mw.form.menuTools.addMenu(sub_menu_title)
 
-        # go through all the keys in the preferences and make QActions for them
-        for option in sorted(prefs.keys()):
-            if option in ["class_name"]:
-                continue
-            else:
-                action = self.create_action(option, mw)
-                sub_menu.addAction(action)
+        options_action = QtGui.QAction("&Button options...", mw)
+        options_action.triggered.connect(self.show_option_dialog)
 
         custom_css = QtGui.QAction("&Alter <code> and <pre> CSS...", mw)
         custom_css.triggered.connect(get_class_name)
         
+        sub_menu.addAction(options_action)
         sub_menu.addAction(custom_css)
 
+    def show_option_dialog(self):
+        option_dialog = QtGui.QDialog(self.mw)
+        option_dialog.setWindowTitle("Options for Supplementary Buttons")
+
+        grid = QtGui.QGridLayout()
+
+        # determine number of items in each column in the grid
+        num_items = len(prefs) / 2
+
+        # go through the keys in the preferences and make QCheckBoxes for them
+        for index, option in enumerate(sorted(prefs.keys())):
+            if option in ["class_name"]:
+                continue
+            else:
+                checkbox = self.create_checkbox(option, mw)
+                if index >= num_items:
+                    col = 1
+                    row = index % num_items
+                    grid.addWidget(checkbox, row, col)
+                else:
+                    col = 0
+                    row = index
+                    grid.addWidget(checkbox, row, col)
+
+        button_box = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok)
+        button_box.accepted.connect(option_dialog.accept)
+        button_box.rejected.connect(option_dialog.reject)
+
+        vbox = QtGui.QVBoxLayout()
+        vbox.addLayout(grid)
+        vbox.addWidget(button_box)
+
+        option_dialog.setLayout(vbox)
+
+        option_dialog.exec_()
 
 # Buttons
 ##################################################
@@ -159,7 +185,7 @@ class ExtraButtons_Options(QtGui.QMenu):
 def mySetupButtons(self):
 
     if prefs["Show <code> button"]:
-        b = self._addButton("text_code", lambda: self.wrapInTags("code",
+        b = self._addButton("text_code", lambda: self.wrap_in_tags("code",
             prefs["class_name"]), _("Ctrl+,"), _("Code format text (Ctrl+,)"),
             check=False)
         set_icon(b, "text_code")
@@ -181,7 +207,7 @@ def mySetupButtons(self):
 
     # FIX ME: think of better symbol to represent a <pre> block
     if prefs["Show code block button"]:
-        b = self._addButton("text_pre", lambda: self.wrapInTags("pre",
+        b = self._addButton("text_pre", lambda: self.wrap_in_tags("pre",
             prefs["class_name"]), _("Ctrl+."),
             tip=_("Create a code block (Ctrl-.)"), check=False)
         set_icon(b, "text_pre")
@@ -212,26 +238,35 @@ def mySetupButtons(self):
             _("Create a table (Ctrl+Shift+3)"), check=False)
         set_icon(b, "table")
 
-    if prefs["Show create button button"]:
-        b = self._addButton("kbd", lambda: self.wrapInTags("kbd"),
+    if prefs["Show keyboard button"]:
+        b = self._addButton("kbd", lambda: self.wrap_in_tags("kbd"),
             _("Ctrl+Shift+k"), _("Create a keyboard button (Ctrl+Shift+K)"),
             check=False)
-        # TODO ICON
         set_icon(b, "kbd")
 
     if prefs["Show create link button"]:
         b = self._addButton("anchor", self.create_hyperlink, _("Ctrl+Shift+h"),
             _("Insert link (Ctrl+Shift+H)"), check=False)
-        # TODO ICON
         set_icon(b, "anchor")
 
-def wrapInTags(self, tag, class_name=None):
-    """Wrap selected text in selected a tag."""
+def wrap_in_tags(self, tag, class_name=None):
+    """Wrap selected text in a tag, optionally giving it a class."""
     selection = self.web.selectedText()
+
+    if not selection:
+        return
 
     selection = escape_html_chars(selection)
 
-    pattern = "@%*"
+    # Due to a bug in Anki or BeautifulSoup, we cannot use a simple
+    # wrap operation like with <a>. So this is a very hackish way of making 
+    # sure that a <code> tag may precede or follow a <div> and that the tag
+    # won't eat the character immediately preceding or following it
+    pattern = "@%*!"
+    len_p = len(pattern)
+
+    # first, wrap the selection up in a pattern that the user is unlikely
+    # to use in its own cards
     self.web.eval("wrap('{0}', '{1}')".format(pattern, pattern[::-1]))
     
     # focus the field, so that changes are saved
@@ -251,7 +286,7 @@ def wrapInTags(self, tag, class_name=None):
     end = html.find(pattern[::-1], begin)
 
     html = (html[:begin] + tag_string_begin + selection + tag_string_end +
-        html[end+3:])
+        html[end+len_p:])
 
     # cleanup HTML: change all non-breakable spaces to normal spaces
     html = html.replace("&nbsp;", " ")
@@ -265,7 +300,7 @@ def wrapInTags(self, tag, class_name=None):
     self.saveNow()
     
     self.web.setFocus()
-    self.web.eval("focusField(%d);" % self.currentField)    
+    self.web.eval("focusField(%d);" % self.currentField)   
 
 def create_hyperlink(self):
     dialog = QtGui.QDialog(self.parentWindow)
@@ -438,7 +473,6 @@ def toggleDefList(self):
 
 def create_table_from_selection(self):
     selection = self.web.selectedText()
-    print repr(selection)
 
     # there is no text to make a table from
     if not selection:
@@ -457,11 +491,20 @@ def create_table_from_selection(self):
         new_elem = [x.strip() for x in elem.split("|")]
         second.append(new_elem)
 
+    # neccessary?
+    max_num_cols = len(max(second, key=lambda x: len(x)))
+
     # create a table
     head_row = ""
+    extra_cols = ""
+    if len(second[0]) < max_num_cols:
+        extra_cols = ("<th align=\"left\" style=\"padding: 5px;"
+            "border-bottom: 2px solid #00B3FF\"></th>" *
+            (max_num_cols - len(second[0])))
     for elem in second[0]:
         head_row += ("<th align=\"left\" style=\"padding: 5px;"
             "border-bottom: 2px solid #00B3FF\">{0}</th>".format(elem))
+    head_row += extra_cols
 
     # check for "-|-|-"
     if all(x == "-" for x in second[1]):
@@ -472,10 +515,15 @@ def create_table_from_selection(self):
     body_rows = ""
     for row in second[start:]:
         body_rows += "<tr>"
+        # if particular row is not up to par with number of cols
+        extra_cols = ""
+        if len(row) < max_num_cols:
+            extra_cols = ("<td style=\"padding: 5px; border-bottom:"
+                "1px solid #B0B0B0\"></td>" * (max_num_cols - len(row)))
         for elem in row:
             body_rows += ("<td style=\"padding: 5px; border-bottom:"
             "1px solid #B0B0B0\">{0}</td>".format(elem))
-        body_rows += "</tr>"
+        body_rows += extra_cols + "</tr>"
 
     html = """
     <table style="width: 100%; border-collapse: collapse;">
@@ -562,7 +610,7 @@ editor.Editor.create_table_from_selection = create_table_from_selection
 editor.Editor.enable_ok_button = enable_ok_button
 editor.Editor.insert_anchor = insert_anchor
 editor.Editor.create_hyperlink = create_hyperlink
-editor.Editor.wrapInTags = wrapInTags
+editor.Editor.wrap_in_tags = wrap_in_tags
 editor.Editor.toggleOrderedList = toggleOrderedList
 editor.Editor.toggleUnorderedList = toggleUnorderedList
 editor.Editor.toggleStrikeThrough = toggleStrikeThrough

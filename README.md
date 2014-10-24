@@ -3,6 +3,7 @@ This add-on adds the following supplementary formatting buttons to Anki:
 
 * a **code** button that will wrap selected text in a `<code>` (shortcut: <kbd>Ctrl</kbd> + <kbd>,</kbd>). You can specify the CSS class you want to use in combination with `<code>`. For example, we have a CSS class named `c` defined in the *Styling* section of *Cards*:
 
+
         .c {
             font-family: droid sans mono;
             background-color: #f2f2f2;
@@ -46,14 +47,46 @@ This add-on adds the following supplementary formatting buttons to Anki:
 
     Upon clicking the button, a popup will appear where you can enter your terms and descriptions.
 
-* a **list** button (shortcut <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>3</kbd>):
+* a **table** button (shortcut <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>3</kbd>):
 
     header | header
     --- | ---
     content | content
     
-    You can select the number of columns and rows.
+    Select the text you want to create a table from. This works very much the same as a Markdown list: 
+    
+        header1 | header2
+        -|-
+        elem1 | elem2
+    
+    This will create a list with two columns and two rows. The `-|-` part is optional, but make sure you add a pipe character `|` between elements to designate a border.
+    
+    Alternatively, if you do not select any text, upon clicking the <kbd>Create a table</kbd> button you will be presented with a dialog window asking you to specify the number of rows and columns.
+    
+* a **keyboard key** button (shortcut <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>K</kbd>):
+    
+    This will create a keyboard key, for example <kbd>Esc</kbd>. By itself, the text that is wrapped in `<kbd>` will not look any different from the rest of the text. You have to style it first by going to the *Styling* section of *Cards* and add CSS to your liking. For example:
+
+
+        kbd {
+            box-shadow: inset 0px 1px 0px 0px #ffffff;
+            background: -webkit-gradient(linear, left top, left bottom, color-stop(0.05, #f9f9f9), color-stop(1, #e9e9e9) );
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            border: 1px solid #dcdcdc;
+            display: inline-block;
+            font-size: 0.8em;
+            height: 30px;
+            line-height: 30px;
+            padding: 0px 10px;
+            text-align: center;
+            text-shadow: 1px 1px 0px #ffffff;
+        }
+
+* a **hyperlink** button (shortcut <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>H</kbd>):
+
+    Upon pressing the button, you will be presented with a dialog window where you can enter both a link and text.
 
 The buttons can be enabled or disabled individually in *Tools > Supplementary buttons add-on (options)*, so feel free to disable the buttons you don't use.
 
-To add this add-on to Anki, copy the file `extra_buttons.py` to your Anki add-on folder, by default on Linux `$HOME/Anki/addon`.
+To add this add-on to Anki, copy the file `extra_buttons.py` to your Anki add-on folder. On Linux,this is   `$HOME/Anki/addon` by default.

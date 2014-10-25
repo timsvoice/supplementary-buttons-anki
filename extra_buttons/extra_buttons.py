@@ -358,7 +358,7 @@ def create_hyperlink(self):
 def insert_anchor(self, url, text):
     # check for valid URL
     pattern = re.compile("(?i)https?://")
-    match = re.match(pattern, text)
+    match = re.match(pattern, url)
     if not match:
         url = "http://" + url
 

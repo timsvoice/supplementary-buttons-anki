@@ -258,6 +258,33 @@ def wrap_in_tags(self, tag, class_name=None):
 
     selection = escape_html_chars(selection)
 
+    tag_string_begin = ("<{0} class='{1}'>".format(tag, class_name) if
+        class_name else "<{0}>".format(tag))
+    tag_string_end = "</{0}>".format(tag)
+
+    html = self.note.fields[self.currentField]
+
+    if "<li><br /></li>" in html:
+        # an empty list means trouble, because somehow Anki will also make the
+        # line in which we want to put a <code> tag a list if we continue
+        replacement = tag_string_begin + selection + tag_string_end
+        self.web.eval("document.execCommand('insertHTML', false, %s);"
+            % json.dumps(replacement))
+
+        self.web.setFocus()
+        self.web.eval("focusField(%d);" % self.currentField)
+        self.saveNow()
+
+        html_after = self.note.fields[self.currentField]
+
+        if html_after != html:
+            # you're in luck!
+            return
+        else:
+            # another Anki bug :( that has to do with <code> tags following
+            # <div> tags
+            return
+
     # Due to a bug in Anki or BeautifulSoup, we cannot use a simple
     # wrap operation like with <a>. So this is a very hackish way of making 
     # sure that a <code> tag may precede or follow a <div> and that the tag
@@ -294,7 +321,7 @@ def wrap_in_tags(self, tag, class_name=None):
     # delete the current HTML and replace it by our new & improved one
     self.web.eval("setFormat('selectAll')")
     self.web.eval("document.execCommand('insertHTML', false, %s);"
-            % json.dumps(html))
+        % json.dumps(html))
 
     # focus the field, so that changes are saved
     self.saveNow()

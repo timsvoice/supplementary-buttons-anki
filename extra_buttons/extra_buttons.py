@@ -305,10 +305,6 @@ def wrap_in_tags(self, tag, class_name=None):
     
     html = self.note.fields[self.currentField]
 
-    tag_string_begin = ("<{0} class='{1}'>".format(tag, class_name) if
-        class_name else "<{0}>".format(tag))
-    tag_string_end = "</{0}>".format(tag)
-
     begin = html.find(pattern)
     end = html.find(pattern[::-1], begin)
 

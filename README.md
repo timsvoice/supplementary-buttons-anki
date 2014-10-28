@@ -59,7 +59,7 @@ This add-on adds the following supplementary formatting buttons to Anki:
         -|-
         elem1 | elem2
     
-    This will create a list with two columns and two rows. The `-|-` part is optional, but make sure you add a pipe character `|` between elements to designate a border.
+    This will create a list with two columns and two rows. The `-|-` part is optional, but can be used to align the column to the left (`:-`), right (`-:`) or to the center (`:-:`). You can skip this line completely, but do make sure you add a pipe character `|` between elements to designate a border.
     
     Alternatively, if you do not select any text, upon clicking the <kbd>Create a table</kbd> button you will be presented with a dialog window asking you to specify the number of rows and columns.
     

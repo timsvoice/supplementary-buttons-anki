@@ -139,7 +139,7 @@ class ExtraButtons_Options(QtGui.QMenu):
 
         custom_css = QtGui.QAction("&Alter <code> and <pre> CSS...", mw)
         custom_css.triggered.connect(get_class_name)
-        
+
         sub_menu.addAction(options_action)
         sub_menu.addAction(custom_css)
 
@@ -281,12 +281,12 @@ def wrap_in_tags(self, tag, class_name=None):
             # you're in luck!
             return
         else:
-            # another Anki bug :( that has to do with <code> tags following
-            # <div> tags
+            # nothing happened :( this is another Anki bug :( that has to do
+            # with <code> tags following <div> tags
             return
 
     # Due to a bug in Anki or BeautifulSoup, we cannot use a simple
-    # wrap operation like with <a>. So this is a very hackish way of making 
+    # wrap operation like with <a>. So this is a very hackish way of making
     # sure that a <code> tag may precede or follow a <div> and that the tag
     # won't eat the character immediately preceding or following it
     pattern = "@%*!"
@@ -295,21 +295,21 @@ def wrap_in_tags(self, tag, class_name=None):
     # first, wrap the selection up in a pattern that the user is unlikely
     # to use in its own cards
     self.web.eval("wrap('{0}', '{1}')".format(pattern, pattern[::-1]))
-    
+
     # focus the field, so that changes are saved
     # this causes the cursor to go to the end of the field
     self.web.setFocus()
     self.web.eval("focusField(%d);" % self.currentField)
 
     self.saveNow()
-    
+
     html = self.note.fields[self.currentField]
 
     begin = html.find(pattern)
     end = html.find(pattern[::-1], begin)
 
     html = (html[:begin] + tag_string_begin + selection + tag_string_end +
-        html[end+len_p:])
+            html[end+len_p:])
 
     # cleanup HTML: change all non-breakable spaces to normal spaces
     html = html.replace("&nbsp;", " ")
@@ -317,13 +317,13 @@ def wrap_in_tags(self, tag, class_name=None):
     # delete the current HTML and replace it by our new & improved one
     self.web.eval("setFormat('selectAll')")
     self.web.eval("document.execCommand('insertHTML', false, %s);"
-        % json.dumps(html))
+                  % json.dumps(html))
 
     # focus the field, so that changes are saved
     self.saveNow()
-    
+
     self.web.setFocus()
-    self.web.eval("focusField(%d);" % self.currentField)   
+    self.web.eval("focusField(%d);" % self.currentField)
 
 def create_hyperlink(self):
     dialog = QtGui.QDialog(self.parentWindow)
@@ -333,7 +333,7 @@ def create_hyperlink(self):
     ok_button_anchor = QtGui.QPushButton("&OK", dialog)
     ok_button_anchor.setEnabled(False)
     ok_button_anchor.clicked.connect(lambda: self.insert_anchor(
-        str(url_edit.text()), str(urltext_edit.text())))
+        url_edit.text(), urltext_edit.text()))
     ok_button_anchor.clicked.connect(dialog.hide)
 
     ok_button_anchor.setAutoDefault(True)
@@ -346,13 +346,13 @@ def create_hyperlink(self):
     url_edit = QtGui.QLineEdit()
     url_edit.setPlaceholderText("URL")
     url_edit.textChanged.connect(lambda: self.enable_ok_button(ok_button_anchor,
-        str(url_edit.text()), str(urltext_edit.text())))
+        url_edit.text(), urltext_edit.text()))
 
     urltext_label = QtGui.QLabel("Text to display:")
     urltext_edit = QtGui.QLineEdit()
     urltext_edit.setPlaceholderText("Text")
-    urltext_edit.textChanged.connect(lambda: self.enable_ok_button(
-        ok_button_anchor, str(url_edit.text()), str(urltext_edit.text())))
+    urltext_edit.textChanged.connect(lambda: self.enable_ok_button(ok_button_anchor,
+        url_edit.text(), urltext_edit.text()))
 
     # if user already selected text, put it in urltext_edit
     selection = self.web.selectedText()
@@ -379,6 +379,8 @@ def create_hyperlink(self):
     dialog.exec_()
 
 def insert_anchor(self, url, text):
+    """Inserts a HTML anchor <a> into the text field, using url as hyperlink
+    and text as text to-be-displayed."""
     # check for valid URL
     pattern = re.compile("(?i)https?://")
     match = re.match(pattern, url)
@@ -387,10 +389,10 @@ def insert_anchor(self, url, text):
 
     text = escape_html_chars(text)
 
-    replacement = "<a href=\"{0}\">{1}</a>".format(url, text)
+    replacement = u"<a href=\"{0}\">{1}</a>".format(url, text)
 
     self.web.eval("document.execCommand('insertHTML', false, %s);"
-        % json.dumps(replacement))
+                  % json.dumps(replacement))
 
 def enable_ok_button(self, button, url, text):
     if url and text:
@@ -492,9 +494,10 @@ class DefList(QtGui.QDialog):
         self.dt_part.setFocus()
 
 def toggleDefList(self):
-    dl = DefList(self, self.parentWindow)    
+    dl = DefList(self, self.parentWindow)
 
 def create_table_from_selection(self):
+    """Create a table out of the selected text."""
     selection = self.web.selectedText()
 
     # there is no text to make a table from
@@ -505,8 +508,12 @@ def create_table_from_selection(self):
     if not selection.count("\n"):
         return False
 
+    # there is no content in table
+    if all(c in ("|", "\n") for c in selection):
+        return False
+
     # split on newlines
-    first = filter(None, selection.split("\n"))
+    first = [x for x in selection.split(u"\n") if x]
 
     # split on pipes
     second = list()
@@ -514,18 +521,18 @@ def create_table_from_selection(self):
         new_elem = [x.strip() for x in elem.split("|")]
         second.append(new_elem)
 
-    # neccessary?
-    max_num_cols = len(max(second, key=lambda x: len(x)))
+    # keep track of the max number of cols so as to make all rows of equal len
+    max_num_cols = len(max(second, key=len))
 
     # create a table
-    head_row = ""
-    extra_cols = ""
+    head_row = u""
+    extra_cols = u""
     if len(second[0]) < max_num_cols:
-        extra_cols = ("<th align=\"left\" style=\"padding: 5px;"
-            "border-bottom: 2px solid #00B3FF\"></th>" *
-            (max_num_cols - len(second[0])))
+        extra_cols = (u"<th align=\"left\" style=\"padding: 5px;"
+                      "border-bottom: 2px solid #00B3FF\"></th>" *
+                      (max_num_cols - len(second[0])))
     for elem in second[0]:
-        head_row += ("<th align=\"left\" style=\"padding: 5px;"
+        head_row += (u"<th align=\"left\" style=\"padding: 5px;"
             "border-bottom: 2px solid #00B3FF\">{0}</th>".format(elem))
     head_row += extra_cols
 
@@ -535,20 +542,20 @@ def create_table_from_selection(self):
     else:
         start = 1
 
-    body_rows = ""
+    body_rows = u""
     for row in second[start:]:
-        body_rows += "<tr>"
+        body_rows += u"<tr>"
         # if particular row is not up to par with number of cols
         extra_cols = ""
         if len(row) < max_num_cols:
-            extra_cols = ("<td style=\"padding: 5px; border-bottom:"
+            extra_cols = (u"<td style=\"padding: 5px; border-bottom:"
                 "1px solid #B0B0B0\"></td>" * (max_num_cols - len(row)))
         for elem in row:
-            body_rows += ("<td style=\"padding: 5px; border-bottom:"
-            "1px solid #B0B0B0\">{0}</td>".format(elem))
+            body_rows += (u"<td style=\"padding: 5px; border-bottom:"
+                          u"1px solid #B0B0B0\">{0}</td>".format(elem))
         body_rows += extra_cols + "</tr>"
 
-    html = """
+    html = u"""
     <table style="width: 100%; border-collapse: collapse;">
         <thead>
             <tr>

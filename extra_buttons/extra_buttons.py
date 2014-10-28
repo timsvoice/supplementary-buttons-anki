@@ -53,6 +53,15 @@ def escape_html_chars(s):
 
     return "".join(html_escape_table.get(c, c) for c in s)
 
+def check_alignment(s):
+    """Return the alignment of a table based on input s. If s not in the list,
+    return default value."""
+    alignments = {":-": "left", ":-:": "center", "-:": "right"}
+    default = "left"
+    if not s in alignments:
+        return default
+    return alignments[s]
+
 # Preferences
 ##################################################
 
@@ -423,11 +432,12 @@ def toggleOutdent(self):
 
 class DefList(QtGui.QDialog):
     """Creates a definition list with one or more terms and descriptions."""
-    def __init__(self, other, parentWindow):
+    def __init__(self, other, parentWindow, selection=None):
         super(DefList, self).__init__()
         # other is whatever self is in the other methods
         self.other = other
         self.parentWindow = parentWindow
+        self.selection = selection
         self.data = list()
         self.setupUI()
 
@@ -442,6 +452,8 @@ class DefList(QtGui.QDialog):
 
         self.dd_part = QtGui.QTextEdit(self.widget)
         self.dd_part.setAcceptRichText(False)
+        if self.selection:
+            self.dd_part.setText(self.selection)
         dd_part_label = QtGui.QLabel("Definition description:")
 
         addButton = QtGui.QPushButton("&Add more", self.widget)
@@ -494,7 +506,8 @@ class DefList(QtGui.QDialog):
         self.dt_part.setFocus()
 
 def toggleDefList(self):
-    dl = DefList(self, self.parentWindow)
+    selection = self.web.selectedText()
+    dl = DefList(self, self.parentWindow, selection if selection else None)
 
 def create_table_from_selection(self):
     """Create a table out of the selected text."""
@@ -524,35 +537,48 @@ def create_table_from_selection(self):
     # keep track of the max number of cols so as to make all rows of equal len
     max_num_cols = len(max(second, key=len))
 
+    # check for "-|-|-"
+    if all(x.strip(":") in ("-", "") for x in second[1]):
+        start = 2
+        align_line = second[1]
+        len_align_line = len(align_line)
+        if len_align_line < max_num_cols:
+            align_line += ["-"] * (max_num_cols - len_align_line)
+        alignments = list()
+        for elem in second[1]:
+            alignments.append(check_alignment(elem))
+    else:
+        alignments = ["left"] * max_num_cols
+        start = 1
+
     # create a table
     head_row = u""
+    for elem, alignment in zip(second[0], alignments):
+        head_row += (u"<th align=\"{0}\" style=\"padding: 5px;"
+            "border-bottom: 2px solid #00B3FF\">{1}</th>".format(alignment, elem))
     extra_cols = u""
     if len(second[0]) < max_num_cols:
-        extra_cols = (u"<th align=\"left\" style=\"padding: 5px;"
-                      "border-bottom: 2px solid #00B3FF\"></th>" *
-                      (max_num_cols - len(second[0])))
-    for elem in second[0]:
-        head_row += (u"<th align=\"left\" style=\"padding: 5px;"
-            "border-bottom: 2px solid #00B3FF\">{0}</th>".format(elem))
+        diff = len(second[0]) - max_num_cols
+        assert diff < 0, "Difference between len(second[0]) and max_num_cols is positive"
+        for alignment in alignments[diff:]:
+            extra_cols += (u"<th align=\"{0}\" style=\"padding: 5px;"
+                           "border-bottom: 2px solid #00B3FF\"></th>".format(alignment))
     head_row += extra_cols
-
-    # check for "-|-|-"
-    if all(x == "-" for x in second[1]):
-        start = 2
-    else:
-        start = 1
 
     body_rows = u""
     for row in second[start:]:
         body_rows += u"<tr>"
+        for elem, alignment in zip(row, alignments):
+            body_rows += (u"<td style=\"text-align: {0}; padding: 5px; border-bottom:"
+                          u"1px solid #B0B0B0\">{1}</td>".format(alignment, elem))
         # if particular row is not up to par with number of cols
         extra_cols = ""
         if len(row) < max_num_cols:
-            extra_cols = (u"<td style=\"padding: 5px; border-bottom:"
-                "1px solid #B0B0B0\"></td>" * (max_num_cols - len(row)))
-        for elem in row:
-            body_rows += (u"<td style=\"padding: 5px; border-bottom:"
-                          u"1px solid #B0B0B0\">{0}</td>".format(elem))
+            diff = len(row) - max_num_cols
+            assert diff < 0, "Difference between len(row) and max_num_cols is positive"
+            for alignment in alignments[diff:]:
+                extra_cols += (u"<td style=\"text-align: {0}; padding: 5px; border-bottom:"
+                    "1px solid #B0B0B0\"></td>".format(alignment))
         body_rows += extra_cols + "</tr>"
 
     html = u"""

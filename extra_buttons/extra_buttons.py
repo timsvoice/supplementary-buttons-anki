@@ -537,6 +537,9 @@ def create_table_from_selection(self):
     # keep track of the max number of cols so as to make all rows of equal len
     max_num_cols = len(max(second, key=len))
 
+    # decide how much horizontal space each column may take
+    width = 100 / max_num_cols
+
     # check for "-|-|-"
     if all(x.strip(":") in ("-", "") for x in second[1]):
         start = 2
@@ -554,15 +557,15 @@ def create_table_from_selection(self):
     # create a table
     head_row = u""
     for elem, alignment in zip(second[0], alignments):
-        head_row += (u"<th align=\"{0}\" style=\"padding: 5px;"
-            "border-bottom: 2px solid #00B3FF\">{1}</th>".format(alignment, elem))
+        head_row += (u"<th align=\"{0}\" style=\"width: {1}%; padding: 5px;"
+            "border-bottom: 2px solid #00B3FF\">{2}</th>".format(alignment, width, elem))
     extra_cols = u""
     if len(second[0]) < max_num_cols:
         diff = len(second[0]) - max_num_cols
         assert diff < 0, "Difference between len(second[0]) and max_num_cols is positive"
         for alignment in alignments[diff:]:
-            extra_cols += (u"<th align=\"{0}\" style=\"padding: 5px;"
-                           "border-bottom: 2px solid #00B3FF\"></th>".format(alignment))
+            extra_cols += (u"<th align=\"{0}\" style=\"width: {1}%; padding: 5px;"
+                           "border-bottom: 2px solid #00B3FF\"></th>".format(alignment, width))
     head_row += extra_cols
 
     body_rows = u""
@@ -645,8 +648,11 @@ def toggleTable(self):
         num_header = counter(start=1, step=1)
         num_data = counter(start=1, step=1)
 
-        header_column = "".join("<th align=\"left\" style=\"padding: 5px;"
-            "border-bottom: 2px solid #00B3FF\">header{}</th>".format(
+        # set width of each column equal
+        width = 100 / num_columns
+
+        header_column = "".join("<th align=\"left\" style=\"width: {0}%; padding: 5px;"
+            "border-bottom: 2px solid #00B3FF\">header{1}</th>".format(width,
                 next(num_header)) for _ in xrange(num_columns))
         body_column = "".join("<td style=\"padding: 5px; border-bottom:"
             "1px solid #B0B0B0\">data{}</td>".format(next(num_data))

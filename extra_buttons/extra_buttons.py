@@ -8,7 +8,7 @@
 # and/or modify it under the terms of the GNU General Public License as
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
-# 
+#
 # Supplementary Buttons for Anki is distributed in the hope that it will be
 # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
@@ -72,6 +72,7 @@ def addons_folder():
 addon_path = os.path.join(addons_folder(), "extra_buttons/.extra_buttons_prefs")
 
 default_conf = {"class_name": "",
+                "last_bg_color": "#00f",
                 "Show <code> button": True,
                 "Show unordered list button": True,
                 "Show ordered list button": True,
@@ -83,7 +84,8 @@ default_conf = {"class_name": "",
                 "Show definition list button": True,
                 "Show table button": True,
                 "Show keyboard button": True,
-                "Show create link button": True}
+                "Show create link button": True,
+                "Show background color button": True}
 
 try:
     with open(addon_path, "r") as f:
@@ -258,6 +260,14 @@ def mySetupButtons(self):
             _("Insert link (Ctrl+Shift+H)"), check=False)
         set_icon(b, "anchor")
 
+    if prefs["Show background color button"]:
+        b1 = self._addButton("background", self.on_background, _("Ctrl+Shift+b"),
+            _("Set background color (Ctrl+Shift+B)"), text=" ")
+        self.setup_background_button(b1)
+        b2 = self._addButton("change_bg_color", self.on_change_col, _("Ctrl+Shift+n"),
+          _("Change color (Ctrl+Shift+N)"), text=u"▾")
+        b2.setFixedWidth(12)
+
 def wrap_in_tags(self, tag, class_name=None):
     """Wrap selected text in a tag, optionally giving it a class."""
     selection = self.web.selectedText()
@@ -367,7 +377,7 @@ def create_hyperlink(self):
     selection = self.web.selectedText()
     if selection:
         urltext_edit.setText(selection)
-    
+
     button_box = QtGui.QHBoxLayout()
     button_box.addStretch(1)
     button_box.addWidget(cancel_button_anchor)
@@ -615,7 +625,7 @@ def toggleTable(self):
 
     form = QtGui.QFormLayout()
     form.addRow(QtGui.QLabel("Enter the number of columns and rows"))
-    
+
     columnSpinBox = QtGui.QSpinBox(dialog)
     columnSpinBox.setMinimum(1)
     columnSpinBox.setMaximum(10)
@@ -668,6 +678,47 @@ def toggleTable(self):
         self.web.eval("document.execCommand('insertHTML', false, %s);"
             % json.dumps(html))
 
+def setup_background_button(self, but):
+    self.background_frame = QtGui.QFrame()
+    self.background_frame.setAutoFillBackground(True)
+    self.background_frame.setFocusPolicy(QtCore.Qt.NoFocus)
+    self.bg_color = prefs.get("last_bg_color", "#00f")
+    self.on_bg_color_changed()
+    hbox = QtGui.QHBoxLayout()
+    hbox.addWidget(self.background_frame)
+    hbox.setMargin(5)
+    but.setLayout(hbox)
+
+# use last background color
+def on_background(self):
+    self._wrap_with_bg_color(self.bg_color)
+
+# choose new color
+def on_change_col(self):
+    new = QtGui.QColorDialog.getColor(QtGui.QColor(self.bg_color), None)
+    # native dialog doesn't refocus us for some reason
+    self.parentWindow.activateWindow()
+    if new.isValid():
+        self.bg_color = new.name()
+        self.on_bg_color_changed()
+        self._wrap_with_bg_color(self.bg_color)
+
+def _update_background_button(self):
+    self.background_frame.setPalette(QtGui.QPalette(QtGui.QColor(self.bg_color)))
+
+def on_bg_color_changed(self):
+    self._update_background_button()
+    prefs["last_bg_color"] = self.bg_color
+
+def _wrap_with_bg_color(self, color):
+    self.web.eval("setFormat('backColor', '%s')" % color)
+
+editor.Editor.on_background = on_background
+editor.Editor.setup_background_button = setup_background_button
+editor.Editor.on_bg_color_changed = on_bg_color_changed
+editor.Editor._update_background_button = _update_background_button
+editor.Editor.on_change_col = on_change_col
+editor.Editor._wrap_with_bg_color = _wrap_with_bg_color
 editor.Editor.create_table_from_selection = create_table_from_selection
 editor.Editor.enable_ok_button = enable_ok_button
 editor.Editor.insert_anchor = insert_anchor

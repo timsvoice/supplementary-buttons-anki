@@ -86,6 +86,10 @@ This add-on adds the following supplementary formatting buttons to Anki:
 * a **hyperlink** button (shortcut <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>H</kbd>):
 
     Upon pressing the button, you will be presented with a dialog window where you can enter both a link and text.
+    
+* a **text highlight** button (shortcut <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>N</kbd> to select color, <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>B</kbd> to apply it):
+
+    Highlight your text with any color you would like.
 
 The buttons can be enabled or disabled individually in *Tools > Supplementary buttons add-on (options)*, so feel free to disable the buttons you don't use.
 

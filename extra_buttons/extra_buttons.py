@@ -270,7 +270,7 @@ def mySetupButtons(self):
 
     if prefs["Show background color button"] and PLATFORM.startswith("linux"):
         b1 = self._addButton("background", self.on_background, _("Ctrl+Shift+b"),
-            _("Set background color (Ctrl+Shift+B)"), text=" ", check=True)
+            _("Set background color (Ctrl+Shift+B)"), text=" ")
         self.setup_background_button(b1)
         b2 = self._addButton("change_bg_color", self.on_change_col, _("Ctrl+Shift+n"),
           _("Change color (Ctrl+Shift+N)"), text=u"▾")

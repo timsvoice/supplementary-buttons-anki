@@ -26,7 +26,6 @@ from anki.utils import json
 from aqt import editor, mw
 from anki.hooks import wrap
 from PyQt4 import QtGui, QtCore
-from BeautifulSoup import BeautifulSoup
 
 # Constants
 ##################################################
@@ -173,14 +172,14 @@ class ExtraButtons_Options(QtGui.QMenu):
             l.remove("Show background color button")
 
         # determine number of items in each column in the grid
-        num_items = len(l) / 2
+        num_items = len(l) / 2  # 6
 
         # go through the keys in the preferences and make QCheckBoxes for them
         for index, option in enumerate(sorted(l)):
             checkbox = self.create_checkbox(option, mw)
-            if index >= num_items:
+            if index > num_items:
                 col = 1
-                row = index % num_items
+                row = index - num_items - 1
                 grid.addWidget(checkbox, row, col)
             else:
                 col = 0
@@ -341,9 +340,6 @@ def wrap_in_tags(self, tag, class_name=None):
 
     # cleanup HTML: change all non-breakable spaces to normal spaces
     html = html.replace("&nbsp;", " ")
-
-    # filter through BeautifulSoup
-    html = unicode(BeautifulSoup(html))
 
     # delete the current HTML and replace it by our new & improved one
     self.web.eval("setFormat('selectAll')")

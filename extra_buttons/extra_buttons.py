@@ -20,11 +20,17 @@
 
 import os
 import re
+import sys
 
 from anki.utils import json
 from aqt import editor, mw
 from anki.hooks import wrap
 from PyQt4 import QtGui, QtCore
+
+# Constants
+##################################################
+
+PLATFORM = sys.platform
 
 # Helper functions
 ##################################################
@@ -268,8 +274,12 @@ def mySetupButtons(self):
           _("Change color (Ctrl+Shift+N)"), text=u"▾")
         b2.setFixedWidth(12)
 
-def wrap_in_tags(self, tag, class_name=None):
-    """Wrap selected text in a tag, optionally giving it a class."""
+def wrap_in_tags(self, tag, class_name=None, style=None):
+    """Wrap selected text in a tag, optionally giving it a class or a style attribute"""
+    # pevent errors when tag is <span> but no style given
+    if tag == "span" and not style:
+        return
+
     selection = self.web.selectedText()
 
     if not selection:
@@ -277,8 +287,12 @@ def wrap_in_tags(self, tag, class_name=None):
 
     selection = escape_html_chars(selection)
 
-    tag_string_begin = ("<{0} class='{1}'>".format(tag, class_name) if
-        class_name else "<{0}>".format(tag))
+    if tag in ("code", "pre", "kbd"):
+        tag_string_begin = ("<{0} class='{1}'>".format(tag, class_name) if
+            class_name else "<{0}>".format(tag))
+    elif tag == "span":
+        tag_string_begin = "<{0} style='{1}'>".format(tag, style)
+    
     tag_string_end = "</{0}>".format(tag)
 
     html = self.note.fields[self.currentField]
@@ -711,7 +725,11 @@ def on_bg_color_changed(self):
     prefs["last_bg_color"] = self.bg_color
 
 def _wrap_with_bg_color(self, color):
-    self.web.eval("setFormat('backColor', '%s')" % color)
+    if PLATFORM.startswith("linux"):
+        self.web.eval("setFormat('hiliteColor', '%s')" % color)
+    else:
+        self.wrap_in_tags("span", style="background-color: {0}".format(color))
+
 
 editor.Editor.on_background = on_background
 editor.Editor.setup_background_button = setup_background_button

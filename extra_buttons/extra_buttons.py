@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2014 Stefan van den Akker <srvandenakker@gmail.com>
+# Copyright 2014 Stefan van den Akker <srvandenakker.dev@gmail.com>
 #
 # This file is part of Supplementary Buttons for Anki.
 #
@@ -292,7 +292,7 @@ def wrap_in_tags(self, tag, class_name=None, style=None):
             class_name else "<{0}>".format(tag))
     elif tag == "span":
         tag_string_begin = "<{0} style='{1}'>".format(tag, style)
-    
+
     tag_string_end = "</{0}>".format(tag)
 
     html = self.note.fields[self.currentField]
@@ -723,6 +723,7 @@ def _update_background_button(self):
 def on_bg_color_changed(self):
     self._update_background_button()
     prefs["last_bg_color"] = self.bg_color
+    save_prefs()
 
 def _wrap_with_bg_color(self, color):
     if PLATFORM.startswith("linux"):

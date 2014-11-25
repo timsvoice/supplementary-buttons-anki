@@ -26,6 +26,7 @@ from anki.utils import json
 from aqt import editor, mw
 from anki.hooks import wrap
 from PyQt4 import QtGui, QtCore
+from BeautifulSoup import BeautifulSoup
 
 # Constants
 ##################################################
@@ -166,23 +167,25 @@ class ExtraButtons_Options(QtGui.QMenu):
 
         grid = QtGui.QGridLayout()
 
+        # create a dict that has all the relevant buttons to be displayed
+        l = [k for k in prefs.keys() if k not in ("class_name", "last_bg_color")]
+        if not PLATFORM.startswith("linux"):
+            l.remove("Show background color button")
+
         # determine number of items in each column in the grid
-        num_items = len(prefs) / 2
+        num_items = len(l) / 2
 
         # go through the keys in the preferences and make QCheckBoxes for them
-        for index, option in enumerate(sorted(prefs.keys())):
-            if option in ["class_name"]:
-                continue
+        for index, option in enumerate(sorted(l)):
+            checkbox = self.create_checkbox(option, mw)
+            if index >= num_items:
+                col = 1
+                row = index % num_items
+                grid.addWidget(checkbox, row, col)
             else:
-                checkbox = self.create_checkbox(option, mw)
-                if index >= num_items:
-                    col = 1
-                    row = index % num_items
-                    grid.addWidget(checkbox, row, col)
-                else:
-                    col = 0
-                    row = index
-                    grid.addWidget(checkbox, row, col)
+                col = 0
+                row = index
+                grid.addWidget(checkbox, row, col)
 
         button_box = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok)
         button_box.accepted.connect(option_dialog.accept)
@@ -266,20 +269,16 @@ def mySetupButtons(self):
             _("Insert link (Ctrl+Shift+H)"), check=False)
         set_icon(b, "anchor")
 
-    if prefs["Show background color button"]:
+    if prefs["Show background color button"] and PLATFORM.startswith("linux"):
         b1 = self._addButton("background", self.on_background, _("Ctrl+Shift+b"),
-            _("Set background color (Ctrl+Shift+B)"), text=" ")
+            _("Set background color (Ctrl+Shift+B)"), text=" ", check=True)
         self.setup_background_button(b1)
         b2 = self._addButton("change_bg_color", self.on_change_col, _("Ctrl+Shift+n"),
           _("Change color (Ctrl+Shift+N)"), text=u"▾")
         b2.setFixedWidth(12)
 
-def wrap_in_tags(self, tag, class_name=None, style=None):
+def wrap_in_tags(self, tag, class_name=None):
     """Wrap selected text in a tag, optionally giving it a class or a style attribute"""
-    # pevent errors when tag is <span> but no style given
-    if tag == "span" and not style:
-        return
-
     selection = self.web.selectedText()
 
     if not selection:
@@ -287,12 +286,8 @@ def wrap_in_tags(self, tag, class_name=None, style=None):
 
     selection = escape_html_chars(selection)
 
-    if tag in ("code", "pre", "kbd"):
-        tag_string_begin = ("<{0} class='{1}'>".format(tag, class_name) if
-            class_name else "<{0}>".format(tag))
-    elif tag == "span":
-        tag_string_begin = "<{0} style='{1}'>".format(tag, style)
-
+    tag_string_begin = ("<{0} class='{1}'>".format(tag, class_name) if
+        class_name else "<{0}>".format(tag))
     tag_string_end = "</{0}>".format(tag)
 
     html = self.note.fields[self.currentField]
@@ -346,6 +341,9 @@ def wrap_in_tags(self, tag, class_name=None, style=None):
 
     # cleanup HTML: change all non-breakable spaces to normal spaces
     html = html.replace("&nbsp;", " ")
+
+    # filter through BeautifulSoup
+    html = unicode(BeautifulSoup(html))
 
     # delete the current HTML and replace it by our new & improved one
     self.web.eval("setFormat('selectAll')")
@@ -729,7 +727,7 @@ def _wrap_with_bg_color(self, color):
     if PLATFORM.startswith("linux"):
         self.web.eval("setFormat('hiliteColor', '%s')" % color)
     else:
-        self.wrap_in_tags("span", style="background-color: {0}".format(color))
+        self.web.eval("setFormat('hiliteColor', '%s')" % color)
 
 
 editor.Editor.on_background = on_background

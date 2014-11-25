@@ -89,7 +89,7 @@ This add-on adds the following supplementary formatting buttons to Anki:
     
 * a **text highlight** button (shortcut <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>N</kbd> to select color, <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>B</kbd> to apply it):
 
-    Highlight your text with any color you would like.
+    Highlight your text with any color you would like. On Linux, you are able to select all the text at once and apply highlighting. Due to an obscure bug in Anki, on Windows and Mac OS X you cannot select more than one line of text.
 
 The buttons can be enabled or disabled individually in *Tools > Supplementary buttons add-on (options)*, so feel free to disable the buttons you don't use.
 

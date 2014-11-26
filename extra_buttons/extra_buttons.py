@@ -30,7 +30,7 @@ from PyQt4 import QtGui, QtCore
 # Constants
 ##################################################
 
-PLATFORM = sys.platform
+PLATFORM = "linux" # CHANGE THIS BACK TO sys.platform
 
 # Helper functions
 ##################################################
@@ -172,14 +172,15 @@ class ExtraButtons_Options(QtGui.QMenu):
             l.remove("Show background color button")
 
         # determine number of items in each column in the grid
-        num_items = len(l) / 2  # 6
+        num_items = len(l) / 2.0  # 6
+        num_items = num_items + 0.5 if (num_items % 1.0 > 0.0) else num_items
 
         # go through the keys in the preferences and make QCheckBoxes for them
         for index, option in enumerate(sorted(l)):
             checkbox = self.create_checkbox(option, mw)
-            if index > num_items:
+            if index >= num_items:
                 col = 1
-                row = index - num_items - 1
+                row = index - num_items
                 grid.addWidget(checkbox, row, col)
             else:
                 col = 0
@@ -721,9 +722,18 @@ def on_bg_color_changed(self):
 
 def _wrap_with_bg_color(self, color):
     if PLATFORM.startswith("linux"):
-        self.web.eval("setFormat('hiliteColor', '%s')" % color)
-    else:
-        self.web.eval("setFormat('hiliteColor', '%s')" % color)
+        # self.web.eval("setFormat('useCSS', false, false)")
+        # self.web.eval("setFormat('hiliteColor', '%s')" % color)
+        selection = self.web.selectedText()
+
+        new_text = "<span style='background-color: {}'>".format(color) + selection + "</span>"
+
+        self.web.eval("document.execCommand('insertHTML', false, %s);"
+                  % json.dumps(new_text))
+        self.saveNow()
+        html = self.note.fields[self.currentField]
+
+        print "HTML:", html
 
 
 editor.Editor.on_background = on_background

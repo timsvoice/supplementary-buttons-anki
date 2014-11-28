@@ -26,21 +26,25 @@ from anki.utils import json
 from aqt import editor, mw
 from anki.hooks import wrap
 from PyQt4 import QtGui, QtCore
+import BeautifulSoup
 
 # Constants
 ##################################################
 
-PLATFORM = "linux" # CHANGE THIS BACK TO sys.platform
+PLATFORM = sys.platform
+
+HTML_TAGS = ("b", "i", "u", "span", "font", "sup", "sub", "dl", "dt", "dd",
+             "code", "s", "pre", "kbd", "a", "strike")
 
 # Helper functions
 ##################################################
 
 def counter(start=0, step=1):
     """Generator that creates infinite numbers."""
-    n = start
+    num = start
     while True:
-        yield n
-        n += step
+        yield num
+        num += step
 
 def set_icon(button, name):
     icon_path = os.path.join(addons_folder(),
@@ -278,7 +282,7 @@ def mySetupButtons(self):
         b2.setFixedWidth(12)
 
 def wrap_in_tags(self, tag, class_name=None):
-    """Wrap selected text in a tag, optionally giving it a class or a style attribute"""
+    """Wrap selected text in a tag, optionally giving it a class."""
     selection = self.web.selectedText()
 
     if not selection:
@@ -721,21 +725,71 @@ def on_bg_color_changed(self):
     save_prefs()
 
 def _wrap_with_bg_color(self, color):
-    if PLATFORM.startswith("linux"):
-        # self.web.eval("setFormat('useCSS', false, false)")
-        # self.web.eval("setFormat('hiliteColor', '%s')" % color)
-        selection = self.web.selectedText()
+    """Wrap the selected text in an appropriate tag with a background color."""
+    # On Linux, the standard 'hiliteColor' method works. On Windows and OSX
+    # we need to apply the background color manually.
 
-        new_text = "<span style='background-color: {}'>".format(color) + selection + "</span>"
+    # if PLATFORM.startswith("linux"):
+    #     self.web.eval("setFormat('hiliteColor', '%s')" % color)
+    # else:
 
-        self.web.eval("document.execCommand('insertHTML', false, %s);"
-                  % json.dumps(new_text))
-        self.saveNow()
-        html = self.note.fields[self.currentField]
+    selection_text = self.web.selectedText()
+    selection_html = self.web.selectedHtml()
 
-        print "HTML:", html
+    print "HTML start:\t", repr(selection_html)
+
+    soup = BeautifulSoup.BeautifulSoup(selection_html)
+
+    for elem in soup.findAll(text=True):
+        elem.replaceWith(BeautifulSoup.BeautifulSoup(
+            "<span style=\"background-color: {0}\">".format(color) + elem +
+            "</span>").span)
+
+    print "Resulting soup:\t", soup
+
+    # new_text = "<span style='background-color: {}'>".format(color) + selection + "</span>"
+
+    self.web.eval("document.execCommand('insertHTML', false, %s);"
+        % json.dumps(unicode(soup)))
+
+    # self.web.setFocus()
+    # self.web.eval("focusField(%d);" % self.currentField)
+    # self.saveNow()
+
+    # html = self.note.fields[self.currentField]
+
+    # print "HTML:", html
+
+def power_remove_format(self):
+    """Remove from the selected text all tags specified in HTML_TAGS."""
+    # For Windows and OS X we need to override the standard removeFormat
+    # method, because it currently doesn't work as it should in (Anki 2.0.31).
+    # Specifically, the background-color <span> gives trouble. This method
+    # should work fine in all but a few rare cases that are easily avoided,
+    # such as a <pre> at the beginning of the HTML.
+
+    selection_html = self.web.selectedHtml()
+    print "Selected HTML:\t", repr(selection_html)
+
+    soup = BeautifulSoup.BeautifulSoup(selection_html)
+    print "Soup:\t\t", repr(soup)
+
+    for tag in HTML_TAGS:
+        for match in soup.findAll(tag):
+            match.replaceWithChildren()
+
+    print "\nSoup AFTER:\t", repr(soup), "\n"
+
+    self.web.eval("document.execCommand('insertHTML', false, %s);"
+        % json.dumps(unicode(soup)))
+
+    # an extra sweep in case the code above didn't work
+    # self.web.eval("setFormat('removeFormat');")
 
 
+
+
+editor.Editor.removeFormat = power_remove_format
 editor.Editor.on_background = on_background
 editor.Editor.setup_background_button = setup_background_button
 editor.Editor.on_bg_color_changed = on_bg_color_changed

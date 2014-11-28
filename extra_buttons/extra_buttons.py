@@ -95,7 +95,8 @@ default_conf = {"class_name": "",
                 "Show table button": True,
                 "Show keyboard button": True,
                 "Show create link button": True,
-                "Show background color button": True}
+                "Show background color button": True,
+                "Show blockquote button": True}
 
 try:
     with open(addon_path, "r") as f:
@@ -280,6 +281,12 @@ def mySetupButtons(self):
         b2 = self._addButton("change_bg_color", self.on_change_col, _("Ctrl+Shift+n"),
           _("Change color (Ctrl+Shift+N)"), text=u"▾")
         b2.setFixedWidth(12)
+
+    if prefs["Show blockquote button"]:
+        b = self._addButton("blockquote", self.toggleBlockquote,
+            _("Ctrl+Shift+Y"), _("Insert blockquote (Ctrl+Shift+Y)"),
+            check=False)
+        set_icon(b, "blockquote")
 
 def wrap_in_tags(self, tag, class_name=None):
     """Wrap selected text in a tag, optionally giving it a class."""
@@ -766,7 +773,11 @@ def power_remove_format(self):
         self.web.setFocus()
         self.web.eval("focusField(%d);" % self.currentField)
 
+def toggleBlockquote(self):
+    self.web.eval("setFormat('formatBlock', 'blockquote');")
 
+
+editor.Editor.toggleBlockquote = toggleBlockquote
 editor.Editor.removeFormat = power_remove_format
 editor.Editor.on_background = on_background
 editor.Editor.setup_background_button = setup_background_button

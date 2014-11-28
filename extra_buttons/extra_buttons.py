@@ -28,6 +28,8 @@ from anki.hooks import wrap
 from PyQt4 import QtGui, QtCore
 import BeautifulSoup
 
+print repr(BeautifulSoup)
+
 # Constants
 ##################################################
 
@@ -273,7 +275,7 @@ def mySetupButtons(self):
             _("Insert link (Ctrl+Shift+H)"), check=False)
         set_icon(b, "anchor")
 
-    if prefs["Show background color button"] and PLATFORM.startswith("linux"):
+    if prefs["Show background color button"]: 
         b1 = self._addButton("background", self.on_background, _("Ctrl+Shift+b"),
             _("Set background color (Ctrl+Shift+B)"), text=" ")
         self.setup_background_button(b1)
@@ -352,10 +354,11 @@ def wrap_in_tags(self, tag, class_name=None):
                   % json.dumps(html))
 
     # focus the field, so that changes are saved
-    self.saveNow()
-
     self.web.setFocus()
     self.web.eval("focusField(%d);" % self.currentField)
+    self.saveNow()
+
+    self.loadNote()
 
 def create_hyperlink(self):
     dialog = QtGui.QDialog(self.parentWindow)
@@ -742,8 +745,8 @@ def _wrap_with_bg_color(self, color):
 
     for elem in soup.findAll(text=True):
         elem.replaceWith(BeautifulSoup.BeautifulSoup(
-            "<span style=\"background-color: {0}\">".format(color) + elem +
-            "</span>").span)
+            "<font style=\"background-color: {0}\">".format(color) + elem +
+            "</font>").font)
 
     print "Resulting soup:\t", soup
 
@@ -768,25 +771,27 @@ def power_remove_format(self):
     # should work fine in all but a few rare cases that are easily avoided,
     # such as a <pre> at the beginning of the HTML.
 
-    selection_html = self.web.selectedHtml()
-    print "Selected HTML:\t", repr(selection_html)
+    # selection_html = self.web.selectedHtml()
+    # print "Selected HTML:\t", repr(selection_html)
 
-    soup = BeautifulSoup.BeautifulSoup(selection_html)
-    print "Soup:\t\t", repr(soup)
+    # soup = BeautifulSoup.BeautifulSoup(selection_html)
+    # print "Soup:\t\t", repr(soup)
 
-    for tag in HTML_TAGS:
-        for match in soup.findAll(tag):
-            match.replaceWithChildren()
+    # for tag in HTML_TAGS:
+    #     for match in soup.findAll(tag):
+    #         match.replaceWithChildren()
 
-    print "\nSoup AFTER:\t", repr(soup), "\n"
-
-    self.web.eval("document.execCommand('insertHTML', false, %s);"
-        % json.dumps(unicode(soup)))
-
-    # an extra sweep in case the code above didn't work
-    # self.web.eval("setFormat('removeFormat');")
+    # print "\nSoup AFTER:\t", repr(soup), "\n"
 
 
+    # # an extra sweep in case the code above didn't work
+    self.web.eval("setFormat('removeFormat');")
+
+    self.loadNote()
+
+    self.saveNow()
+    self.web.setFocus()
+    self.web.eval("focusField(%d);" % self.currentField)
 
 
 editor.Editor.removeFormat = power_remove_format

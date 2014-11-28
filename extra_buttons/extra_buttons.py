@@ -28,8 +28,6 @@ from anki.hooks import wrap
 from PyQt4 import QtGui, QtCore
 import BeautifulSoup
 
-print repr(BeautifulSoup)
-
 # Constants
 ##################################################
 
@@ -67,7 +65,7 @@ def escape_html_chars(s):
 
 def check_alignment(s):
     """Return the alignment of a table based on input s. If s not in the list,
-    return default value."""
+    return the default value."""
     alignments = {":-": "left", ":-:": "center", "-:": "right"}
     default = "left"
     if not s in alignments:
@@ -174,8 +172,8 @@ class ExtraButtons_Options(QtGui.QMenu):
 
         # create a dict that has all the relevant buttons to be displayed
         l = [k for k in prefs.keys() if k not in ("class_name", "last_bg_color")]
-        if not PLATFORM.startswith("linux"):
-            l.remove("Show background color button")
+        # if not PLATFORM.startswith("linux"):
+        #     l.remove("Show background color button")
 
         # determine number of items in each column in the grid
         num_items = len(l) / 2.0  # 6
@@ -275,7 +273,7 @@ def mySetupButtons(self):
             _("Insert link (Ctrl+Shift+H)"), check=False)
         set_icon(b, "anchor")
 
-    if prefs["Show background color button"]: 
+    if prefs["Show background color button"]:
         b1 = self._addButton("background", self.on_background, _("Ctrl+Shift+b"),
             _("Set background color (Ctrl+Shift+B)"), text=" ")
         self.setup_background_button(b1)
@@ -358,6 +356,9 @@ def wrap_in_tags(self, tag, class_name=None):
     self.web.eval("focusField(%d);" % self.currentField)
     self.saveNow()
 
+    # reload the note: this is needed on OS X, because it will otherwise
+    # falsely show that the formatting of the element at the start of
+    # the HTML has spread across the entire note
     self.loadNote()
 
 def create_hyperlink(self):
@@ -732,66 +733,38 @@ def _wrap_with_bg_color(self, color):
     # On Linux, the standard 'hiliteColor' method works. On Windows and OSX
     # we need to apply the background color manually.
 
-    # if PLATFORM.startswith("linux"):
-    #     self.web.eval("setFormat('hiliteColor', '%s')" % color)
-    # else:
+    if PLATFORM.startswith("linux"):
+        self.web.eval("setFormat('hiliteColor', '%s')" % color)
+    else:
+        selection_html = self.web.selectedHtml()
+        soup = BeautifulSoup.BeautifulSoup(selection_html)
 
-    selection_text = self.web.selectedText()
-    selection_html = self.web.selectedHtml()
+        for elem in soup.findAll(text=True):
+            elem.replaceWith(BeautifulSoup.BeautifulSoup(
+                "<font style=\"background-color: {0}\">".format(color)
+                + elem + "</font>").font)
 
-    print "HTML start:\t", repr(selection_html)
-
-    soup = BeautifulSoup.BeautifulSoup(selection_html)
-
-    for elem in soup.findAll(text=True):
-        elem.replaceWith(BeautifulSoup.BeautifulSoup(
-            "<font style=\"background-color: {0}\">".format(color) + elem +
-            "</font>").font)
-
-    print "Resulting soup:\t", soup
-
-    # new_text = "<span style='background-color: {}'>".format(color) + selection + "</span>"
-
-    self.web.eval("document.execCommand('insertHTML', false, %s);"
-        % json.dumps(unicode(soup)))
-
-    # self.web.setFocus()
-    # self.web.eval("focusField(%d);" % self.currentField)
-    # self.saveNow()
-
-    # html = self.note.fields[self.currentField]
-
-    # print "HTML:", html
+        self.web.eval("document.execCommand('insertHTML', false, %s);"
+            % json.dumps(unicode(soup)))
 
 def power_remove_format(self):
-    """Remove from the selected text all tags specified in HTML_TAGS."""
+    """Remove formatting from selected text."""
     # For Windows and OS X we need to override the standard removeFormat
     # method, because it currently doesn't work as it should in (Anki 2.0.31).
     # Specifically, the background-color <span> gives trouble. This method
     # should work fine in all but a few rare cases that are easily avoided,
     # such as a <pre> at the beginning of the HTML.
 
-    # selection_html = self.web.selectedHtml()
-    # print "Selected HTML:\t", repr(selection_html)
-
-    # soup = BeautifulSoup.BeautifulSoup(selection_html)
-    # print "Soup:\t\t", repr(soup)
-
-    # for tag in HTML_TAGS:
-    #     for match in soup.findAll(tag):
-    #         match.replaceWithChildren()
-
-    # print "\nSoup AFTER:\t", repr(soup), "\n"
-
-
-    # # an extra sweep in case the code above didn't work
     self.web.eval("setFormat('removeFormat');")
 
-    self.loadNote()
+    if not PLATFORM.startswith("linux"):
+        # reload the note: this is needed on OS X and possibly Windows to
+        # display that the markup is indeed gone
+        self.loadNote()
 
-    self.saveNow()
-    self.web.setFocus()
-    self.web.eval("focusField(%d);" % self.currentField)
+        self.saveNow()
+        self.web.setFocus()
+        self.web.eval("focusField(%d);" % self.currentField)
 
 
 editor.Editor.removeFormat = power_remove_format

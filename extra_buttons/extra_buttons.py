@@ -96,7 +96,8 @@ default_conf = {"class_name": "",
                 "Show keyboard button": True,
                 "Show create link button": True,
                 "Show background color button": True,
-                "Show blockquote button": True}
+                "Show blockquote button": True,
+                "Show justify buttons": True}
 
 try:
     with open(addon_path, "r") as f:
@@ -287,6 +288,28 @@ def mySetupButtons(self):
             _("Ctrl+Shift+Y"), _("Insert blockquote (Ctrl+Shift+Y)"),
             check=False)
         set_icon(b, "blockquote")
+
+    if prefs["Show justify buttons"]:
+        b1 = self._addButton("left", self.justifyLeft,
+            # _("Ctrl+Shift+Y"), _("Insert blockquote (Ctrl+Shift+Y)"), FIXME
+            check=False)
+        set_icon(b1, "left")
+
+        b2 = self._addButton("center", self.justifyCenter,
+            # _("Ctrl+Shift+Y"), _("Insert blockquote (Ctrl+Shift+Y)"), # FIXME
+            check=False)
+        set_icon(b2, "center")
+
+        b3 = self._addButton("right", self.justifyRight,
+            # _("Ctrl+Shift+Y"), _("Insert blockquote (Ctrl+Shift+Y)"), FIXME
+            check=False)
+        set_icon(b3, "right")
+
+        b4 = self._addButton("justified", self.justifyFull,
+            # _("Ctrl+Shift+Y"), _("Insert blockquote (Ctrl+Shift+Y)"), FIXME
+            check=False)
+        set_icon(b4, "justified")
+
 
 def wrap_in_tags(self, tag, class_name=None):
     """Wrap selected text in a tag, optionally giving it a class."""
@@ -776,7 +799,23 @@ def power_remove_format(self):
 def toggleBlockquote(self):
     self.web.eval("setFormat('formatBlock', 'blockquote');")
 
+def justifyCenter(self):
+    self.web.eval("setFormat('justifyCenter');")
 
+def justifyLeft(self):
+    self.web.eval("setFormat('justifyLeft');")
+
+def justifyRight(self):
+    self.web.eval("setFormat('justifyRight');")
+
+def justifyFull(self):
+    self.web.eval("setFormat('justifyFull');")
+
+
+editor.Editor.justifyFull = justifyFull
+editor.Editor.justifyRight = justifyRight
+editor.Editor.justifyLeft = justifyLeft
+editor.Editor.justifyCenter = justifyCenter
 editor.Editor.toggleBlockquote = toggleBlockquote
 editor.Editor.removeFormat = power_remove_format
 editor.Editor.on_background = on_background

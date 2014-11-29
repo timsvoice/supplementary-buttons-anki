@@ -94,9 +94,10 @@ default_conf = {"class_name": "",
                 "Show definition list button": True,
                 "Show table button": True,
                 "Show keyboard button": True,
-                "Show create link button": True,
+                "Show create link buttons": True,
                 "Show background color button": True,
-                "Show blockquote button": True}
+                "Show blockquote button": True,
+                "Show justify buttons": True}
 
 try:
     with open(addon_path, "r") as f:
@@ -269,10 +270,14 @@ def mySetupButtons(self):
             check=False)
         set_icon(b, "kbd")
 
-    if prefs["Show create link button"]:
-        b = self._addButton("anchor", self.create_hyperlink, _("Ctrl+Shift+h"),
+    if prefs["Show create link buttons"]:
+        b1 = self._addButton("anchor", self.create_hyperlink, _("Ctrl+Shift+h"),
             _("Insert link (Ctrl+Shift+H)"), check=False)
-        set_icon(b, "anchor")
+        set_icon(b1, "anchor")
+
+        b2 = self._addButton("unlink", self.unlink, _("Ctrl+Shift+Alt+h"),
+            _("Unlink (Ctrl+Shift+Alt+H)"), check=False)
+        set_icon(b2, "unlink")
 
     if prefs["Show background color button"]:
         b1 = self._addButton("background", self.on_background, _("Ctrl+Shift+b"),
@@ -287,6 +292,28 @@ def mySetupButtons(self):
             _("Ctrl+Shift+Y"), _("Insert blockquote (Ctrl+Shift+Y)"),
             check=False)
         set_icon(b, "blockquote")
+
+    if prefs["Show justify buttons"]:
+        b1 = self._addButton("left", self.justifyLeft,
+            _("Ctrl+Shift+Alt+l"), _("Insert blockquote (Ctrl+Shift+Alt+L)"),
+            check=False)
+        set_icon(b1, "left")
+
+        b2 = self._addButton("center", self.justifyCenter,
+            _("Ctrl+Shift+Alt+c"), _("Insert blockquote (Ctrl+Shift+Alt+C)"),
+            check=False)
+        set_icon(b2, "center")
+
+        b3 = self._addButton("right", self.justifyRight,
+            _("Ctrl+Shift+Alt+r"), _("Insert blockquote (Ctrl+Shift+Alt+R)"),
+            check=False)
+        set_icon(b3, "right")
+
+        b4 = self._addButton("justified", self.justifyFull,
+            _("Ctrl+Shift+Alt+j"), _("Insert blockquote (Ctrl+Shift+Alt+J)"),
+            check=False)
+        set_icon(b4, "justified")
+
 
 def wrap_in_tags(self, tag, class_name=None):
     """Wrap selected text in a tag, optionally giving it a class."""
@@ -421,6 +448,12 @@ def create_hyperlink(self):
 
     dialog.exec_()
 
+def enable_ok_button(self, button, url, text):
+    if url and text:
+        button.setEnabled(True)
+    else:
+        button.setEnabled(False)
+
 def insert_anchor(self, url, text):
     """Inserts a HTML anchor <a> into the text field, using url as hyperlink
     and text as text to-be-displayed."""
@@ -437,11 +470,8 @@ def insert_anchor(self, url, text):
     self.web.eval("document.execCommand('insertHTML', false, %s);"
                   % json.dumps(replacement))
 
-def enable_ok_button(self, button, url, text):
-    if url and text:
-        button.setEnabled(True)
-    else:
-        button.setEnabled(False)
+def unlink(self):
+    self.web.eval("setFormat('unlink')")
 
 def toggleUnorderedList(self):
     self.web.eval("setFormat('insertUnorderedList')")
@@ -776,7 +806,24 @@ def power_remove_format(self):
 def toggleBlockquote(self):
     self.web.eval("setFormat('formatBlock', 'blockquote');")
 
+def justifyCenter(self):
+    self.web.eval("setFormat('justifyCenter');")
 
+def justifyLeft(self):
+    self.web.eval("setFormat('justifyLeft');")
+
+def justifyRight(self):
+    self.web.eval("setFormat('justifyRight');")
+
+def justifyFull(self):
+    self.web.eval("setFormat('justifyFull');")
+
+
+editor.Editor.unlink = unlink
+editor.Editor.justifyFull = justifyFull
+editor.Editor.justifyRight = justifyRight
+editor.Editor.justifyLeft = justifyLeft
+editor.Editor.justifyCenter = justifyCenter
 editor.Editor.toggleBlockquote = toggleBlockquote
 editor.Editor.removeFormat = power_remove_format
 editor.Editor.on_background = on_background

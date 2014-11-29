@@ -85,11 +85,21 @@ This add-on adds the following supplementary formatting buttons to Anki:
 
 * a **hyperlink** button (shortcut <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>H</kbd>):
 
-    Upon pressing the button, you will be presented with a dialog window where you can enter both a link and text.
+    Upon pressing the button, you will be presented with a dialog window where you can enter both a link and text. To unlink a hyperlink, use the unlink button.
     
 * a **text highlight** button (shortcut <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>N</kbd> to select color, <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>B</kbd> to apply it):
 
     Highlight your text with any color you would like.
+    
+* a **blockquote** button (shortcut <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Y</kbd>):
+
+    Cite your source distinctively from the rest of the text.
+    
+    > Do not pray for easy lives. Pray to be stronger men.
+
+* **alignment** buttons:
+
+    Align your text left, right, center or justified. Shortcuts are <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Alt</kbd> + <kbd>L</kbd>, <kbd>R</kbd>, <kbd>C</kbd> and <kbd>J</kbd>, respectively.
 
 The buttons can be enabled or disabled individually in *Tools > Supplementary buttons add-on (options)*, so feel free to disable the buttons you don't use.
 

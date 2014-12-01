@@ -36,6 +36,8 @@ PLATFORM = sys.platform
 HTML_TAGS = ("b", "i", "u", "span", "font", "sup", "sub", "dl", "dt", "dd",
              "code", "s", "pre", "kbd", "a", "strike")
 
+HEADING_TAGS = ("h1", "h2", "h3", "h4", "h5", "h6")
+
 # Helper functions
 ##################################################
 
@@ -72,6 +74,28 @@ def check_alignment(s):
         return default
     return alignments[s]
 
+def check_size_heading(s):
+    """Determine by counting the number of leading hashes in the string the
+    size of the heading. Return an int that is the length of the hashes."""
+    regex = re.compile(r"^(#+)")
+    if s.strip().startswith("#"):
+        return len(regex.match(s).group(1))
+    else:
+        return -1
+
+def strip_leading_whitespace(s):
+    """Remove leading whitespace from a string s. Whitespace is defined as
+    a space, a tab or a non-breakable space."""
+    while True:
+        if s.startswith(" "):
+            s = s.lstrip()
+        elif s.startswith("&nbsp;"):
+            s = s.lstrip("&nbsp;")
+        else:
+            break
+    return s
+
+
 # Preferences
 ##################################################
 
@@ -97,7 +121,8 @@ default_conf = {"class_name": "",
                 "Show create link buttons": True,
                 "Show background color button": True,
                 "Show blockquote button": True,
-                "Show justify buttons": True}
+                "Show justify buttons": True,
+                "Show heading button": True}
 
 try:
     with open(addon_path, "r") as f:
@@ -295,25 +320,30 @@ def mySetupButtons(self):
 
     if prefs["Show justify buttons"]:
         b1 = self._addButton("left", self.justifyLeft,
-            _("Ctrl+Shift+Alt+l"), _("Insert blockquote (Ctrl+Shift+Alt+L)"),
+            _("Ctrl+Shift+Alt+l"), _("Align text left (Ctrl+Shift+Alt+L)"),
             check=False)
         set_icon(b1, "left")
 
         b2 = self._addButton("center", self.justifyCenter,
-            _("Ctrl+Shift+Alt+c"), _("Insert blockquote (Ctrl+Shift+Alt+C)"),
+            _("Ctrl+Shift+Alt+c"), _("Align text center (Ctrl+Shift+Alt+C)"),
             check=False)
         set_icon(b2, "center")
 
         b3 = self._addButton("right", self.justifyRight,
-            _("Ctrl+Shift+Alt+r"), _("Insert blockquote (Ctrl+Shift+Alt+R)"),
+            _("Ctrl+Shift+Alt+r"), _("Align text right (Ctrl+Shift+Alt+R)"),
             check=False)
         set_icon(b3, "right")
 
         b4 = self._addButton("justified", self.justifyFull,
-            _("Ctrl+Shift+Alt+j"), _("Insert blockquote (Ctrl+Shift+Alt+J)"),
+            _("Ctrl+Shift+Alt+j"), _("Justify text (Ctrl+Shift+Alt+J)"),
             check=False)
         set_icon(b4, "justified")
 
+    if prefs["Show heading button"]:
+        b = self._addButton("heading", self.toggleHeading,
+            _("Ctrl+Alt+1"), _("Insert heading (Ctrl+Alt+1)"),
+            check=False)
+        set_icon(b, "heading")
 
 def wrap_in_tags(self, tag, class_name=None):
     """Wrap selected text in a tag, optionally giving it a class."""
@@ -381,19 +411,17 @@ def wrap_in_tags(self, tag, class_name=None):
     html = html.replace("&nbsp;", " ")
 
     # delete the current HTML and replace it by our new & improved one
-    self.web.eval("setFormat('selectAll')")
-    self.web.eval("document.execCommand('insertHTML', false, %s);"
-                  % json.dumps(html))
-
-    # focus the field, so that changes are saved
-    self.web.setFocus()
-    self.web.eval("focusField(%d);" % self.currentField)
-    self.saveNow()
+    self.note.fields[self.currentField] = html
 
     # reload the note: this is needed on OS X, because it will otherwise
     # falsely show that the formatting of the element at the start of
     # the HTML has spread across the entire note
     self.loadNote()
+
+    # focus the field, so that changes are saved
+    self.web.setFocus()
+    self.web.eval("focusField(%d);" % self.currentField)
+    self.saveNow()
 
 def create_hyperlink(self):
     dialog = QtGui.QDialog(self.parentWindow)
@@ -792,16 +820,45 @@ def power_remove_format(self):
     # should work fine in all but a few rare cases that are easily avoided,
     # such as a <pre> at the beginning of the HTML.
 
+    selection = self.web.selectedText()
+
+    # normal removeFormat method
     self.web.eval("setFormat('removeFormat');")
+
+    self.web.eval("setFormat('selectAll')")
+    complete_sel = self.web.selectedText()
+    self.web.eval("focusField(%d);" % self.currentField)
+
+    # if we have selected the complete card, we can remove more thoroughly
+    if selection == complete_sel:
+        self.remove_garbage()
 
     if not PLATFORM.startswith("linux"):
         # reload the note: this is needed on OS X and possibly Windows to
-        # display that the markup is indeed gone
+        # display in the editor that the markup is indeed gone
         self.loadNote()
 
         self.saveNow()
         self.web.setFocus()
         self.web.eval("focusField(%d);" % self.currentField)
+
+def remove_garbage(self):
+    """Remove HTML that doesn't get deleted automatically."""
+    self.saveNow()
+    self.web.setFocus()
+    self.web.eval("focusField(%d);" % self.currentField)
+
+    html = self.note.fields[self.currentField]
+    soup = BeautifulSoup.BeautifulSoup(html)
+
+    for tag in HEADING_TAGS + HTML_TAGS:
+        for match in soup.findAll(tag):
+            match.replaceWithChildren()
+
+    # print "New soup:", repr(soup)
+
+    self.note.fields[self.currentField] = unicode(soup)
+    self.loadNote()
 
 def toggleBlockquote(self):
     self.web.eval("setFormat('formatBlock', 'blockquote');")
@@ -818,7 +875,163 @@ def justifyRight(self):
 def justifyFull(self):
     self.web.eval("setFormat('justifyFull');")
 
+def toggleHeading(self):
+    selection = self.web.selectedHtml()
+    if not selection:
+        # if no text is selected, show a dialog
+        self.create_custom_heading()
+        return
+    print "HTML before:\t", repr(selection)
+    soup = BeautifulSoup.BeautifulSoup(selection)
+    size = check_size_heading(soup.text)
+    print "size:\t", repr(size)
+    if size == -1:
+        self.create_custom_heading(soup.text)
+        return
+    # remove all headings from selection
+    for tag in ("h1", "h2", "h3", "h4", "h5", "h6"):
+        for match in soup.findAll(tag):
+            match.replaceWithChildren()
 
+    # delete leading hashes
+    relevant_text = soup.text[size:]
+    relevant_text = strip_leading_whitespace(relevant_text)
+
+    # wrap new heading around the selection
+    result_soup = BeautifulSoup.BeautifulSoup()
+    tag = BeautifulSoup.Tag(result_soup, "h{0!s}".format(size))
+    result_soup.insert(0, tag)
+    tag.insert(0, relevant_text)
+
+    print "Resultant soup:", repr(result_soup)
+
+    self.web.eval("document.execCommand('insertHTML', false, %s);"
+        % json.dumps(unicode(result_soup)))
+
+    self.cleanup_headers()
+
+def create_custom_heading(self, selected_text=None):
+    dialog = QtGui.QDialog(self.parentWindow)
+    dialog.setWindowTitle("Create custom heading")
+
+    text_label = QtGui.QLabel("Text:", dialog)
+    text_line_edit = QtGui.QLineEdit(dialog)
+    if selected_text:
+        text_line_edit.setText(selected_text)
+
+    text_hbox = QtGui.QHBoxLayout()
+    text_hbox.addWidget(text_label)
+    text_hbox.addWidget(text_line_edit)
+
+    stylesheet = """
+    QGroupBox { border: 1px inset lightgrey;
+                        border-radius: 5px;
+                        margin-top: 10px;
+                        font-weight: bold; }
+    QGroupBox::title {  subcontrol-origin: margin;
+                        subcontrol-position: top;
+                        padding:0 3px 0 3px; }
+    """
+
+    groupbox = QtGui.QGroupBox("Choose a size", dialog)
+    groupbox.setStyleSheet(stylesheet)
+
+    radio_button1 = QtGui.QRadioButton("Biggest", dialog)
+    radio_button1.setChecked(True)
+    radio_button2 = QtGui.QRadioButton("Big", dialog)
+    radio_button3 = QtGui.QRadioButton("Medium", dialog)
+    radio_button4 = QtGui.QRadioButton("Small", dialog)
+    radio_button5 = QtGui.QRadioButton("Smaller", dialog)
+    radio_button6 = QtGui.QRadioButton("Tiny", dialog)
+
+    radio_button_group = QtGui.QButtonGroup(dialog)
+    radio_button_group.addButton(radio_button1)
+    radio_button_group.setId(radio_button1, 1)
+    radio_button_group.addButton(radio_button2)
+    radio_button_group.setId(radio_button2, 2)
+    radio_button_group.addButton(radio_button3)
+    radio_button_group.setId(radio_button3, 3)
+    radio_button_group.addButton(radio_button4)
+    radio_button_group.setId(radio_button4, 4)
+    radio_button_group.addButton(radio_button5)
+    radio_button_group.setId(radio_button5, 5)
+    radio_button_group.addButton(radio_button6)
+    radio_button_group.setId(radio_button6, 6)
+
+    radio_hbox = QtGui.QHBoxLayout()
+    radio_hbox.addWidget(radio_button1)
+    radio_hbox.addWidget(radio_button2)
+    radio_hbox.addWidget(radio_button3)
+    radio_hbox.addWidget(radio_button4)
+    radio_hbox.addWidget(radio_button5)
+    radio_hbox.addWidget(radio_button6)
+
+    groupbox.setLayout(radio_hbox)
+
+    button_box = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok |
+        QtGui.QDialogButtonBox.Cancel, QtCore.Qt.Horizontal, dialog)
+
+    button_box.accepted.connect(dialog.accept)
+    button_box.rejected.connect(dialog.reject)
+
+    vbox = QtGui.QVBoxLayout()
+    vbox.addLayout(text_hbox)
+    vbox.addStretch(1)
+    vbox.addWidget(groupbox)
+    vbox.addWidget(button_box)
+
+    vbox.setSizeConstraint(QtGui.QLayout.SetFixedSize)
+
+    dialog.setLayout(vbox)
+
+    if dialog.exec_() == QtGui.QDialog.Accepted:
+        text = unicode(text_line_edit.text())
+        # print "Text:", repr(text)
+        size_heading = radio_button_group.id(radio_button_group.checkedButton())
+        heading_tag = "h" + str(size_heading)
+        # print "Checked button:", repr(size_heading)
+        if text == "":
+            return
+        else:
+            text = escape_html_chars(text)
+            start_tag = "<{0}>".format(heading_tag)
+            end_tag = "</{0}>".format(heading_tag)
+            if selected_text:
+                self.web.eval("wrap('{0}', '{1}')".format(start_tag, end_tag))
+                self.cleanup_headers()
+            else:
+                result = u"{0}{1}{2}".format(start_tag, text, end_tag)
+                # print "RESULT:", result
+                self.web.eval("document.execCommand('insertHTML', false, %s);"
+                    % json.dumps(unicode(result)))
+
+def cleanup_headers(self):
+    """Clean up empty headers from the card."""
+    self.saveNow()
+    self.web.setFocus()
+    self.web.eval("focusField(%d);" % self.currentField)
+
+    html = self.note.fields[self.currentField]
+    # print "HTML:", html
+    soup = BeautifulSoup.BeautifulSoup(html)
+
+    for tag in HEADING_TAGS:
+        print tag
+        for match in soup.findAll(tag):
+            print "match.parent.name:", match.parent.name
+            if match.parent.name in HEADING_TAGS:
+                match.parent.replaceWithChildren()
+
+    # print "Result HTML:", soup
+
+    self.note.fields[self.currentField] = unicode(soup)
+    self.loadNote()
+
+
+editor.Editor.remove_garbage = remove_garbage
+editor.Editor.cleanup_headers = cleanup_headers
+editor.Editor.create_custom_heading = create_custom_heading
+editor.Editor.toggleHeading = toggleHeading
 editor.Editor.unlink = unlink
 editor.Editor.justifyFull = justifyFull
 editor.Editor.justifyRight = justifyRight

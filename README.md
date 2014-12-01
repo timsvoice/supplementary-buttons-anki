@@ -100,7 +100,11 @@ This add-on adds the following supplementary formatting buttons to Anki:
 * **alignment** buttons:
 
     Align your text left, right, center or justified. Shortcuts are <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Alt</kbd> + <kbd>L</kbd>, <kbd>R</kbd>, <kbd>C</kbd> and <kbd>J</kbd>, respectively.
+    
+* a **heading** button (shortcut <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>1</kbd>):
+
+    You can either create a heading by prepending text with hashes: `#` for a `<h1>` heading, `######` for a `<h6>` heading. If you do not prepend any hashes, or if you select no text at all, a dialog will appear where you can create your own heading.
 
 The buttons can be enabled or disabled individually in *Tools > Supplementary buttons add-on (options)*, so feel free to disable the buttons you don't use.
 
-To add this add-on to Anki, copy the file `extra_buttons.py` to your Anki add-on folder. On Linux,this is   `$HOME/Anki/addon` by default.
+To add this add-on to Anki, copy the file `extra_buttons.py` to your Anki add-on folder. On Linux,this is `$HOME/Anki/addon` by default.

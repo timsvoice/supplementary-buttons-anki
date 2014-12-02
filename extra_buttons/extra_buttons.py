@@ -34,7 +34,7 @@ import BeautifulSoup
 PLATFORM = sys.platform
 
 HTML_TAGS = ("b", "i", "u", "span", "font", "sup", "sub", "dl", "dt", "dd",
-             "code", "s", "pre", "kbd", "a", "strike")
+             "code", "s", "pre", "kbd", "a", "strike", "blockquote")
 
 HEADING_TAGS = ("h1", "h2", "h3", "h4", "h5", "h6")
 
@@ -827,20 +827,19 @@ def power_remove_format(self):
 
     self.web.eval("setFormat('selectAll')")
     complete_sel = self.web.selectedText()
-    self.web.eval("focusField(%d);" % self.currentField)
 
     # if we have selected the complete card, we can remove more thoroughly
     if selection == complete_sel:
         self.remove_garbage()
 
-    if not PLATFORM.startswith("linux"):
+    # if PLATFORM.startswith("linux"):
         # reload the note: this is needed on OS X and possibly Windows to
         # display in the editor that the markup is indeed gone
-        self.loadNote()
+    self.loadNote()
 
-        self.saveNow()
-        self.web.setFocus()
-        self.web.eval("focusField(%d);" % self.currentField)
+    self.saveNow()
+    self.web.setFocus()
+    self.web.eval("focusField(%d);" % self.currentField)
 
 def remove_garbage(self):
     """Remove HTML that doesn't get deleted automatically."""

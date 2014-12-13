@@ -422,6 +422,8 @@ def wrap_in_tags(self, tag, class_name=None):
     self.web.setFocus()
     self.web.eval("focusField(%d);" % self.currentField)
     self.saveNow()
+    self.web.setFocus()
+    self.web.eval("focusField(%d);" % self.currentField)
 
 def create_hyperlink(self):
     dialog = QtGui.QDialog(self.parentWindow)
@@ -580,6 +582,8 @@ class DefList(QtGui.QDialog):
             # create all the terms and descriptions
             result = "<dl>"
             for key, value in self.data:
+                key = escape_html_chars(key)
+                value = escape_html_chars(value)
                 result = result + "<dt><b>" + key + "</b></dt><dd>" + \
                     value + "</dd>"
 

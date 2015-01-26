@@ -107,4 +107,4 @@ This add-on adds the following supplementary formatting buttons to Anki:
 
 The buttons can be enabled or disabled individually in *Tools > Supplementary buttons add-on (options)*, so feel free to disable the buttons you don't use.
 
-To add this add-on to Anki, copy the file `extra_buttons.py` to your Anki add-on folder. On Linux,this is `$HOME/Anki/addon` by default.
+To add this add-on to Anki, copy the file `extra_buttons.py` to your Anki add-on folder. On Linux,this is `$HOME/Anki/addon` by default, or you can go to the [Anki add-on site](https://ankiweb.net/shared/info/162313389) and install the add-on from there (preferred).

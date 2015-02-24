@@ -99,7 +99,7 @@ This add-on adds the following supplementary formatting buttons to Anki:
 
 * **alignment** buttons:
 
-    Align your text left, right, center or justified. Shortcuts are <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Alt</kbd> + <kbd>L</kbd>, <kbd>R</kbd>, <kbd>C</kbd> and <kbd>J</kbd>, respectively.
+    Align your text left, right, center or justified. Shortcuts are <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Alt</kbd> + <kbd>L</kbd>, <kbd>R</kbd>, <kbd>B</kbd> and <kbd>J</kbd>, respectively.
     
 * a **heading** button (shortcut <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>1</kbd>):
 

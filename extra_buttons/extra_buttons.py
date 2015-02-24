@@ -103,6 +103,11 @@ def addons_folder():
     """Return the addon folder used by Anki."""
     return mw.pm.addonFolder()
 
+def save_prefs():
+    """Save the preferences to disk."""
+    with open(addon_path, "w") as f:
+        json.dump(prefs, f)
+
 addon_path = os.path.join(addons_folder(), "extra_buttons/.extra_buttons_prefs")
 
 default_conf = {"class_name": "",
@@ -127,15 +132,21 @@ default_conf = {"class_name": "",
 try:
     with open(addon_path, "r") as f:
         prefs = json.load(f)
-except IOError:
+except:
+    # file does not exist or is corrupted: fall back to default
     with open(addon_path, "w") as f:
         prefs = default_conf
         json.dump(prefs, f)
-
-def save_prefs():
-    """Save the preferences to disk."""
-    with open(addon_path, "w") as f:
-        json.dump(prefs, f)
+else:
+    # add items that are not in prefs, but should be (e.g. after update)
+    for key, value in default_conf.iteritems():
+        if prefs.get(key) is None:
+            prefs[key] = value
+    # delete items in prefs that should not be there (e.g. after update)
+    for key in prefs.keys()[:]:
+        if default_conf.get(key) is None:
+            del prefs[key]
+    save_prefs()
 
 def get_class_name(self):
     """Sets the CSS styling for the <code> and <pre> tags."""

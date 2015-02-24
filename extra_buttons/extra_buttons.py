@@ -336,7 +336,7 @@ def mySetupButtons(self):
         set_icon(b1, "left")
 
         b2 = self._addButton("center", self.justifyCenter,
-            _("Ctrl+Shift+Alt+c"), _("Align text center (Ctrl+Shift+Alt+C)"),
+            _("Ctrl+Shift+Alt+b"), _("Align text center (Ctrl+Shift+Alt+B)"),
             check=False)
         set_icon(b2, "center")
 

@@ -108,7 +108,7 @@ def save_prefs():
     with open(addon_path, "w") as f:
         json.dump(prefs, f)
 
-addon_path = os.path.join(addons_folder(), "extra_buttons/.extra_buttons_prefs")
+addon_path = os.path.join(addons_folder(), "extra_buttons", ".extra_buttons_prefs")
 
 default_conf = {"class_name": "",
                 "last_bg_color": "#00f",

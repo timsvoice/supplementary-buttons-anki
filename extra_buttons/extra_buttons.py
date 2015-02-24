@@ -639,6 +639,7 @@ def create_table_from_selection(self):
     second = list()
     for elem in first[:]:
         new_elem = [x.strip() for x in elem.split("|")]
+        new_elem = [escape_html_chars(word) for word in new_elem]
         second.append(new_elem)
 
     # keep track of the max number of cols so as to make all rows of equal len

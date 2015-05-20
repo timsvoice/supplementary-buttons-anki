@@ -127,7 +127,8 @@ default_conf = {"class_name": "",
                 "Show background color button": True,
                 "Show blockquote button": True,
                 "Show justify buttons": True,
-                "Show heading button": True}
+                "Show heading button": True,
+                "Show abbreviation button": True}
 
 try:
     with open(addon_path, "r") as f:
@@ -356,6 +357,12 @@ def mySetupButtons(self):
             check=False)
         set_icon(b, "heading")
 
+    if prefs["Show abbreviation button"]:
+        b = self._addButton("abbreviation", self.toggleAbbreviation,
+            _("Shift+Alt+A"), _("Insert abbreviation (Shift+Alt+A)"),
+            check=False)
+        set_icon(b, "abbreviation")
+
 def wrap_in_tags(self, tag, class_name=None):
     """Wrap selected text in a tag, optionally giving it a class."""
     selection = self.web.selectedText()
@@ -435,6 +442,87 @@ def wrap_in_tags(self, tag, class_name=None):
     self.saveNow()
     self.web.setFocus()
     self.web.eval("focusField(%d);" % self.currentField)
+
+class Abbreviation(object):
+    def __init__(self, other, parent_window, selected_text):
+        self.other = other
+        self.parent_window = parent_window
+        self.selected_text = selected_text
+        self.abbreviation_dialog()
+
+    def abbreviation_dialog(self):
+        """Creates a dialog window where the user can enter data for the HTML
+        tag <abbr>, for both the abbreviation and the title attribute."""
+        dialog = QtGui.QDialog(self.parent_window)
+        dialog.setWindowTitle("Create an abbreviation")
+        dialog.resize(350, 200)
+
+        # OK and Cancel button
+        ok_button = QtGui.QPushButton("&Ok", dialog)
+        ok_button.setEnabled(False)
+        ok_button.clicked.connect(lambda: self.insert_abbreviation(
+            text_edit.text(), title_edit.text()))
+        ok_button.clicked.connect(dialog.hide)
+
+        cancel_button = QtGui.QPushButton("&Cancel", dialog)
+        cancel_button.clicked.connect(dialog.hide)
+        cancel_button.setAutoDefault(True)
+
+        # two labels: one for the text, one for the title attribute
+        text_label = QtGui.QLabel("Text:")
+        title_label = QtGui.QLabel("Title:")
+
+        # two text fields: one for the text, one for the content of the title attribute
+        text_edit = QtGui.QLineEdit()
+        text_edit.setPlaceholderText("Text")
+        text_edit.textChanged.connect(lambda: self.enable_ok_button(
+            ok_button, text_edit.text(), title_edit.text()))
+
+        title_edit = QtGui.QLineEdit();
+        title_edit.setPlaceholderText("Abbreviation")
+        title_edit.textChanged.connect(lambda: self.enable_ok_button(
+            ok_button, text_edit.text(), title_edit.text()))
+
+        # if user already selected text, we put it in the text edit field
+        if self.selected_text:
+            text_edit.setText(self.selected_text)
+
+        hbox = QtGui.QHBoxLayout()
+        hbox.addStretch(1)
+        hbox.addWidget(cancel_button)
+        hbox.addWidget(ok_button)
+
+        vbox = QtGui.QVBoxLayout()
+        vbox.addWidget(text_label)
+        vbox.addWidget(text_edit)
+        vbox.addWidget(title_label)
+        vbox.addWidget(title_edit)
+        vbox.addLayout(hbox)
+
+        dialog.setLayout(vbox)
+
+        title_edit.setFocus()
+
+        dialog.exec_()
+
+    def enable_ok_button(self, button, text, title):
+        if text and title:
+            button.setEnabled(True)
+        else:
+            button.setEnabled(False)
+
+    def insert_abbreviation(self, text, title):
+        # escape HTML
+        text = escape_html_chars(text)
+        title = escape_html_chars(title)
+        # unicode
+        assert isinstance(text, unicode)
+        assert isinstance(text, unicode)
+        # create new tag
+        result = u"<abbr title='{0}'>{1}</abbr>".format(title, text)
+        # insert the new tag into the card
+        self.other.web.eval("document.execCommand('insertHTML', false, %s);"
+            % json.dumps(result))
 
 def create_hyperlink(self):
     dialog = QtGui.QDialog(self.parentWindow)
@@ -1042,7 +1130,11 @@ def cleanup_headers(self):
     self.note.fields[self.currentField] = unicode(soup)
     self.loadNote()
 
+def toggleAbbreviation(self):
+    selected = self.web.selectedText()
+    abbreviation = Abbreviation(self, self.parentWindow, selected)
 
+editor.Editor.toggleAbbreviation = toggleAbbreviation
 editor.Editor.remove_garbage = remove_garbage
 editor.Editor.cleanup_headers = cleanup_headers
 editor.Editor.create_custom_heading = create_custom_heading

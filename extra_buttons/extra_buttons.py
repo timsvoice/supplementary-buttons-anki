@@ -21,6 +21,7 @@
 import os
 import re
 import sys
+import random
 
 from anki.utils import json
 from aqt import editor, mw
@@ -33,8 +34,11 @@ import BeautifulSoup
 
 PLATFORM = sys.platform
 
+DIALOG_SIZE_X = 350
+DIALOG_SIZE_Y = 200
+
 HTML_TAGS = ("b", "i", "u", "span", "font", "sup", "sub", "dl", "dt", "dd",
-             "code", "s", "pre", "kbd", "a", "strike", "blockquote")
+             "code", "s", "pre", "kbd", "a", "strike", "blockquote", "abbr")
 
 HEADING_TAGS = ("h1", "h2", "h3", "h4", "h5", "h6")
 
@@ -524,10 +528,121 @@ class Abbreviation(object):
         self.other.web.eval("document.execCommand('insertHTML', false, %s);"
             % json.dumps(result))
 
+class OrderedList(QtGui.QDialog):
+    def __init__(self, other, parent_window):
+        super(OrderedList, self).__init__(parent_window)
+        self.other = other
+
+        self.setupGUI()
+
+    def setupGUI(self):
+        self.setWindowTitle("Choose format for ordered list")
+        # self.resize(DIALOG_SIZE_X, DIALOG_SIZE_Y)
+
+        stylesheet = """
+        QGroupBox { border: 1px inset lightgrey;
+                            border-radius: 5px;
+                            margin-top: 10px;
+                            font-weight: bold; }
+        QGroupBox::title {  subcontrol-origin: margin;
+                            subcontrol-position: top;
+                            padding:0 3px 0 3px; }
+        """
+
+        groupbox = QtGui.QGroupBox("Type", self)
+        groupbox.setStyleSheet(stylesheet)
+
+        # stylesheet for the radio buttons
+        self.setStyleSheet("QRadioButton { font-weight: bold; }")
+
+        radio_button1 = QtGui.QRadioButton("1.", self)
+        radio_button1.setChecked(True)
+        radio_button2 = QtGui.QRadioButton("A.", self)
+        radio_button3 = QtGui.QRadioButton("a.", self)
+        radio_button4 = QtGui.QRadioButton("I.", self)
+        radio_button5 = QtGui.QRadioButton("i.", self)
+
+        radio_button_group = QtGui.QButtonGroup(self)
+        radio_button_group.addButton(radio_button1)
+        radio_button_group.setId(radio_button1, 1)
+        radio_button_group.addButton(radio_button2)
+        radio_button_group.setId(radio_button2, 2)
+        radio_button_group.addButton(radio_button3)
+        radio_button_group.setId(radio_button3, 3)
+        radio_button_group.addButton(radio_button4)
+        radio_button_group.setId(radio_button4, 4)
+        radio_button_group.addButton(radio_button5)
+        radio_button_group.setId(radio_button5, 5)
+
+        radio_vbox = QtGui.QVBoxLayout(self)
+        radio_vbox.addWidget(radio_button1)
+        radio_vbox.addWidget(radio_button2)
+        radio_vbox.addWidget(radio_button3)
+        radio_vbox.addWidget(radio_button4)
+        radio_vbox.addWidget(radio_button5)
+
+        groupbox.setLayout(radio_vbox)
+
+        start_label = QtGui.QLabel("<b>Start:</b>", self)
+
+        spinbox = QtGui.QSpinBox(self)
+        spinbox.setMinimum(1)
+        spinbox.setMaximum(100)
+        # get value with .value()
+
+        spinbox_vbox = QtGui.QVBoxLayout()
+        spinbox_vbox.addWidget(start_label)
+        spinbox_vbox.addWidget(spinbox)
+        spinbox_vbox.addStretch(1)
+
+        button_box = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok |
+            QtGui.QDialogButtonBox.Cancel, QtCore.Qt.Horizontal, self)
+
+        button_box.accepted.connect(self.accept)
+        button_box.rejected.connect(self.reject)
+
+        spinbox_vbox.addWidget(button_box)
+
+        hbox = QtGui.QHBoxLayout(self);
+        hbox.addWidget(groupbox)
+        hbox.addLayout(spinbox_vbox)
+
+        self.setLayout(hbox)
+
+        if self.exec_() == QtGui.QDialog.Accepted:
+            type_of_list = {
+                    1: "1",
+                    2: "A",
+                    3: "a",
+                    4: "I",
+                    5: "i"
+            }
+
+            choice = type_of_list.get(
+                    radio_button_group.id(radio_button_group.checkedButton()), "1")
+
+            self.insertOrderedList(choice, spinbox.value())
+
+    def insertOrderedList(self, type_of_list, start_num):
+        """Create a new ordered list based on the input of the user."""
+        print type_of_list
+        print start_num
+        self.other.web.eval("""
+            document.execCommand('insertOrderedList');
+            var olElem = window.getSelection().focusNode.parentNode;
+            if (olElem.toString() !== "[object HTMLOListElement]") {
+                olElem = olElem.parentNode;
+            }
+            olElem.setAttribute("type", "%s");
+            olElem.setAttribute("start", "%s");
+            olElem.style.marginLeft = "20px";
+            """ % (type_of_list, str(start_num))
+        )
+
 def create_hyperlink(self):
     dialog = QtGui.QDialog(self.parentWindow)
     dialog.setWindowTitle("Create a hyperlink")
-    dialog.resize(350, 200)
+    dialog.resize(DIALOG_SIZE_X, DIALOG_SIZE_Y)
 
     ok_button_anchor = QtGui.QPushButton("&OK", dialog)
     ok_button_anchor.setEnabled(False)
@@ -606,7 +721,7 @@ def toggleUnorderedList(self):
     self.web.eval("setFormat('insertUnorderedList')")
 
 def toggleOrderedList(self):
-    self.web.eval("setFormat('insertOrderedList')")
+    ol = OrderedList(self, self.parentWindow)
 
 def toggleStrikeThrough(self):
     self.web.eval("setFormat('strikeThrough')")
@@ -936,9 +1051,11 @@ def power_remove_format(self):
     if selection == complete_sel:
         self.remove_garbage()
 
-    # if PLATFORM.startswith("linux"):
-        # reload the note: this is needed on OS X and possibly Windows to
-        # display in the editor that the markup is indeed gone
+    if PLATFORM.startswith("linux"):
+        return
+
+    # reload the note: this is needed on OS X and possibly Windows to
+    # display in the editor that the markup is indeed gone
     self.loadNote()
 
     self.saveNow()
@@ -954,11 +1071,13 @@ def remove_garbage(self):
     html = self.note.fields[self.currentField]
     soup = BeautifulSoup.BeautifulSoup(html)
 
+    print "Old soup:", repr(soup)
+
     for tag in HEADING_TAGS + HTML_TAGS:
         for match in soup.findAll(tag):
             match.replaceWithChildren()
 
-    # print "New soup:", repr(soup)
+    print "New soup:", repr(soup)
 
     self.note.fields[self.currentField] = unicode(soup)
     self.loadNote()

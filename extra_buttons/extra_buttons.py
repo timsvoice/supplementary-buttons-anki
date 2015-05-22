@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2014 Stefan van den Akker <srvandenakker.dev@gmail.com>
+# Copyright 2014-2015 Stefan van den Akker <srvandenakker.dev@gmail.com>
 #
 # This file is part of Supplementary Buttons for Anki.
 #
@@ -21,7 +21,6 @@
 import os
 import re
 import sys
-import random
 
 from anki.utils import json
 from aqt import editor, mw
@@ -37,10 +36,18 @@ import const
 
 class Utility(object):
     """Utility class with all helper functions that are needed throughout
-    the addon. All methods are static, and all fields are constant."""
+    the addon. All methods are static, and all fields are constants."""
 
     # Constants
     ##################################################
+
+    const.PROGRAM_NAME = "Supplementary Buttons for Anki"
+    const.VERSION = "0.6.0"
+    const.YEAR_START = 2014
+    const.YEAR_LAST = 2015
+    const.ANKIWEB_URL = "https://ankiweb.net/shared/info/162313389"
+    const.GITHUB_URL = "https://https://github.com/Neftas/supplementary-buttons-anki"
+    const.EMAIL = "srvandenakker.dev@gmail.com"
 
     # Linux, Mac OS, Windows, etc
     const.PLATFORM = sys.platform
@@ -53,6 +60,8 @@ class Utility(object):
                  "code", "s", "pre", "kbd", "a", "strike", "blockquote", "abbr")
 
     const.HEADING_TAGS = ("h1", "h2", "h3", "h4", "h5", "h6")
+
+    const.CODE_AND_PRE_CLASS = "c"
 
     # Methods
     ##################################################
@@ -119,6 +128,12 @@ class Utility(object):
                 break
         return s
 
+    @staticmethod
+    def create_horizontal_rule():
+        frame = QtGui.QFrame()
+        frame.setFrameShape(QtGui.QFrame.HLine)
+        frame.setFrameShadow(QtGui.QFrame.Sunken)
+        return frame
 
 # Preferences
 ##################################################
@@ -129,8 +144,9 @@ class Preferences(object):
         self.main_window = mw
         self.addon_path = os.path.join(self.addons_folder(),
                 "extra_buttons", ".extra_buttons_prefs")
-        self._default_conf = {"class_name": "",
+        self._default_conf = {"class_name": const.CODE_AND_PRE_CLASS,
                              "last_bg_color": "#00f",
+                             "fixed_ol_type": "",
                              "Show <code> button": True,
                              "Show unordered list button": True,
                              "Show ordered list button": True,
@@ -178,19 +194,19 @@ class Preferences(object):
         with open(self.addon_path, "w") as f:
             json.dump(self.prefs, f)
 
-    def get_class_name(self):
-        """Sets the CSS styling for the <code> and <pre> tags."""
+    # def set_css_class_name_code_pre(self):
+    #     """Sets the CSS styling for the <code> and <pre> tags."""
 
-        current_text = self.prefs.get("class_name", "")
+    #     current_text = self.prefs.get("class_name", "")
 
-        text, ok = QtGui.QInputDialog.getText(self.main_window,
-            "Set class for <code> and <pre>",
-            "Enter a class name for your custom CSS &lt;code&gt; and &lt;pre&gt; style",
-            QtGui.QLineEdit.Normal, current_text)
+    #     text, ok = QtGui.QInputDialog.getText(self.main_window,
+    #         "Set class for <code> and <pre>",
+    #         "Enter a class name for your custom CSS &lt;code&gt; and &lt;pre&gt; style",
+    #         QtGui.QLineEdit.Normal, current_text)
 
-        if ok:
-            self.prefs["class_name"] = text
-            self.save_prefs()
+    #     if ok:
+    #         self.prefs["class_name"] = text
+    #         self.save_prefs()
 
 
 # Menu
@@ -203,6 +219,7 @@ class ExtraButtons_Options(QtGui.QMenu):
         super(ExtraButtons_Options, self).__init__()
         self.mw = mw
         self.preferences = preferences
+        self.listOfRadioButtons = list()
 
     def button_switch(self, state):
         """Puts a button either on or off. Reverses current state."""
@@ -211,7 +228,6 @@ class ExtraButtons_Options(QtGui.QMenu):
         current_state = self.preferences.prefs[name]
         if bool(state) != current_state:
             self.preferences.prefs[name] = not current_state
-        self.preferences.save_prefs()
 
     def create_checkbox(self, name, mw):
         checkbox = QtGui.QCheckBox(name, self)
@@ -219,6 +235,10 @@ class ExtraButtons_Options(QtGui.QMenu):
             checkbox.setChecked(True)
         checkbox.stateChanged.connect(self.button_switch)
         return checkbox
+
+    def create_radiobutton(self, name):
+        radiobutton = QtGui.QRadioButton(name)
+        return radiobutton
 
     def setup_extra_buttons_options(self):
 
@@ -228,11 +248,38 @@ class ExtraButtons_Options(QtGui.QMenu):
         options_action = QtGui.QAction("&Button options...", mw)
         options_action.triggered.connect(self.show_option_dialog)
 
-        custom_css = QtGui.QAction("&Alter <code> and <pre> CSS...", mw)
-        custom_css.triggered.connect(self.preferences.get_class_name)
+        about_action = QtGui.QAction("&About {0}...".format(const.PROGRAM_NAME), mw)
+        about_action.triggered.connect(self.show_about_dialog)
+
+        # custom_css = QtGui.QAction("&Alter <code> and <pre> CSS...", mw)
+        # custom_css.triggered.connect(self.preferences.set_css_class_name_code_pre)
 
         sub_menu.addAction(options_action)
-        sub_menu.addAction(custom_css)
+        # sub_menu.addAction(custom_css)
+        sub_menu.addAction(about_action)
+
+    def show_about_dialog(self):
+        about_dialog = QtGui.QMessageBox.about(self.mw,
+            "About {0} v{1}".format(const.PROGRAM_NAME, const.VERSION),
+            """\
+        Copyright: <b>Stefan van den Akker</b>, {0}-{1}<br />
+        Email: <a href="mailto:{2}">{2}</a><br />
+        Bugs & feature requests or if you want to help out with code:
+            <a href="{3}">Github</a><br /><br />
+        Don't forget to rate and share your thoughts on <a href="{4}">AnkiWeb</a>!
+            """.format(const.YEAR_START, const.YEAR_LAST,
+                        const.EMAIL, const.GITHUB_URL, const.ANKIWEB_URL)
+        )
+
+    def enableRadioButtons(self, checkbox):
+        if checkbox.isChecked():
+            # enable radio buttons
+            for rb in self.listOfRadioButtons:
+                rb.setEnabled(True)
+        else:
+            # disable radiobuttons
+            for rb in self.listOfRadioButtons:
+                rb.setEnabled(False)
 
     def show_option_dialog(self):
         option_dialog = QtGui.QDialog(self.mw)
@@ -241,9 +288,12 @@ class ExtraButtons_Options(QtGui.QMenu):
         grid = QtGui.QGridLayout()
 
         # create a dict that has all the relevant buttons to be displayed
-        l = [k for k in self.preferences.prefs.keys() if k not in ("class_name", "last_bg_color")]
-        # if not const.PLATFORM.startswith("linux"):
-        #     l.remove("Show background color button")
+        l = [k for k in self.preferences.prefs.keys() if k not in
+                ("class_name", "last_bg_color", "fixed_ol_type")]
+
+        # no text highlighting on platforms other Linux
+        if not const.PLATFORM.startswith("linux"):
+            l.remove("Show background color button")
 
         # determine number of items in each column in the grid
         num_items = len(l) / 2.0
@@ -261,17 +311,79 @@ class ExtraButtons_Options(QtGui.QMenu):
                 row = index
                 grid.addWidget(checkbox, row, col)
 
-        button_box = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok)
+        cssClassLabel = QtGui.QLabel("CSS class for &lt;code&gt; and &lt;pre&gt; code blocks", self)
+        cssClassText = QtGui.QLineEdit(self.preferences.prefs.get("class_name"), self)
+        cssClassHBox = QtGui.QHBoxLayout()
+        cssClassHBox.addWidget(cssClassLabel)
+        cssClassHBox.addWidget(cssClassText)
+
+        checkBox = QtGui.QCheckBox("Fix ordered list type", self)
+        if self.preferences.prefs["fixed_ol_type"]:
+            checkBox.setChecked(True)
+        else:
+            checkBox.setChecked(False)
+
+        checkBox.stateChanged.connect(lambda: self.enableRadioButtons(checkBox))
+
+        # make sure self.listOfRadioButtons is empty
+        # before adding new buttons
+        self.listOfRadioButtons = list()
+        for type_ol in ("1.", "A.", "a.", "I.", "i."):
+            rb = self.create_radiobutton(type_ol)
+            self.listOfRadioButtons.append(rb)
+
+        ol_type = self.preferences.prefs.get("fixed_ol_type")
+        if not ol_type:
+            self.listOfRadioButtons[0].toggle()
+        else:
+            for rb in self.listOfRadioButtons:
+                if ol_type == rb.text():
+                    rb.toggle()
+                    break
+
+        buttonGroup = QtGui.QButtonGroup(self)
+
+        numRadioButton = 0
+        for rb in self.listOfRadioButtons:
+            buttonGroup.addButton(rb, numRadioButton)
+            numRadioButton += 1
+
+        hbox = QtGui.QHBoxLayout()
+        hbox.addWidget(checkBox)
+        for rb in self.listOfRadioButtons:
+            if not checkBox.isChecked():
+                rb.setEnabled(False)
+            hbox.addWidget(rb)
+
+        button_box = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok |
+                QtGui.QDialogButtonBox.Cancel)
         button_box.accepted.connect(option_dialog.accept)
         button_box.rejected.connect(option_dialog.reject)
 
         vbox = QtGui.QVBoxLayout()
         vbox.addLayout(grid)
+        vbox.addWidget(Utility.create_horizontal_rule())
+        vbox.addLayout(cssClassHBox)
+        vbox.addWidget(Utility.create_horizontal_rule())
+        vbox.addLayout(hbox)
         vbox.addWidget(button_box)
 
         option_dialog.setLayout(vbox)
 
-        option_dialog.exec_()
+        if option_dialog.exec_() == QtGui.QDialog.Accepted:
+            if checkBox.isChecked():
+                selectedRadioButton = buttonGroup.id(buttonGroup.checkedButton())
+                self.preferences.prefs["fixed_ol_type"] = (
+                        self.listOfRadioButtons[selectedRadioButton].text())
+            else:
+                self.preferences.prefs["fixed_ol_type"] = ""
+
+            # change CSS class for <code> and <pre>
+            self.preferences.prefs["class_name"] = cssClassText.text()
+
+            # save preferences to disk
+            self.preferences.save_prefs()
+
 
 # Buttons
 ##################################################
@@ -556,11 +668,15 @@ class Abbreviation(object):
             % json.dumps(result))
 
 class OrderedList(QtGui.QDialog):
-    def __init__(self, other, parent_window):
+    def __init__(self, other, parent_window, preferences, fixed=False):
         super(OrderedList, self).__init__(parent_window)
         self.other = other
+        self.preferences = preferences
 
-        self.setupGUI()
+        if not fixed:
+            self.setupGUI()
+        else:
+            self.insertOrderedList(self.preferences.prefs["fixed_ol_type"][0], 1)
 
     def setupGUI(self):
         self.setWindowTitle("Choose format for ordered list")
@@ -651,7 +767,9 @@ class OrderedList(QtGui.QDialog):
             self.insertOrderedList(choice, spinbox.value())
 
     def insertOrderedList(self, type_of_list, start_num):
-        """Create a new ordered list based on the input of the user."""
+        """Create a new ordered list based on the input of the user.
+        type_of_list is a string ("1", "A", "a", "I", "i") and
+        start_num is an integer."""
         print type_of_list
         print start_num
         self.other.web.eval("""
@@ -756,7 +874,10 @@ def toggleUnorderedList(self):
     )
 
 def toggleOrderedList(self):
-    ol = OrderedList(self, self.parentWindow)
+    if preferences.prefs["fixed_ol_type"]:
+        ol = OrderedList(self, self.parentWindow, preferences, True)
+    else:
+        ol = OrderedList(self, self.parentWindow, preferences)
 
 def toggleStrikeThrough(self):
     self.web.eval("setFormat('strikeThrough')")
@@ -1050,14 +1171,15 @@ def on_bg_color_changed(self):
 def _wrap_with_bg_color(self, color):
     """Wrap the selected text in an appropriate tag with a background color."""
     # On Linux, the standard 'hiliteColor' method works. On Windows and OSX
-    # we need to apply the background color manually.
+    # the formatting seems to get filtered out by Anki itself
 
-    # if const.PLATFORM.startswith("linux"):
     self.web.eval("""
         if (!setFormat('hiliteColor', '%s')) {
             setFormat('backcolor', '%s');
         }
         """ % (color, color))
+
+    # code that once was used to highlight text on platforms other than Linux
     # else:
     #     selection_html = self.web.selectedHtml()
     #     soup = BeautifulSoup.BeautifulSoup(selection_html)

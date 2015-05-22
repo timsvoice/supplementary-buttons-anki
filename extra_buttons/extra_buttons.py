@@ -1057,7 +1057,7 @@ def _wrap_with_bg_color(self, color):
         if (!setFormat('hiliteColor', '%s')) {
             setFormat('backcolor', '%s');
         }
-        """ % (color, color)
+        """ % (color, color))
     # else:
     #     selection_html = self.web.selectedHtml()
     #     soup = BeautifulSoup.BeautifulSoup(selection_html)

@@ -459,12 +459,13 @@ def setup_buttons(self):
             _("Unlink (Ctrl+Shift+Alt+H)"), check=False)
         Utility.set_icon(b2, "unlink", preferences)
 
-    if preferences.prefs["Show background color button"]:
+    if (preferences.prefs["Show background color button"] and
+            const.PLATFORM.startswith("linux")):
         b1 = self._addButton("background", self.on_background, _("Ctrl+Shift+b"),
             _("Set background color (Ctrl+Shift+B)"), text=" ")
         self.setup_background_button(b1)
         b2 = self._addButton("change_bg_color", self.on_change_col, _("Ctrl+Shift+n"),
-      _("Change color (Ctrl+Shift+N)"), text=u"▾")
+          _("Change color (Ctrl+Shift+N)"), text=u"▾")
         b2.setFixedWidth(12)
 
     if preferences.prefs["Show blockquote button"]:

@@ -29,142 +29,168 @@ from anki.hooks import wrap
 from PyQt4 import QtGui, QtCore
 import BeautifulSoup
 
-# Constants
+import const
+
+
+# Helper class
 ##################################################
 
-PLATFORM = sys.platform
+class Utility(object):
+    """Utility class with all helper functions that are needed throughout
+    the addon. All methods are static, and all fields are constant."""
 
-DIALOG_SIZE_X = 350
-DIALOG_SIZE_Y = 200
+    # Constants
+    ##################################################
 
-HTML_TAGS = ("b", "i", "u", "span", "font", "sup", "sub", "dl", "dt", "dd",
-             "code", "s", "pre", "kbd", "a", "strike", "blockquote", "abbr")
+    # Linux, Mac OS, Windows, etc
+    const.PLATFORM = sys.platform
 
-HEADING_TAGS = ("h1", "h2", "h3", "h4", "h5", "h6")
+    # size of the dialog windows
+    const.DIALOG_SIZE_X = 350
+    const.DIALOG_SIZE_Y = 200
 
-# Helper functions
-##################################################
+    const.HTML_TAGS = ("b", "i", "u", "span", "font", "sup", "sub", "dl", "dt", "dd",
+                 "code", "s", "pre", "kbd", "a", "strike", "blockquote", "abbr")
 
-def counter(start=0, step=1):
-    """Generator that creates infinite numbers."""
-    num = start
-    while True:
-        yield num
-        num += step
+    const.HEADING_TAGS = ("h1", "h2", "h3", "h4", "h5", "h6")
 
-def set_icon(button, name):
-    icon_path = os.path.join(addons_folder(),
-        "extra_buttons/icons/{}.png".format(name))
-    button.setIcon(QtGui.QIcon(icon_path))
+    # Methods
+    ##################################################
 
-def escape_html_chars(s):
-    """Escape HTML characters in a string. Return a safe string."""
-    html_escape_table = {
-        "&": "&amp;",
-        '"': "&quot;",
-        "'": "&apos;",
-        ">": "&gt;",
-        "<": "&lt;",
-    }
+    @staticmethod
+    def counter(start=0, step=1):
+        """Generator that creates infinite numbers."""
+        num = start
+        while True:
+            yield num
+            num += step
 
-    return "".join(html_escape_table.get(c, c) for c in s)
+    @staticmethod
+    def set_icon(button, name, preferences):
+        """Define the path for the icon the corresponding
+        button should have."""
+        icon_path = os.path.join(preferences.addons_folder(),
+            "extra_buttons/icons/{}.png".format(name))
+        button.setIcon(QtGui.QIcon(icon_path))
 
-def check_alignment(s):
-    """Return the alignment of a table based on input s. If s not in the list,
-    return the default value."""
-    alignments = {":-": "left", ":-:": "center", "-:": "right"}
-    default = "left"
-    if not s in alignments:
-        return default
-    return alignments[s]
+    @staticmethod
+    def escape_html_chars(s):
+        """Escape HTML characters in a string. Return a safe string."""
+        html_escape_table = {
+            "&": "&amp;",
+            '"': "&quot;",
+            "'": "&apos;",
+            ">": "&gt;",
+            "<": "&lt;",
+        }
 
-def check_size_heading(s):
-    """Determine by counting the number of leading hashes in the string the
-    size of the heading. Return an int that is the length of the hashes."""
-    regex = re.compile(r"^(#+)")
-    if s.strip().startswith("#"):
-        return len(regex.match(s).group(1))
-    else:
-        return -1
+        return "".join(html_escape_table.get(c, c) for c in s)
 
-def strip_leading_whitespace(s):
-    """Remove leading whitespace from a string s. Whitespace is defined as
-    a space, a tab or a non-breakable space."""
-    while True:
-        if s.startswith(" "):
-            s = s.lstrip()
-        elif s.startswith("&nbsp;"):
-            s = s.lstrip("&nbsp;")
+    @staticmethod
+    def check_alignment(s):
+        """Return the alignment of a table based on input s. If s not in the list,
+        return the default value."""
+        alignments = {":-": "left", ":-:": "center", "-:": "right"}
+        default = "left"
+        if not s in alignments:
+            return default
+        return alignments[s]
+
+    @staticmethod
+    def check_size_heading(s):
+        """Determine by counting the number of leading hashes in the string the
+        size of the heading. Return an int that is the length of the hashes."""
+        regex = re.compile(r"^(#+)")
+        if s.strip().startswith("#"):
+            return len(regex.match(s).group(1))
         else:
-            break
-    return s
+            return -1
+
+    @staticmethod
+    def strip_leading_whitespace(s):
+        """Remove leading whitespace from a string s. Whitespace is defined as
+        a space, a tab or a non-breakable space."""
+        while True:
+            if s.startswith(" "):
+                s = s.lstrip()
+            elif s.startswith("&nbsp;"):
+                s = s.lstrip("&nbsp;")
+            else:
+                break
+        return s
 
 
 # Preferences
 ##################################################
 
-def addons_folder():
-    """Return the addon folder used by Anki."""
-    return mw.pm.addonFolder()
+class Preferences(object):
 
-def save_prefs():
-    """Save the preferences to disk."""
-    with open(addon_path, "w") as f:
-        json.dump(prefs, f)
+    def __init__(self, mw):
+        self.main_window = mw
+        self.addon_path = os.path.join(self.addons_folder(),
+                "extra_buttons", ".extra_buttons_prefs")
+        self._default_conf = {"class_name": "",
+                             "last_bg_color": "#00f",
+                             "Show <code> button": True,
+                             "Show unordered list button": True,
+                             "Show ordered list button": True,
+                             "Show strikethrough button": True,
+                             "Show code block button": True,
+                             "Show horizontal rule button": True,
+                             "Show indent button": True,
+                             "Show outdent button": True,
+                             "Show definition list button": True,
+                             "Show table button": True,
+                             "Show keyboard button": True,
+                             "Show create link buttons": True,
+                             "Show background color button": True,
+                             "Show blockquote button": True,
+                             "Show justify buttons": True,
+                             "Show heading button": True,
+                             "Show abbreviation button": True}
+        self.prefs = None
 
-addon_path = os.path.join(addons_folder(), "extra_buttons", ".extra_buttons_prefs")
+        try:
+            with open(self.addon_path, "r") as f:
+                self.prefs = json.load(f)
+        except:
+            # file does not exist or is corrupted: fall back to default
+            with open(self.addon_path, "w") as f:
+                self.prefs = self._default_conf
+                json.dump(self.prefs, f)
+        else:
+            # add items that are not in prefs, but should be (e.g. after update)
+            for key, value in self._default_conf.iteritems():
+                if self.prefs.get(key) is None:
+                    self.prefs[key] = value
+            # delete items in prefs that should not be there (e.g. after update)
+            for key in self.prefs.keys()[:]:
+                if self._default_conf.get(key) is None:
+                    del self.prefs[key]
+            self.save_prefs()
 
-default_conf = {"class_name": "",
-                "last_bg_color": "#00f",
-                "Show <code> button": True,
-                "Show unordered list button": True,
-                "Show ordered list button": True,
-                "Show strikethrough button": True,
-                "Show code block button": True,
-                "Show horizontal rule button": True,
-                "Show indent button": True,
-                "Show outdent button": True,
-                "Show definition list button": True,
-                "Show table button": True,
-                "Show keyboard button": True,
-                "Show create link buttons": True,
-                "Show background color button": True,
-                "Show blockquote button": True,
-                "Show justify buttons": True,
-                "Show heading button": True,
-                "Show abbreviation button": True}
+    def addons_folder(self):
+        """Return the addon folder used by Anki."""
+        return self.main_window.pm.addonFolder()
 
-try:
-    with open(addon_path, "r") as f:
-        prefs = json.load(f)
-except:
-    # file does not exist or is corrupted: fall back to default
-    with open(addon_path, "w") as f:
-        prefs = default_conf
-        json.dump(prefs, f)
-else:
-    # add items that are not in prefs, but should be (e.g. after update)
-    for key, value in default_conf.iteritems():
-        if prefs.get(key) is None:
-            prefs[key] = value
-    # delete items in prefs that should not be there (e.g. after update)
-    for key in prefs.keys()[:]:
-        if default_conf.get(key) is None:
-            del prefs[key]
-    save_prefs()
+    def save_prefs(self):
+        """Save the preferences to disk."""
+        with open(self.addon_path, "w") as f:
+            json.dump(self.prefs, f)
 
-def get_class_name(self):
-    """Sets the CSS styling for the <code> and <pre> tags."""
+    def get_class_name(self):
+        """Sets the CSS styling for the <code> and <pre> tags."""
 
-    current_text = prefs.get("class_name", "")
+        current_text = self.prefs.get("class_name", "")
 
-    text, ok = QtGui.QInputDialog.getText(mw, "Set class for <code> and <pre>",
-        "Enter a class name for your custom CSS &lt;code&gt; and &lt;pre&gt; style",
-        QtGui.QLineEdit.Normal, current_text)
+        text, ok = QtGui.QInputDialog.getText(self.main_window,
+            "Set class for <code> and <pre>",
+            "Enter a class name for your custom CSS &lt;code&gt; and &lt;pre&gt; style",
+            QtGui.QLineEdit.Normal, current_text)
 
-    if ok:
-        prefs["class_name"] = text
-        save_prefs()
+        if ok:
+            self.prefs["class_name"] = text
+            self.save_prefs()
 
 
 # Menu
@@ -173,22 +199,23 @@ def get_class_name(self):
 class ExtraButtons_Options(QtGui.QMenu):
     """Display the various options in the main menu."""
 
-    def __init__(self, mw):
+    def __init__(self, mw, preferences):
         super(ExtraButtons_Options, self).__init__()
         self.mw = mw
+        self.preferences = preferences
 
     def button_switch(self, state):
         """Puts a button either on or off. Reverses current state."""
         source = self.sender()
         name = source.text()
-        current_state = prefs[name]
+        current_state = self.preferences.prefs[name]
         if bool(state) != current_state:
-            prefs[name] = not current_state
-        save_prefs()
+            self.preferences.prefs[name] = not current_state
+        self.preferences.save_prefs()
 
     def create_checkbox(self, name, mw):
         checkbox = QtGui.QCheckBox(name, self)
-        if prefs[name]:
+        if self.preferences.prefs[name]:
             checkbox.setChecked(True)
         checkbox.stateChanged.connect(self.button_switch)
         return checkbox
@@ -202,7 +229,7 @@ class ExtraButtons_Options(QtGui.QMenu):
         options_action.triggered.connect(self.show_option_dialog)
 
         custom_css = QtGui.QAction("&Alter <code> and <pre> CSS...", mw)
-        custom_css.triggered.connect(get_class_name)
+        custom_css.triggered.connect(self.preferences.get_class_name)
 
         sub_menu.addAction(options_action)
         sub_menu.addAction(custom_css)
@@ -214,15 +241,15 @@ class ExtraButtons_Options(QtGui.QMenu):
         grid = QtGui.QGridLayout()
 
         # create a dict that has all the relevant buttons to be displayed
-        l = [k for k in prefs.keys() if k not in ("class_name", "last_bg_color")]
-        # if not PLATFORM.startswith("linux"):
+        l = [k for k in self.preferences.prefs.keys() if k not in ("class_name", "last_bg_color")]
+        # if not const.PLATFORM.startswith("linux"):
         #     l.remove("Show background color button")
 
         # determine number of items in each column in the grid
-        num_items = len(l) / 2.0  # 6
+        num_items = len(l) / 2.0
         num_items = num_items + 0.5 if (num_items % 1.0 > 0.0) else num_items
 
-        # go through the keys in the preferences and make QCheckBoxes for them
+        # go through the keys in the prefs and make QCheckBoxes for them
         for index, option in enumerate(sorted(l)):
             checkbox = self.create_checkbox(option, mw)
             if index >= num_items:
@@ -249,123 +276,123 @@ class ExtraButtons_Options(QtGui.QMenu):
 # Buttons
 ##################################################
 
-def mySetupButtons(self):
+def setup_buttons(self):
 
-    if prefs["Show <code> button"]:
+    if preferences.prefs["Show <code> button"]:
         b = self._addButton("text_code", lambda: self.wrap_in_tags("code",
-            prefs["class_name"]), _("Ctrl+,"), _("Code format text (Ctrl+,)"),
+            preferences.prefs["class_name"]), _("Ctrl+,"), _("Code format text (Ctrl+,)"),
             check=False)
-        set_icon(b, "text_code")
+        Utility.set_icon(b, "text_code", preferences)
 
-    if prefs["Show unordered list button"]:
+    if preferences.prefs["Show unordered list button"]:
         b = self._addButton("unordered_list", self.toggleUnorderedList,
             _("Ctrl+["), _("Create unordered list (Ctrl+[)"), check=False)
-        set_icon(b, "unordered_list")
+        Utility.set_icon(b, "unordered_list", preferences)
 
-    if prefs["Show ordered list button"]:
+    if preferences.prefs["Show ordered list button"]:
         b = self._addButton("ordered_list", self.toggleOrderedList, _("Ctrl+]"),
             _("Create ordered list (Ctrl+])"), check=False)
-        set_icon(b, "ordered_list")
+        Utility.set_icon(b, "ordered_list", preferences)
 
-    if prefs["Show strikethrough button"]:
+    if preferences.prefs["Show strikethrough button"]:
         b = self._addButton("text_strikethrough", self.toggleStrikeThrough,
             _("Alt+Shift+5"), _("Strikethrough text (Alt+Shift+5)"), check=True)
-        set_icon(b, "text_strikethrough")
+        Utility.set_icon(b, "text_strikethrough", preferences)
 
-    # FIX ME: think of better symbol to represent a <pre> block
-    if prefs["Show code block button"]:
+    # FIXME: think of better symbol to represent a <pre> block
+    if preferences.prefs["Show code block button"]:
         b = self._addButton("text_pre", lambda: self.wrap_in_tags("pre",
-            prefs["class_name"]), _("Ctrl+."),
+            preferences.prefs["class_name"]), _("Ctrl+."),
             tip=_("Create a code block (Ctrl-.)"), check=False)
-        set_icon(b, "text_pre")
+        Utility.set_icon(b, "text_pre", preferences)
 
-    if prefs["Show horizontal rule button"]:
+    if preferences.prefs["Show horizontal rule button"]:
         b = self._addButton("hor_rule", self.toggleHorizontalLine, _("Ctrl+h"),
             tip=_("Create a horizontal rule (Ctrl+H)"), check=False)
-        set_icon(b, "hor_rule")
+        Utility.set_icon(b, "hor_rule", preferences)
 
-    if prefs["Show indent button"]:
+    if preferences.prefs["Show indent button"]:
         b = self._addButton("indent", self.toggleIndent, _("Ctrl+Shift+]"),
             _("Indent text or list (Ctrl+Shift+])"), check=False)
-        set_icon(b, "indent")
+        Utility.set_icon(b, "indent", preferences)
 
-    if prefs["Show outdent button"]:
+    if preferences.prefs["Show outdent button"]:
         b = self._addButton("outdent", self.toggleOutdent, _("Ctrl+Shift+["),
             _("Outdent text or list (Ctrl+Shift+[)"), check=False)
-        set_icon(b, "outdent")
+        Utility.set_icon(b, "outdent", preferences)
 
-    # FIX ME: better symbol for <dl>
-    if prefs["Show definition list button"]:
+    # FIXME: better symbol for <dl>
+    if preferences.prefs["Show definition list button"]:
         b = self._addButton("deflist", self.toggleDefList, _("Ctrl+Shift+d"),
             _("Create definition list (Ctrl+Shift+D)"), check=False)
-        set_icon(b, "deflist")
+        Utility.set_icon(b, "deflist", preferences)
 
-    if prefs["Show table button"]:
+    if preferences.prefs["Show table button"]:
         b = self._addButton("table", self.toggleTable, _("Ctrl+Shift+3"),
             _("Create a table (Ctrl+Shift+3)"), check=False)
-        set_icon(b, "table")
+        Utility.set_icon(b, "table", preferences)
 
-    if prefs["Show keyboard button"]:
+    if preferences.prefs["Show keyboard button"]:
         b = self._addButton("kbd", lambda: self.wrap_in_tags("kbd"),
             _("Ctrl+Shift+k"), _("Create a keyboard button (Ctrl+Shift+K)"),
             check=False)
-        set_icon(b, "kbd")
+        Utility.set_icon(b, "kbd", preferences)
 
-    if prefs["Show create link buttons"]:
+    if preferences.prefs["Show create link buttons"]:
         b1 = self._addButton("anchor", self.create_hyperlink, _("Ctrl+Shift+h"),
             _("Insert link (Ctrl+Shift+H)"), check=False)
-        set_icon(b1, "anchor")
+        Utility.set_icon(b1, "anchor", preferences)
 
         b2 = self._addButton("unlink", self.unlink, _("Ctrl+Shift+Alt+h"),
             _("Unlink (Ctrl+Shift+Alt+H)"), check=False)
-        set_icon(b2, "unlink")
+        Utility.set_icon(b2, "unlink", preferences)
 
-    if prefs["Show background color button"]:
+    if preferences.prefs["Show background color button"]:
         b1 = self._addButton("background", self.on_background, _("Ctrl+Shift+b"),
             _("Set background color (Ctrl+Shift+B)"), text=" ")
         self.setup_background_button(b1)
         b2 = self._addButton("change_bg_color", self.on_change_col, _("Ctrl+Shift+n"),
-          _("Change color (Ctrl+Shift+N)"), text=u"▾")
+      _("Change color (Ctrl+Shift+N)"), text=u"▾")
         b2.setFixedWidth(12)
 
-    if prefs["Show blockquote button"]:
+    if preferences.prefs["Show blockquote button"]:
         b = self._addButton("blockquote", self.toggleBlockquote,
             _("Ctrl+Shift+Y"), _("Insert blockquote (Ctrl+Shift+Y)"),
             check=False)
-        set_icon(b, "blockquote")
+        Utility.set_icon(b, "blockquote", preferences)
 
-    if prefs["Show justify buttons"]:
+    if preferences.prefs["Show justify buttons"]:
         b1 = self._addButton("left", self.justifyLeft,
-            _("Ctrl+Shift+Alt+l"), _("Align text left (Ctrl+Shift+Alt+L)"),
-            check=False)
-        set_icon(b1, "left")
+        _("Ctrl+Shift+Alt+l"), _("Align text left (Ctrl+Shift+Alt+L)"),
+        check=False)
+        Utility.set_icon(b1, "left", preferences)
 
         b2 = self._addButton("center", self.justifyCenter,
             _("Ctrl+Shift+Alt+b"), _("Align text center (Ctrl+Shift+Alt+B)"),
             check=False)
-        set_icon(b2, "center")
+        Utility.set_icon(b2, "center", preferences)
 
         b3 = self._addButton("right", self.justifyRight,
             _("Ctrl+Shift+Alt+r"), _("Align text right (Ctrl+Shift+Alt+R)"),
             check=False)
-        set_icon(b3, "right")
+        Utility.set_icon(b3, "right", preferences)
 
         b4 = self._addButton("justified", self.justifyFull,
             _("Ctrl+Shift+Alt+j"), _("Justify text (Ctrl+Shift+Alt+J)"),
             check=False)
-        set_icon(b4, "justified")
+        Utility.set_icon(b4, "justified", preferences)
 
-    if prefs["Show heading button"]:
+    if preferences.prefs["Show heading button"]:
         b = self._addButton("heading", self.toggleHeading,
             _("Ctrl+Alt+1"), _("Insert heading (Ctrl+Alt+1)"),
             check=False)
-        set_icon(b, "heading")
+        Utility.set_icon(b, "heading", preferences)
 
-    if prefs["Show abbreviation button"]:
+    if preferences.prefs["Show abbreviation button"]:
         b = self._addButton("abbreviation", self.toggleAbbreviation,
             _("Shift+Alt+A"), _("Insert abbreviation (Shift+Alt+A)"),
             check=False)
-        set_icon(b, "abbreviation")
+        Utility.set_icon(b, "abbreviation", preferences)
 
 def wrap_in_tags(self, tag, class_name=None):
     """Wrap selected text in a tag, optionally giving it a class."""
@@ -374,7 +401,7 @@ def wrap_in_tags(self, tag, class_name=None):
     if not selection:
         return
 
-    selection = escape_html_chars(selection)
+    selection = Utility.escape_html_chars(selection)
 
     tag_string_begin = ("<{0} class='{1}'>".format(tag, class_name) if
         class_name else "<{0}>".format(tag))
@@ -517,8 +544,8 @@ class Abbreviation(object):
 
     def insert_abbreviation(self, text, title):
         # escape HTML
-        text = escape_html_chars(text)
-        title = escape_html_chars(title)
+        text = Utility.escape_html_chars(text)
+        title = Utility.escape_html_chars(title)
         # unicode
         assert isinstance(text, unicode)
         assert isinstance(text, unicode)
@@ -537,7 +564,7 @@ class OrderedList(QtGui.QDialog):
 
     def setupGUI(self):
         self.setWindowTitle("Choose format for ordered list")
-        # self.resize(DIALOG_SIZE_X, DIALOG_SIZE_Y)
+        # self.resize(const.DIALOG_SIZE_X, const.DIALOG_SIZE_Y)
 
         stylesheet = """
         QGroupBox { border: 1px inset lightgrey;
@@ -642,7 +669,7 @@ class OrderedList(QtGui.QDialog):
 def create_hyperlink(self):
     dialog = QtGui.QDialog(self.parentWindow)
     dialog.setWindowTitle("Create a hyperlink")
-    dialog.resize(DIALOG_SIZE_X, DIALOG_SIZE_Y)
+    dialog.resize(const.DIALOG_SIZE_X, const.DIALOG_SIZE_Y)
 
     ok_button_anchor = QtGui.QPushButton("&OK", dialog)
     ok_button_anchor.setEnabled(False)
@@ -707,7 +734,7 @@ def insert_anchor(self, url, text):
     if not match:
         url = "http://" + url
 
-    text = escape_html_chars(text)
+    text = Utility.escape_html_chars(text)
 
     replacement = u"<a href=\"{0}\">{1}</a>".format(url, text)
 
@@ -718,7 +745,15 @@ def unlink(self):
     self.web.eval("setFormat('unlink')")
 
 def toggleUnorderedList(self):
-    self.web.eval("setFormat('insertUnorderedList')")
+    self.web.eval("""
+        document.execCommand('insertUnorderedList');
+        var ulElem = window.getSelection().focusNode.parentNode;
+        if (ulElem.toString() !== "[object HTMLUListElement]") {
+            ulElem = ulElem.parentNode;
+        }
+        ulElem.style.marginLeft = "20px";
+        """
+    )
 
 def toggleOrderedList(self):
     ol = OrderedList(self, self.parentWindow)
@@ -796,8 +831,8 @@ class DefList(QtGui.QDialog):
             # create all the terms and descriptions
             result = "<dl>"
             for key, value in self.data:
-                key = escape_html_chars(key)
-                value = escape_html_chars(value)
+                key = Utility.escape_html_chars(key)
+                value = Utility.escape_html_chars(value)
                 result = result + "<dt><b>" + key + "</b></dt><dd>" + \
                     value + "</dd>"
 
@@ -842,7 +877,7 @@ def create_table_from_selection(self):
     second = list()
     for elem in first[:]:
         new_elem = [x.strip() for x in elem.split("|")]
-        new_elem = [escape_html_chars(word) for word in new_elem]
+        new_elem = [Utility.escape_html_chars(word) for word in new_elem]
         second.append(new_elem)
 
     # keep track of the max number of cols so as to make all rows of equal len
@@ -860,7 +895,7 @@ def create_table_from_selection(self):
             align_line += ["-"] * (max_num_cols - len_align_line)
         alignments = list()
         for elem in second[1]:
-            alignments.append(check_alignment(elem))
+            alignments.append(Utility.check_alignment(elem))
     else:
         alignments = ["left"] * max_num_cols
         start = 1
@@ -956,8 +991,8 @@ def toggleTable(self):
         num_columns = columnSpinBox.value()
         num_rows = rowSpinBox.value() - 1
 
-        num_header = counter(start=1, step=1)
-        num_data = counter(start=1, step=1)
+        num_header = Utility.counter(start=1, step=1)
+        num_data = Utility.counter(start=1, step=1)
 
         # set width of each column equal
         width = 100 / num_columns
@@ -983,7 +1018,7 @@ def setup_background_button(self, but):
     self.background_frame = QtGui.QFrame()
     self.background_frame.setAutoFillBackground(True)
     self.background_frame.setFocusPolicy(QtCore.Qt.NoFocus)
-    self.bg_color = prefs.get("last_bg_color", "#00f")
+    self.bg_color = preferences.prefs.get("last_bg_color", "#00f")
     self.on_bg_color_changed()
     hbox = QtGui.QHBoxLayout()
     hbox.addWidget(self.background_frame)
@@ -1009,27 +1044,31 @@ def _update_background_button(self):
 
 def on_bg_color_changed(self):
     self._update_background_button()
-    prefs["last_bg_color"] = self.bg_color
-    save_prefs()
+    preferences.prefs["last_bg_color"] = self.bg_color
+    preferences.save_prefs()
 
 def _wrap_with_bg_color(self, color):
     """Wrap the selected text in an appropriate tag with a background color."""
     # On Linux, the standard 'hiliteColor' method works. On Windows and OSX
     # we need to apply the background color manually.
 
-    if PLATFORM.startswith("linux"):
-        self.web.eval("setFormat('hiliteColor', '%s')" % color)
-    else:
-        selection_html = self.web.selectedHtml()
-        soup = BeautifulSoup.BeautifulSoup(selection_html)
+    # if const.PLATFORM.startswith("linux"):
+    self.web.eval("""
+        if (!setFormat('hiliteColor', '%s')) {
+            setFormat('backcolor', '%s');
+        }
+        """ % (color, color)
+    # else:
+    #     selection_html = self.web.selectedHtml()
+    #     soup = BeautifulSoup.BeautifulSoup(selection_html)
 
-        for elem in soup.findAll(text=True):
-            elem.replaceWith(BeautifulSoup.BeautifulSoup(
-                "<font style=\"background-color: {0}\">".format(color)
-                + elem + "</font>").font)
+    #     for elem in soup.findAll(text=True):
+    #         elem.replaceWith(BeautifulSoup.BeautifulSoup(
+    #             "<font style=\"background-color: {0}\">".format(color)
+    #             + elem + "</font>").font)
 
-        self.web.eval("document.execCommand('insertHTML', false, %s);"
-            % json.dumps(unicode(soup)))
+    #     self.web.eval("document.execCommand('insertHTML', false, %s);"
+    #         % json.dumps(unicode(soup)))
 
 def power_remove_format(self):
     """Remove formatting from selected text."""
@@ -1051,7 +1090,7 @@ def power_remove_format(self):
     if selection == complete_sel:
         self.remove_garbage()
 
-    if PLATFORM.startswith("linux"):
+    if const.PLATFORM.startswith("linux"):
         return
 
     # reload the note: this is needed on OS X and possibly Windows to
@@ -1073,7 +1112,7 @@ def remove_garbage(self):
 
     print "Old soup:", repr(soup)
 
-    for tag in HEADING_TAGS + HTML_TAGS:
+    for tag in const.HEADING_TAGS + const.HTML_TAGS:
         for match in soup.findAll(tag):
             match.replaceWithChildren()
 
@@ -1105,7 +1144,7 @@ def toggleHeading(self):
         return
     print "HTML before:\t", repr(selection)
     soup = BeautifulSoup.BeautifulSoup(selection)
-    size = check_size_heading(soup.text)
+    size = Utility.check_size_heading(soup.text)
     print "size:\t", repr(size)
     if size == -1:
         self.create_custom_heading(soup.text)
@@ -1117,7 +1156,7 @@ def toggleHeading(self):
 
     # delete leading hashes
     relevant_text = soup.text[size:]
-    relevant_text = strip_leading_whitespace(relevant_text)
+    relevant_text = Utility.strip_leading_whitespace(relevant_text)
 
     # wrap new heading around the selection
     result_soup = BeautifulSoup.BeautifulSoup()
@@ -1215,7 +1254,7 @@ def create_custom_heading(self, selected_text=None):
         if text == "":
             return
         else:
-            text = escape_html_chars(text)
+            text = Utility.escape_html_chars(text)
             start_tag = "<{0}>".format(heading_tag)
             end_tag = "</{0}>".format(heading_tag)
             if selected_text:
@@ -1237,11 +1276,11 @@ def cleanup_headers(self):
     # print "HTML:", html
     soup = BeautifulSoup.BeautifulSoup(html)
 
-    for tag in HEADING_TAGS:
+    for tag in const.HEADING_TAGS:
         print tag
         for match in soup.findAll(tag):
             print "match.parent.name:", match.parent.name
-            if match.parent.name in HEADING_TAGS:
+            if match.parent.name in const.HEADING_TAGS:
                 match.parent.replaceWithChildren()
 
     # print "Result HTML:", soup
@@ -1285,7 +1324,8 @@ editor.Editor.toggleIndent = toggleIndent
 editor.Editor.toggleOutdent = toggleOutdent
 editor.Editor.toggleDefList = toggleDefList
 editor.Editor.toggleTable = toggleTable
-editor.Editor.setupButtons = wrap(editor.Editor.setupButtons, mySetupButtons)
+editor.Editor.setupButtons = wrap(editor.Editor.setupButtons, setup_buttons)
 
-mw.ExtraButtons_Options = ExtraButtons_Options(mw)
+preferences = Preferences(mw)
+mw.ExtraButtons_Options = ExtraButtons_Options(mw, preferences)
 mw.ExtraButtons_Options.setup_extra_buttons_options()

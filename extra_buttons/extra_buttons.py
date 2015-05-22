@@ -263,11 +263,12 @@ class ExtraButtons_Options(QtGui.QMenu):
             "About {0} v{1}".format(const.PROGRAM_NAME, const.VERSION),
             """\
         Copyright: <b>Stefan van den Akker</b>, {0}-{1}<br />
-        Email: <a href="mailto:{2}">{2}</a><br />
+        Version: {2}<br />
+        Email: <a href="mailto:{3}">{3}</a><br />
         Bugs & feature requests or if you want to help out with code:
-            <a href="{3}">Github</a><br /><br />
-        Don't forget to rate and share your thoughts on <a href="{4}">AnkiWeb</a>!
-            """.format(const.YEAR_START, const.YEAR_LAST,
+            <a href="{4}">Github</a><br /><br />
+        Don't forget to rate and share your thoughts on <a href="{5}">AnkiWeb</a>!
+            """.format(const.YEAR_START, const.YEAR_LAST, const.VERSION,
                         const.EMAIL, const.GITHUB_URL, const.ANKIWEB_URL)
         )
 

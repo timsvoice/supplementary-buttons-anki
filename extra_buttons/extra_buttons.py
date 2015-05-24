@@ -1214,7 +1214,12 @@ def power_remove_format(self):
     if selection == complete_sel:
         self.remove_garbage()
 
+    # deselect all text
+    self.web.eval("window.getSelection().removeAllRanges();")
+
     if const.PLATFORM.startswith("linux"):
+        # refocus on the field we're editing
+        self.web.eval("focusField(%d);" % self.currentField)
         return
 
     # reload the note: this is needed on OS X and possibly Windows to

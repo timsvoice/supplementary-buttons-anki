@@ -42,7 +42,7 @@ class Utility(object):
     ##################################################
 
     const.PROGRAM_NAME = "Supplementary Buttons for Anki"
-    const.VERSION = "0.6.0"
+    const.VERSION = "0.6.1"
     const.YEAR_START = 2014
     const.YEAR_LAST = 2015
     const.ANKIWEB_URL = "https://ankiweb.net/shared/info/162313389"

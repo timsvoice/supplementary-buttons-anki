@@ -293,8 +293,8 @@ class ExtraButtons_Options(QtGui.QMenu):
                 ("class_name", "last_bg_color", "fixed_ol_type")]
 
         # no text highlighting on platforms other Linux
-        if not const.PLATFORM.startswith("linux"):
-            l.remove("Show background color button")
+        # if not const.PLATFORM.startswith("linux"):
+        #     l.remove("Show background color button")
 
         # determine number of items in each column in the grid
         num_items = len(l) / 2.0
@@ -460,8 +460,7 @@ def setup_buttons(self):
             _("Unlink (Ctrl+Shift+Alt+H)"), check=False)
         Utility.set_icon(b2, "unlink", preferences)
 
-    if (preferences.prefs["Show background color button"] and
-            const.PLATFORM.startswith("linux")):
+    if (preferences.prefs["Show background color button"]: # and const.PLATFORM.startswith("linux")):
         b1 = self._addButton("background", self.on_background, _("Ctrl+Shift+b"),
             _("Set background color (Ctrl+Shift+B)"), text=" ")
         self.setup_background_button(b1)
@@ -1180,6 +1179,15 @@ def _wrap_with_bg_color(self, color):
             setFormat('backcolor', '%s');
         }
         """ % (color, color))
+
+    if not const.PLATFORM.startswith("linux"):
+        # remove all Apple style classes
+        self.web.eval("""
+        var matches = document.querySelectorAll(".Apple-style-span");
+        for (var i = 0; i < matches.length; i++) {
+            matches[i].removeAttribute("class");
+        }
+        """)
 
     # code that once was used to highlight text on platforms other than Linux
     # else:

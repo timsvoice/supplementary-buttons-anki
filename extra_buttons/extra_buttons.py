@@ -293,8 +293,8 @@ class ExtraButtons_Options(QtGui.QMenu):
                 ("class_name", "last_bg_color", "fixed_ol_type")]
 
         # no text highlighting on platforms other Linux
-        if not const.PLATFORM.startswith("linux"):
-            l.remove("Show background color button")
+        # if not const.PLATFORM.startswith("linux"):
+        #     l.remove("Show background color button")
 
         # determine number of items in each column in the grid
         num_items = len(l) / 2.0
@@ -460,8 +460,7 @@ def setup_buttons(self):
             _("Unlink (Ctrl+Shift+Alt+H)"), check=False)
         Utility.set_icon(b2, "unlink", preferences)
 
-    if (preferences.prefs["Show background color button"] and
-            const.PLATFORM.startswith("linux")):
+    if (preferences.prefs["Show background color button"]): # and const.PLATFORM.startswith("linux")):
         b1 = self._addButton("background", self.on_background, _("Ctrl+Shift+b"),
             _("Set background color (Ctrl+Shift+B)"), text=" ")
         self.setup_background_button(b1)
@@ -1181,18 +1180,16 @@ def _wrap_with_bg_color(self, color):
         }
         """ % (color, color))
 
-    # code that once was used to highlight text on platforms other than Linux
-    # else:
-    #     selection_html = self.web.selectedHtml()
-    #     soup = BeautifulSoup.BeautifulSoup(selection_html)
+    if not const.PLATFORM.startswith("linux"):
+        # remove all Apple style classes thus enabling
+        # text highlighting for other platforms besides Linux
+        self.web.eval("""
+        var matches = document.querySelectorAll(".Apple-style-span");
+        for (var i = 0; i < matches.length; i++) {
+            matches[i].removeAttribute("class");
+        }
+        """)
 
-    #     for elem in soup.findAll(text=True):
-    #         elem.replaceWith(BeautifulSoup.BeautifulSoup(
-    #             "<font style=\"background-color: {0}\">".format(color)
-    #             + elem + "</font>").font)
-
-    #     self.web.eval("document.execCommand('insertHTML', false, %s);"
-    #         % json.dumps(unicode(soup)))
 
 def power_remove_format(self):
     """Remove formatting from selected text."""

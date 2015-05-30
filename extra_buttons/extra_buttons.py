@@ -421,7 +421,7 @@ def setup_buttons(self):
 
     if preferences.prefs["Show horizontal rule button"]:
         b = self._addButton("hor_rule", self.toggleHorizontalLine, _("Ctrl+shift+l"),
-            tip=_("Create a horizontal rule (Ctrl+H)"), check=False)
+            tip=_("Create a horizontal rule (Ctrl+Shift+L)"), check=False)
         Utility.set_icon(b, "hor_rule", preferences)
 
     if preferences.prefs["Show indent button"]:

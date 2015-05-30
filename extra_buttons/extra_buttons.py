@@ -420,7 +420,7 @@ def setup_buttons(self):
         Utility.set_icon(b, "text_pre", preferences)
 
     if preferences.prefs["Show horizontal rule button"]:
-        b = self._addButton("hor_rule", self.toggleHorizontalLine, _("Ctrl+h"),
+        b = self._addButton("hor_rule", self.toggleHorizontalLine, _("Ctrl+shift+l"),
             tip=_("Create a horizontal rule (Ctrl+H)"), check=False)
         Utility.set_icon(b, "hor_rule", preferences)
 

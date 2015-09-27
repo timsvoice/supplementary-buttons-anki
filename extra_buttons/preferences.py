@@ -147,7 +147,7 @@ class Preferences(object):
             Utility.normalize_user_prefs(self._default_keybindings,
                     self.keybindings)
             self.keybindings = Utility.check_user_keybindings(
-                    self._default_keybindings, self.keybindings)
+                    self._default_keybindings, self.keybindings, const.PLATFORM)
 
     def get_keybinding(self, name_of_key):
         """Return the keybinding indicated by name_of_key, and capitalize

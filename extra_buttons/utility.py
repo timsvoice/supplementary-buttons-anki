@@ -272,13 +272,13 @@ class Utility(object):
         return "+".join(x for x in pretty_sequence if x)
 
     @staticmethod
-    def check_user_keybindings(default_keybindings, user_keybindings):
+    def check_user_keybindings(default_keybindings, user_keybindings, platform=""):
         """Check the correctness of the user keybindings. If not correct, the
         default binding will be used instead. Return a check dictionary of
         valid keybindings."""
         validated_keybindings = dict()
         for key, value in user_keybindings.iteritems():
-            val_binding = Utility.validate_key_sequence(value)
+            val_binding = Utility.validate_key_sequence(value, platform)
             if not val_binding:
                 validated_keybindings[key] = default_keybindings.get(key)
             else:

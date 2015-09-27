@@ -937,6 +937,7 @@ class Blockquote(object):
         start = self.selected_html.find(start_delim)
         end = self.selected_html.find(end_delim, start + 1)
         if start > -1 and end > -1:
+            author = self.selected_html[(start+len_delim):end]
             self.other.web.eval("""
                 document.execCommand('formatBlock', false, 'blockquote');
                 var bq = window.getSelection().focusNode.parentNode;
@@ -949,17 +950,9 @@ class Blockquote(object):
                 authorParagraph.style.fontStyle = "italic";
                 authorParagraph.innerHTML = "%s"
                 bq.appendChild(authorParagraph);
-                // create an "exit" out of the blockquote
-                var exit = document.createelement('br');
-                bq.parentNode.insertBefore(exit, bq.nextSibling);
             """ % (author, author))
         else:
-            self.other.web.eval("""
-                document.execCommand('formatBlock', false, 'blockquote');
-                var bq = window.getSelection().focusNode.parentNode;
-                var exit = document.createElement('br');
-                bq.parentNode.insertBefore(exit, bq.nextSibling);
-            """)
+            self.other.web.eval("setFormat('formatBlock', 'blockquote');")
 
 
 def justifyCenter(self):

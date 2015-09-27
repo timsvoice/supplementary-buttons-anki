@@ -918,7 +918,49 @@ def remove_garbage(self):
     self.loadNote()
 
 def toggleBlockquote(self):
-    self.web.eval("setFormat('formatBlock', 'blockquote');")
+    # self.web.eval("setFormat('formatBlock', 'blockquote');")
+    selected = self.web.selectedHtml()
+    Blockquote(self, selected)
+
+class Blockquote(object):
+
+    def __init__(self, other, selected_html):
+        self.other          = other
+        self.selected_html  = selected_html
+        self.insert_blockquote()
+
+    def insert_blockquote(self):
+        author = None
+        start_delim = "[["
+        end_delim = "]]"
+        len_delim = len(start_delim)
+        start = self.selected_html.find(start_delim)
+        end = self.selected_html.find(end_delim, start + 1)
+        if start > -1 and end > -1:
+            self.other.web.eval("""
+                document.execCommand('formatBlock', false, 'blockquote');
+                var bq = window.getSelection().focusNode.parentNode;
+                if (bq.toString() !== "[object HTMLQuoteElement]") {
+                    bq = bq.parentNode;
+                }
+                bq.setAttribute("cite", "%s");
+                bq.innerText = bq.innerText.replace(/ ?\[\[.+?\]\]/g, "");
+                var authorParagraph = document.createElement("p");
+                authorParagraph.style.fontStyle = "italic";
+                authorParagraph.innerHTML = "%s"
+                bq.appendChild(authorParagraph);
+                // create an "exit" out of the blockquote
+                var exit = document.createelement('br');
+                bq.parentNode.insertBefore(exit, bq.nextSibling);
+            """ % (author, author))
+        else:
+            self.other.web.eval("""
+                document.execCommand('formatBlock', false, 'blockquote');
+                var bq = window.getSelection().focusNode.parentNode;
+                var exit = document.createElement('br');
+                bq.parentNode.insertBefore(exit, bq.nextSibling);
+            """)
+
 
 def justifyCenter(self):
     self.web.eval("setFormat('justifyCenter');")

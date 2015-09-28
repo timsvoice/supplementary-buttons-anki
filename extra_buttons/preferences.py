@@ -210,7 +210,7 @@ class Preferences(object):
 // folder.
 {
 """
-        for key, value in self.keybindings.iteritems():
+        for key, value in sorted(self.keybindings.iteritems()):
             contents += "\"{}\": \"{}\",\n".format(key, value)
         contents += "\"_comment\": \"end of keybindings\"\n"
         contents += "}"

@@ -941,7 +941,8 @@ class Blockquote(object):
             self.other.web.eval("""
                 document.execCommand('formatBlock', false, 'blockquote');
                 var bq = window.getSelection().focusNode.parentNode;
-                if (bq.toString() !== "[object HTMLQuoteElement]") {
+                if (bq.toString() !== "[object HTMLQuoteElement]")
+                    && bq.toString() !== "[object HTMLBlockquoteElement]") {
                     bq = bq.parentNode;
                 }
                 bq.setAttribute("cite", "%s");

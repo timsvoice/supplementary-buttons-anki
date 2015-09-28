@@ -18,9 +18,7 @@
 # with Supplementary Buttons for Anki. If not, see http://www.gnu.org/licenses/.
 
 
-import os
 import re
-import sys
 
 from anki.utils import json
 from aqt import editor, mw
@@ -29,361 +27,9 @@ from PyQt4 import QtGui, QtCore
 import BeautifulSoup
 
 import const
-
-
-# Helper class
-##################################################
-
-class Utility(object):
-    """Utility class with all helper functions that are needed throughout
-    the addon. All methods are static, and all fields are constants."""
-
-    # Constants
-    ##################################################
-
-    const.PROGRAM_NAME = "Supplementary Buttons for Anki"
-    const.VERSION = "0.6.1"
-    const.YEAR_START = 2014
-    const.YEAR_LAST = 2015
-    const.ANKIWEB_URL = "https://ankiweb.net/shared/info/162313389"
-    const.GITHUB_URL = "https://https://github.com/Neftas/supplementary-buttons-anki"
-    const.EMAIL = "srvandenakker.dev@gmail.com"
-
-    # Linux, Mac OS, Windows, etc
-    const.PLATFORM = sys.platform
-
-    # size of the dialog windows
-    const.DIALOG_SIZE_X = 350
-    const.DIALOG_SIZE_Y = 200
-
-    const.HTML_TAGS = ("b", "i", "u", "span", "font", "sup", "sub", "dl", "dt", "dd",
-                 "code", "s", "pre", "kbd", "a", "strike", "blockquote", "abbr")
-
-    const.HEADING_TAGS = ("h1", "h2", "h3", "h4", "h5", "h6")
-
-    const.CODE_AND_PRE_CLASS = "c"
-
-    # Methods
-    ##################################################
-
-    @staticmethod
-    def counter(start=0, step=1):
-        """Generator that creates infinite numbers."""
-        num = start
-        while True:
-            yield num
-            num += step
-
-    @staticmethod
-    def set_icon(button, name, preferences):
-        """Define the path for the icon the corresponding
-        button should have."""
-        icon_path = os.path.join(preferences.addons_folder(),
-            "extra_buttons/icons/{}.png".format(name))
-        button.setIcon(QtGui.QIcon(icon_path))
-
-    @staticmethod
-    def escape_html_chars(s):
-        """Escape HTML characters in a string. Return a safe string."""
-        html_escape_table = {
-            "&": "&amp;",
-            '"': "&quot;",
-            "'": "&apos;",
-            ">": "&gt;",
-            "<": "&lt;",
-        }
-
-        return "".join(html_escape_table.get(c, c) for c in s)
-
-    @staticmethod
-    def check_alignment(s):
-        """Return the alignment of a table based on input s. If s not in the list,
-        return the default value."""
-        alignments = {":-": "left", ":-:": "center", "-:": "right"}
-        default = "left"
-        if not s in alignments:
-            return default
-        return alignments[s]
-
-    @staticmethod
-    def check_size_heading(s):
-        """Determine by counting the number of leading hashes in the string the
-        size of the heading. Return an int that is the length of the hashes."""
-        regex = re.compile(r"^(#+)")
-        if s.strip().startswith("#"):
-            return len(regex.match(s).group(1))
-        else:
-            return -1
-
-    @staticmethod
-    def strip_leading_whitespace(s):
-        """Remove leading whitespace from a string s. Whitespace is defined as
-        a space, a tab or a non-breakable space."""
-        while True:
-            if s.startswith(" "):
-                s = s.lstrip()
-            elif s.startswith("&nbsp;"):
-                s = s.lstrip("&nbsp;")
-            else:
-                break
-        return s
-
-    @staticmethod
-    def create_horizontal_rule():
-        frame = QtGui.QFrame()
-        frame.setFrameShape(QtGui.QFrame.HLine)
-        frame.setFrameShadow(QtGui.QFrame.Sunken)
-        return frame
-
-# Preferences
-##################################################
-
-class Preferences(object):
-
-    def __init__(self, mw):
-        self.main_window = mw
-        self.addon_path = os.path.join(self.addons_folder(),
-                "extra_buttons", ".extra_buttons_prefs")
-        self._default_conf = {"class_name": const.CODE_AND_PRE_CLASS,
-                             "last_bg_color": "#00f",
-                             "fixed_ol_type": "",
-                             "Show <code> button": True,
-                             "Show unordered list button": True,
-                             "Show ordered list button": True,
-                             "Show strikethrough button": True,
-                             "Show code block button": True,
-                             "Show horizontal rule button": True,
-                             "Show indent button": True,
-                             "Show outdent button": True,
-                             "Show definition list button": True,
-                             "Show table button": True,
-                             "Show keyboard button": True,
-                             "Show create link buttons": True,
-                             "Show background color button": True,
-                             "Show blockquote button": True,
-                             "Show justify buttons": True,
-                             "Show heading button": True,
-                             "Show abbreviation button": True}
-        self.prefs = None
-
-        try:
-            with open(self.addon_path, "r") as f:
-                self.prefs = json.load(f)
-        except:
-            # file does not exist or is corrupted: fall back to default
-            with open(self.addon_path, "w") as f:
-                self.prefs = self._default_conf
-                json.dump(self.prefs, f)
-        else:
-            # add items that are not in prefs, but should be (e.g. after update)
-            for key, value in self._default_conf.iteritems():
-                if self.prefs.get(key) is None:
-                    self.prefs[key] = value
-            # delete items in prefs that should not be there (e.g. after update)
-            for key in self.prefs.keys()[:]:
-                if self._default_conf.get(key) is None:
-                    del self.prefs[key]
-            self.save_prefs()
-
-    def addons_folder(self):
-        """Return the addon folder used by Anki."""
-        return self.main_window.pm.addonFolder()
-
-    def save_prefs(self):
-        """Save the preferences to disk."""
-        with open(self.addon_path, "w") as f:
-            json.dump(self.prefs, f)
-
-    # def set_css_class_name_code_pre(self):
-    #     """Sets the CSS styling for the <code> and <pre> tags."""
-
-    #     current_text = self.prefs.get("class_name", "")
-
-    #     text, ok = QtGui.QInputDialog.getText(self.main_window,
-    #         "Set class for <code> and <pre>",
-    #         "Enter a class name for your custom CSS &lt;code&gt; and &lt;pre&gt; style",
-    #         QtGui.QLineEdit.Normal, current_text)
-
-    #     if ok:
-    #         self.prefs["class_name"] = text
-    #         self.save_prefs()
-
-
-# Menu
-##################################################
-
-class ExtraButtons_Options(QtGui.QMenu):
-    """Display the various options in the main menu."""
-
-    def __init__(self, mw, preferences):
-        super(ExtraButtons_Options, self).__init__()
-        self.mw = mw
-        self.preferences = preferences
-        self.listOfRadioButtons = list()
-
-    def button_switch(self, state):
-        """Puts a button either on or off. Reverses current state."""
-        source = self.sender()
-        name = source.text()
-        current_state = self.preferences.prefs[name]
-        if bool(state) != current_state:
-            self.preferences.prefs[name] = not current_state
-
-    def create_checkbox(self, name, mw):
-        checkbox = QtGui.QCheckBox(name, self)
-        if self.preferences.prefs[name]:
-            checkbox.setChecked(True)
-        checkbox.stateChanged.connect(self.button_switch)
-        return checkbox
-
-    def create_radiobutton(self, name):
-        radiobutton = QtGui.QRadioButton(name)
-        return radiobutton
-
-    def setup_extra_buttons_options(self):
-
-        sub_menu_title = "&Supplementary buttons add-on (options)"
-        sub_menu = mw.form.menuTools.addMenu(sub_menu_title)
-
-        options_action = QtGui.QAction("&Button options...", mw)
-        options_action.triggered.connect(self.show_option_dialog)
-
-        about_action = QtGui.QAction("&About {0}...".format(const.PROGRAM_NAME), mw)
-        about_action.triggered.connect(self.show_about_dialog)
-
-        # custom_css = QtGui.QAction("&Alter <code> and <pre> CSS...", mw)
-        # custom_css.triggered.connect(self.preferences.set_css_class_name_code_pre)
-
-        sub_menu.addAction(options_action)
-        # sub_menu.addAction(custom_css)
-        sub_menu.addAction(about_action)
-
-    def show_about_dialog(self):
-        about_dialog = QtGui.QMessageBox.about(self.mw,
-            "About {0} v{1}".format(const.PROGRAM_NAME, const.VERSION),
-            """\
-        Copyright: <b>Stefan van den Akker</b>, {0}-{1}<br />
-        Version: {2}<br />
-        Email: <a href="mailto:{3}">{3}</a><br />
-        Bugs & feature requests or if you want to help out with code:
-            <a href="{4}">Github</a><br /><br />
-        Don't forget to rate and share your thoughts on <a href="{5}">AnkiWeb</a>!
-            """.format(const.YEAR_START, const.YEAR_LAST, const.VERSION,
-                        const.EMAIL, const.GITHUB_URL, const.ANKIWEB_URL)
-        )
-
-    def enableRadioButtons(self, checkbox):
-        if checkbox.isChecked():
-            # enable radio buttons
-            for rb in self.listOfRadioButtons:
-                rb.setEnabled(True)
-        else:
-            # disable radiobuttons
-            for rb in self.listOfRadioButtons:
-                rb.setEnabled(False)
-
-    def show_option_dialog(self):
-        option_dialog = QtGui.QDialog(self.mw)
-        option_dialog.setWindowTitle("Options for Supplementary Buttons")
-
-        grid = QtGui.QGridLayout()
-
-        # create a dict that has all the relevant buttons to be displayed
-        l = [k for k in self.preferences.prefs.keys() if k not in
-                ("class_name", "last_bg_color", "fixed_ol_type")]
-
-        # no text highlighting on platforms other Linux
-        # if not const.PLATFORM.startswith("linux"):
-        #     l.remove("Show background color button")
-
-        # determine number of items in each column in the grid
-        num_items = len(l) / 2.0
-        num_items = num_items + 0.5 if (num_items % 1.0 > 0.0) else num_items
-
-        # go through the keys in the prefs and make QCheckBoxes for them
-        for index, option in enumerate(sorted(l)):
-            checkbox = self.create_checkbox(option, mw)
-            if index >= num_items:
-                col = 1
-                row = index - num_items
-                grid.addWidget(checkbox, row, col)
-            else:
-                col = 0
-                row = index
-                grid.addWidget(checkbox, row, col)
-
-        cssClassLabel = QtGui.QLabel("CSS class for &lt;code&gt; and &lt;pre&gt; code blocks", self)
-        cssClassText = QtGui.QLineEdit(self.preferences.prefs.get("class_name"), self)
-        cssClassHBox = QtGui.QHBoxLayout()
-        cssClassHBox.addWidget(cssClassLabel)
-        cssClassHBox.addWidget(cssClassText)
-
-        checkBox = QtGui.QCheckBox("Fix ordered list type", self)
-        if self.preferences.prefs["fixed_ol_type"]:
-            checkBox.setChecked(True)
-        else:
-            checkBox.setChecked(False)
-
-        checkBox.stateChanged.connect(lambda: self.enableRadioButtons(checkBox))
-
-        # make sure self.listOfRadioButtons is empty
-        # before adding new buttons
-        self.listOfRadioButtons = list()
-        for type_ol in ("1.", "A.", "a.", "I.", "i."):
-            rb = self.create_radiobutton(type_ol)
-            self.listOfRadioButtons.append(rb)
-
-        ol_type = self.preferences.prefs.get("fixed_ol_type")
-        if not ol_type:
-            self.listOfRadioButtons[0].toggle()
-        else:
-            for rb in self.listOfRadioButtons:
-                if ol_type == rb.text():
-                    rb.toggle()
-                    break
-
-        buttonGroup = QtGui.QButtonGroup(self)
-
-        numRadioButton = 0
-        for rb in self.listOfRadioButtons:
-            buttonGroup.addButton(rb, numRadioButton)
-            numRadioButton += 1
-
-        hbox = QtGui.QHBoxLayout()
-        hbox.addWidget(checkBox)
-        for rb in self.listOfRadioButtons:
-            if not checkBox.isChecked():
-                rb.setEnabled(False)
-            hbox.addWidget(rb)
-
-        button_box = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok |
-                QtGui.QDialogButtonBox.Cancel)
-        button_box.accepted.connect(option_dialog.accept)
-        button_box.rejected.connect(option_dialog.reject)
-
-        vbox = QtGui.QVBoxLayout()
-        vbox.addLayout(grid)
-        vbox.addWidget(Utility.create_horizontal_rule())
-        vbox.addLayout(cssClassHBox)
-        vbox.addWidget(Utility.create_horizontal_rule())
-        vbox.addLayout(hbox)
-        vbox.addWidget(button_box)
-
-        option_dialog.setLayout(vbox)
-
-        if option_dialog.exec_() == QtGui.QDialog.Accepted:
-            if checkBox.isChecked():
-                selectedRadioButton = buttonGroup.id(buttonGroup.checkedButton())
-                self.preferences.prefs["fixed_ol_type"] = (
-                        self.listOfRadioButtons[selectedRadioButton].text())
-            else:
-                self.preferences.prefs["fixed_ol_type"] = ""
-
-            # change CSS class for <code> and <pre>
-            self.preferences.prefs["class_name"] = cssClassText.text()
-
-            # save preferences to disk
-            self.preferences.save_prefs()
+from utility import Utility
+from preferences import Preferences
+from menu import ExtraButtons_Options
 
 
 # Buttons
@@ -392,118 +38,143 @@ class ExtraButtons_Options(QtGui.QMenu):
 def setup_buttons(self):
 
     if preferences.prefs["Show <code> button"]:
+        shortcut = preferences.get_keybinding(const.CODE)
         b = self._addButton("text_code", lambda: self.wrap_in_tags("code",
-            preferences.prefs["class_name"]), _("Ctrl+,"), _("Code format text (Ctrl+,)"),
+            preferences.prefs["class_name"]), _(shortcut),
+            _("Code format text ({})".format(shortcut)),
             check=False)
         Utility.set_icon(b, "text_code", preferences)
 
     if preferences.prefs["Show unordered list button"]:
+        shortcut = preferences.get_keybinding(const.UNORDERED_LIST)
         b = self._addButton("unordered_list", self.toggleUnorderedList,
-            _("Ctrl+["), _("Create unordered list (Ctrl+[)"), check=False)
+            _(shortcut), _("Create unordered list ({})".format(shortcut)),
+            check=False)
         Utility.set_icon(b, "unordered_list", preferences)
 
     if preferences.prefs["Show ordered list button"]:
-        b = self._addButton("ordered_list", self.toggleOrderedList, _("Ctrl+]"),
-            _("Create ordered list (Ctrl+])"), check=False)
+        shortcut = preferences.get_keybinding(const.ORDERED_LIST)
+        b = self._addButton("ordered_list", self.toggleOrderedList, _(shortcut),
+            _("Create ordered list ({})".format(shortcut)), check=False)
         Utility.set_icon(b, "ordered_list", preferences)
 
     if preferences.prefs["Show strikethrough button"]:
+        shortcut = preferences.get_keybinding(const.STRIKETHROUGH)
         b = self._addButton("text_strikethrough", self.toggleStrikeThrough,
-            _("Alt+Shift+5"), _("Strikethrough text (Alt+Shift+5)"), check=True)
+            _(shortcut), _("Strikethrough text ({})".format(shortcut)),
+            check=True)
         Utility.set_icon(b, "text_strikethrough", preferences)
 
     # FIXME: think of better symbol to represent a <pre> block
     if preferences.prefs["Show code block button"]:
+        shortcut = preferences.get_keybinding(const.PRE)
         b = self._addButton("text_pre", lambda: self.wrap_in_tags("pre",
-            preferences.prefs["class_name"]), _("Ctrl+."),
-            tip=_("Create a code block (Ctrl-.)"), check=False)
+            preferences.prefs["class_name"]), _(shortcut),
+            tip=_("Create a code block ({})".format(shortcut)), check=False)
         Utility.set_icon(b, "text_pre", preferences)
 
     if preferences.prefs["Show horizontal rule button"]:
-        b = self._addButton("hor_rule", self.toggleHorizontalLine, _("Ctrl+shift+alt+-"),
-            tip=_("Create a horizontal rule (Ctrl+Shift+Alt+_)"), check=False)
+        shortcut = preferences.get_keybinding(const.HORIZONTAL_RULE)
+        b = self._addButton("hor_rule", self.toggleHorizontalLine, _(shortcut),
+            tip=_("Create a horizontal rule ({})".format(shortcut)), check=False)
         Utility.set_icon(b, "hor_rule", preferences)
 
     if preferences.prefs["Show indent button"]:
-        b = self._addButton("indent", self.toggleIndent, _("Ctrl+Shift+]"),
-            _("Indent text or list (Ctrl+Shift+])"), check=False)
+        shortcut = preferences.get_keybinding(const.INDENT)
+        b = self._addButton("indent", self.toggleIndent, _(shortcut),
+            _("Indent text or list ({})".format(shortcut)), check=False)
         Utility.set_icon(b, "indent", preferences)
 
     if preferences.prefs["Show outdent button"]:
-        b = self._addButton("outdent", self.toggleOutdent, _("Ctrl+Shift+["),
-            _("Outdent text or list (Ctrl+Shift+[)"), check=False)
+        shortcut = preferences.get_keybinding(const.OUTDENT)
+        b = self._addButton("outdent", self.toggleOutdent, _(shortcut),
+            _("Outdent text or list ({})".format(shortcut)), check=False)
         Utility.set_icon(b, "outdent", preferences)
 
     # FIXME: better symbol for <dl>
     if preferences.prefs["Show definition list button"]:
-        b = self._addButton("deflist", self.toggleDefList, _("Ctrl+Shift+d"),
-            _("Create definition list (Ctrl+Shift+D)"), check=False)
+        shortcut = preferences.get_keybinding(const.DEFINITION_LIST)
+        b = self._addButton("deflist", self.toggleDefList, _(shortcut),
+            _("Create definition list (shortcut)"), check=False)
         Utility.set_icon(b, "deflist", preferences)
 
     if preferences.prefs["Show table button"]:
-        b = self._addButton("table", self.toggleTable, _("Ctrl+Shift+3"),
-            _("Create a table (Ctrl+Shift+3)"), check=False)
+        shortcut = preferences.get_keybinding(const.TABLE)
+        b = self._addButton("table", self.toggleTable, _(shortcut),
+            _("Create a table ({})".format(shortcut)), check=False)
         Utility.set_icon(b, "table", preferences)
 
     if preferences.prefs["Show keyboard button"]:
+        shortcut = preferences.get_keybinding(const.KEYBOARD)
         b = self._addButton("kbd", lambda: self.wrap_in_tags("kbd"),
-            _("Ctrl+Shift+k"), _("Create a keyboard button (Ctrl+Shift+K)"),
+            _(shortcut), _("Create a keyboard button ({})".format(shortcut)),
             check=False)
         Utility.set_icon(b, "kbd", preferences)
 
     if preferences.prefs["Show create link buttons"]:
-        b1 = self._addButton("anchor", self.create_hyperlink, _("Ctrl+Shift+h"),
-            _("Insert link (Ctrl+Shift+H)"), check=False)
+        shortcut = preferences.get_keybinding(const.HYPERLINK)
+        b1 = self._addButton("anchor", self.create_hyperlink, _(shortcut),
+            _("Insert link ({})".format(shortcut)), check=False)
         Utility.set_icon(b1, "anchor", preferences)
 
-        b2 = self._addButton("unlink", self.unlink, _("Ctrl+Shift+Alt+h"),
-            _("Unlink (Ctrl+Shift+Alt+H)"), check=False)
+        shortcut = preferences.get_keybinding(const.REMOVE_HYPERLINK)
+        b2 = self._addButton("unlink", self.unlink, _(shortcut),
+            _("Unlink ({})".format(shortcut)), check=False)
         Utility.set_icon(b2, "unlink", preferences)
 
-    if (preferences.prefs["Show background color button"]): # and const.PLATFORM.startswith("linux")):
-        b1 = self._addButton("background", self.on_background, _("Ctrl+Shift+b"),
-            _("Set background color (Ctrl+Shift+B)"), text=" ")
+    if preferences.prefs["Show background color button"]:
+        shortcut = preferences.get_keybinding(const.BACKGROUND_COLOR)
+        b1 = self._addButton("background", self.on_background, _(shortcut),
+            _("Set background color ({})".format(shortcut)), text=" ")
         self.setup_background_button(b1)
-        b2 = self._addButton("change_bg_color", self.on_change_col, _("Ctrl+Shift+n"),
-          _("Change color (Ctrl+Shift+N)"), text=u"▾")
+        shortcut = preferences.get_keybinding(const.BACKGROUND_COLOR_CHANGE)
+        b2 = self._addButton("change_bg_color", self.on_change_col, _(shortcut),
+          _("Change color ({})".format(shortcut)), text=u"▾")
         b2.setFixedWidth(12)
 
     if preferences.prefs["Show blockquote button"]:
+        shortcut = preferences.get_keybinding(const.BLOCKQUOTE)
         b = self._addButton("blockquote", self.toggleBlockquote,
-            _("Ctrl+Shift+Y"), _("Insert blockquote (Ctrl+Shift+Y)"),
+            _(shortcut), _("Insert blockquote ({})".format(shortcut)),
             check=False)
         Utility.set_icon(b, "blockquote", preferences)
 
     if preferences.prefs["Show justify buttons"]:
+        shortcut = preferences.get_keybinding(const.TEXT_ALLIGN_FLUSH_LEFT)
         b1 = self._addButton("left", self.justifyLeft,
-        _("Ctrl+Shift+Alt+l"), _("Align text left (Ctrl+Shift+Alt+L)"),
+        _(shortcut), _("Align text left ({})".format(shortcut)),
         check=False)
         Utility.set_icon(b1, "left", preferences)
 
+        shortcut = preferences.get_keybinding(const.TEXT_ALLIGN_CENTERED)
         b2 = self._addButton("center", self.justifyCenter,
-            _("Ctrl+Shift+Alt+b"), _("Align text center (Ctrl+Shift+Alt+B)"),
+            _(shortcut), _("Align text center ({})".format(shortcut)),
             check=False)
         Utility.set_icon(b2, "center", preferences)
 
+        shortcut = preferences.get_keybinding(const.TEXT_ALLIGN_FLUSH_RIGHT)
         b3 = self._addButton("right", self.justifyRight,
-            _("Ctrl+Shift+Alt+r"), _("Align text right (Ctrl+Shift+Alt+R)"),
+            _(shortcut), _("Align text right ({})".format(shortcut)),
             check=False)
         Utility.set_icon(b3, "right", preferences)
 
+        shortcut = preferences.get_keybinding(const.TEXT_ALLIGN_JUSTIFIED)
         b4 = self._addButton("justified", self.justifyFull,
-            _("Ctrl+Shift+Alt+j"), _("Justify text (Ctrl+Shift+Alt+J)"),
+            _(shortcut), _("Justify text ({})".format(shortcut)),
             check=False)
         Utility.set_icon(b4, "justified", preferences)
 
     if preferences.prefs["Show heading button"]:
+        shortcut = preferences.get_keybinding(const.HEADING)
         b = self._addButton("heading", self.toggleHeading,
-            _("Ctrl+Alt+1"), _("Insert heading (Ctrl+Alt+1)"),
+            _(shortcut), _("Insert heading ({})".format(shortcut)),
             check=False)
         Utility.set_icon(b, "heading", preferences)
 
     if preferences.prefs["Show abbreviation button"]:
+        shortcut = preferences.get_keybinding(const.ABBREVIATION)
         b = self._addButton("abbreviation", self.toggleAbbreviation,
-            _("Shift+Alt+A"), _("Insert abbreviation (Shift+Alt+A)"),
+            _(shortcut), _("Insert abbreviation ({})".format(shortcut)),
             check=False)
         Utility.set_icon(b, "abbreviation", preferences)
 
@@ -622,7 +293,7 @@ class Abbreviation(object):
         text_edit.textChanged.connect(lambda: self.enable_ok_button(
             ok_button, text_edit.text(), title_edit.text()))
 
-        title_edit = QtGui.QLineEdit();
+        title_edit = QtGui.QLineEdit()
         title_edit.setPlaceholderText("Abbreviation")
         title_edit.textChanged.connect(lambda: self.enable_ok_button(
             ok_button, text_edit.text(), title_edit.text()))
@@ -660,7 +331,6 @@ class Abbreviation(object):
         text = Utility.escape_html_chars(text)
         title = Utility.escape_html_chars(title)
         # unicode
-        assert isinstance(text, unicode)
         assert isinstance(text, unicode)
         # create new tag
         result = u"<abbr title='{0}'>{1}</abbr>".format(title, text)
@@ -747,7 +417,7 @@ class OrderedList(QtGui.QDialog):
 
         spinbox_vbox.addWidget(button_box)
 
-        hbox = QtGui.QHBoxLayout(self);
+        hbox = QtGui.QHBoxLayout(self)
         hbox.addWidget(groupbox)
         hbox.addLayout(spinbox_vbox)
 
@@ -1248,7 +918,43 @@ def remove_garbage(self):
     self.loadNote()
 
 def toggleBlockquote(self):
-    self.web.eval("setFormat('formatBlock', 'blockquote');")
+    # self.web.eval("setFormat('formatBlock', 'blockquote');")
+    selected = self.web.selectedHtml()
+    Blockquote(self, selected)
+
+class Blockquote(object):
+
+    def __init__(self, other, selected_html):
+        self.other          = other
+        self.selected_html  = selected_html
+        self.insert_blockquote()
+
+    def insert_blockquote(self):
+        author = None
+        start_delim = "[["
+        end_delim = "]]"
+        len_delim = len(start_delim)
+        start = self.selected_html.find(start_delim)
+        end = self.selected_html.find(end_delim, start + 1)
+        if start > -1 and end > -1:
+            author = self.selected_html[(start+len_delim):end]
+            self.other.web.eval("""
+                document.execCommand('formatBlock', false, 'blockquote');
+                var bq = window.getSelection().focusNode.parentNode;
+                if (bq.toString() !== "[object HTMLQuoteElement]"
+                    && bq.toString() !== "[object HTMLBlockquoteElement]") {
+                    bq = bq.parentNode;
+                }
+                bq.setAttribute("cite", "%s");
+                bq.innerText = bq.innerText.replace(/ ?\[\[.+?\]\]/g, "");
+                var authorParagraph = document.createElement("p");
+                authorParagraph.style.fontStyle = "italic";
+                authorParagraph.innerHTML = "%s"
+                bq.appendChild(authorParagraph);
+            """ % (author, author))
+        else:
+            self.other.web.eval("setFormat('formatBlock', 'blockquote');")
+
 
 def justifyCenter(self):
     self.web.eval("setFormat('justifyCenter');")

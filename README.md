@@ -1,3 +1,4 @@
+## New buttons
 
 This add-on adds the following supplementary formatting buttons to Anki:
 
@@ -93,9 +94,12 @@ This add-on adds the following supplementary formatting buttons to Anki:
     
 * a **blockquote** button (shortcut <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Y</kbd>):
 
-    Cite your source distinctively from the rest of the text.
+    Cite your source distinctively from the rest of the text. You can add an author by putting brackets around the text:
     
-    > Do not pray for easy lives. Pray to be stronger men.
+        Do not pray for easy lives. Pray to be stronger men. [[John F. Kennedy]]
+    
+    > Do not pray for easy lives. Pray to be stronger men.  
+    > _John F. Kennedy_
 
 * **alignment** buttons:
 
@@ -105,6 +109,34 @@ This add-on adds the following supplementary formatting buttons to Anki:
 
     You can either create a heading by prepending text with hashes: `#` for a `<h1>` heading, `######` for a `<h6>` heading. If you do not prepend any hashes, or if you select no text at all, a dialog will appear where you can create your own heading.
 
+## Custom user-defined keybindings
+
+You can change the default keybindings by editing the `keybinding.json` file in your `Anki/addons/extra_buttons` folder.  Please keep in mind that there is no check for duplicate keybindings. This means that when a keybinding is already taken by either your OS, Anki, this addon, or some other running program, the result is undefined.
+
+This file needs to contain valid JSON. Basically this means that the key-value pairs should be enclosed in double quotes:
+
+    "key": "value"
+
+The opening and closing braces in the file `{` and `}` are mandatory. Each key-value pair should contain a colon `:` and should end with a comma, except for the last pair. See the file for valid examples.
+
+Invalid JSON cannot be parsed and will result in the use of the default keybindings. If you find that your new keybindings don't work (i.e. they don't show up in Anki, despite you changing this file), please use a JSON validator to check for faulty JSON.
+
+Modifier keys that can be used include: the function keys (`F1` through `F12`), `Ctrl`, `Alt`, `Shift`, ASCII alphanumeric characters, and ASCII punctuation characters. For Mac OS X, be advised that `Ctrl` maps to the <kbd>Cmd</kbd> key (or "Apple key"), NOT to <kbd>Ctrl</kbd>. If you want to use the <kbd>Ctrl</kbd> key on Mac OS X, use `Meta` instead. So, `Ctrl+Shift+[` on Linux or Windows maps to `Meta+Shift+[` on Mac OS X. The string `Ctrl+Shift+[` on Mac OS X will require you to type <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>[</kbd> in Anki. Please make sure you understand this before opening bug reports.
+
+The use of an invalid key sequence will silently revert the sequence to the default setting. For example, invalid sequences are:
+
+* only modifier keys: `Ctrl+Shift`
+* empty sequence
+* non-existing modifier keys: `Ctrl+Iota+j`
+
+The order or case of the string sequence is unimportant. `Ctrl+Alt+p` is the same as `ALT+CTRL+P` or even `p+Ctrl+Alt`.
+
+If you want to revert your changes to the default keybindings provided by Supplementary Buttons for Anki, please remove the keybindings JSON file in your addon folder.
+
+## Disabling unused buttons
+
 The buttons can be enabled or disabled individually in *Tools > Supplementary buttons add-on (options)*, so feel free to disable the buttons you don't use.
 
-To add this add-on to Anki, copy the file `extra_buttons.py` to your Anki add-on folder. On Linux,this is `$HOME/Anki/addon` by default, or you can go to the [Anki add-on site](https://ankiweb.net/shared/info/162313389) and install the add-on from there (preferred).
+## Installation
+
+The preferred way to install is via the [Anki add-on site](https://ankiweb.net/shared/info/162313389) and copy the addon code (162313389) into Anki (*Tools > Add-ons > Browse & Install...*).

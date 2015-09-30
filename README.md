@@ -139,4 +139,4 @@ The buttons can be enabled or disabled individually in *Tools > Supplementary bu
 
 ## Installation
 
-The preferred way to install is via the [Anki add-on site](https://ankiweb.net/shared/info/162313389) and copy the addon code (162313389) into Anki (*Tools > Add-ons > Browse & Install...*).
+The preferred way to install is using the [Anki add-on site](https://ankiweb.net/shared/info/162313389) way by copying the addon code (162313389) into Anki (*Tools > Add-ons > Browse & Install...*).

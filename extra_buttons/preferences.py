@@ -42,53 +42,55 @@ class Preferences(object):
         # the default preferences that are used when no custom preferences
         # are found, or when the user preferences are corrupted
         self._default_conf = {
-                "class_name": const.CODE_AND_PRE_CLASS,
-                "last_bg_color": "#00f",
-                "fixed_ol_type": "",
-                "Show <code> button": True,
-                "Show unordered list button": True,
-                "Show ordered list button": True,
-                "Show strikethrough button": True,
-                "Show code block button": True,
-                "Show horizontal rule button": True,
-                "Show indent button": True,
-                "Show outdent button": True,
-                "Show definition list button": True,
-                "Show table button": True,
-                "Show keyboard button": True,
-                "Show create link buttons": True,
-                "Show background color button": True,
-                "Show blockquote button": True,
-                "Show justify buttons": True,
-                "Show heading button": True,
-                "Show abbreviation button": True
+                const.CODE_CLASS:           const.CODE_AND_PRE_CLASS,
+                const.LAST_BG_COLOR:        "#00f",
+                const.FIXED_OL_TYPE:        "",
+                const.CODE:                 True,
+                const.UNORDERED_LIST:       True,
+                const.ORDERED_LIST:         True,
+                const.STRIKETHROUGH:        True,
+                const.PRE:                  True,
+                const.HORIZONTAL_RULE:      True,
+                const.INDENT:               True,
+                const.OUTDENT:              True,
+                const.DEFINITION_LIST:      True,
+                const.TABLE:                True,
+                const.KEYBOARD:             True,
+                const.HYPERLINK:            True,
+                const.BACKGROUND_COLOR:     True,
+                const.BLOCKQUOTE:           True,
+                const.TEXT_ALLIGN:          True,
+                const.HEADING:              True,
+                const.ABBREVIATION:         True,
+                const.MARKDOWN:             True
         }
 
         # the default keybindings that are used when no custom keybindings
         # are found, or when the user keybindings are corrupted
         self._default_keybindings_linux_windows = {
-                const.CODE: "ctrl+,",
-                const.UNORDERED_LIST: "ctrl+[",
-                const.ORDERED_LIST: "ctrl+]",
-                const.STRIKETHROUGH: "alt+shift+5",
-                const.PRE: "ctrl+.",
-                const.HORIZONTAL_RULE: "ctrl+shift+alt+_",
-                const.INDENT: "ctrl+shift+]",
-                const.OUTDENT: "ctrl+shift+[",
-                const.DEFINITION_LIST: "ctrl+shift+d",
-                const.TABLE: "ctrl+shift+3",
-                const.KEYBOARD: "ctrl+shift+k",
-                const.HYPERLINK: "ctrl+shift+h",
-                const.REMOVE_HYPERLINK: "ctrl+shift+alt+h",
-                const.BACKGROUND_COLOR: "ctrl+shift+b",
-                const.BACKGROUND_COLOR_CHANGE: "ctrl+shift+n",
-                const.BLOCKQUOTE: "ctrl+shift+y",
-                const.TEXT_ALLIGN_FLUSH_LEFT: "ctrl+shift+alt+l",
-                const.TEXT_ALLIGN_FLUSH_RIGHT: "ctrl+shift+alt+r",
-                const.TEXT_ALLIGN_JUSTIFIED: "ctrl+shift+alt+s",
-                const.TEXT_ALLIGN_CENTERED: "ctrl+shift+alt+b",
-                const.HEADING: "ctrl+alt+1",
-                const.ABBREVIATION: "shift+alt+a"
+                const.CODE:                         "ctrl+,",
+                const.UNORDERED_LIST:               "ctrl+[",
+                const.ORDERED_LIST:                 "ctrl+]",
+                const.STRIKETHROUGH:                "alt+shift+5",
+                const.PRE:                          "ctrl+.",
+                const.HORIZONTAL_RULE:              "ctrl+shift+alt+_",
+                const.INDENT:                       "ctrl+shift+]",
+                const.OUTDENT:                      "ctrl+shift+[",
+                const.DEFINITION_LIST:              "ctrl+shift+d",
+                const.TABLE:                        "ctrl+shift+3",
+                const.KEYBOARD:                     "ctrl+shift+k",
+                const.HYPERLINK:                    "ctrl+shift+h",
+                const.REMOVE_HYPERLINK:             "ctrl+shift+alt+h",
+                const.BACKGROUND_COLOR:             "ctrl+shift+b",
+                const.BACKGROUND_COLOR_CHANGE:      "ctrl+shift+n",
+                const.BLOCKQUOTE:                   "ctrl+shift+y",
+                const.TEXT_ALLIGN_FLUSH_LEFT:       "ctrl+shift+alt+l",
+                const.TEXT_ALLIGN_FLUSH_RIGHT:      "ctrl+shift+alt+r",
+                const.TEXT_ALLIGN_JUSTIFIED:        "ctrl+shift+alt+s",
+                const.TEXT_ALLIGN_CENTERED:         "ctrl+shift+alt+b",
+                const.HEADING:                      "ctrl+alt+1",
+                const.ABBREVIATION:                 "shift+alt+a",
+                const.MARKDOWN:                     "ctrl+shift+alt+m"
         }
         # Mac OS Xbindings are the same as Linux/Windows bindings,
         # except for the following
@@ -212,7 +214,7 @@ class Preferences(object):
 """
         for key, value in sorted(self.keybindings.iteritems()):
             contents += "\"{}\": \"{}\",\n".format(key, value)
-        contents += "\"_comment\": \"end of keybindings\"\n"
+        contents += "\"_version\": \"{}\"\n".format(const.VERSION)
         contents += "}"
 
         try:

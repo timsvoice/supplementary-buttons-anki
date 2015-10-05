@@ -30,6 +30,21 @@ import const
 from utility import Utility
 from preferences import Preferences
 from menu import ExtraButtons_Options
+from html2text import html2text
+import markdown
+from markdown.extensions import Extension
+from markdown.extensions.fenced_code import FencedCodeExtension
+from markdown.extensions.smart_strong import SmartEmphasisExtension
+from markdown.extensions.footnotes import FootnoteExtension
+from markdown.extensions.attr_list import AttrListExtension
+from markdown.extensions.def_list import DefListExtension
+from markdown.extensions.tables import TableExtension
+from markdown.extensions.abbr import AbbrExtension
+from markdown.extensions.nl2br import Nl2BrExtension
+from markdown.extensions.admonition import AdmonitionExtension
+from markdown.extensions.codehilite import CodeHiliteExtension
+import sys
+import os
 
 
 # Buttons
@@ -37,7 +52,7 @@ from menu import ExtraButtons_Options
 
 def setup_buttons(self):
 
-    if preferences.prefs["Show <code> button"]:
+    if preferences.prefs.get(const.CODE):
         shortcut = preferences.get_keybinding(const.CODE)
         b = self._addButton("text_code", lambda: self.wrap_in_tags("code",
             preferences.prefs["class_name"]), _(shortcut),
@@ -45,20 +60,20 @@ def setup_buttons(self):
             check=False)
         Utility.set_icon(b, "text_code", preferences)
 
-    if preferences.prefs["Show unordered list button"]:
+    if preferences.prefs.get(const.UNORDERED_LIST):
         shortcut = preferences.get_keybinding(const.UNORDERED_LIST)
         b = self._addButton("unordered_list", self.toggleUnorderedList,
             _(shortcut), _("Create unordered list ({})".format(shortcut)),
             check=False)
         Utility.set_icon(b, "unordered_list", preferences)
 
-    if preferences.prefs["Show ordered list button"]:
+    if preferences.prefs.get(const.ORDERED_LIST):
         shortcut = preferences.get_keybinding(const.ORDERED_LIST)
         b = self._addButton("ordered_list", self.toggleOrderedList, _(shortcut),
             _("Create ordered list ({})".format(shortcut)), check=False)
         Utility.set_icon(b, "ordered_list", preferences)
 
-    if preferences.prefs["Show strikethrough button"]:
+    if preferences.prefs.get(const.STRIKETHROUGH):
         shortcut = preferences.get_keybinding(const.STRIKETHROUGH)
         b = self._addButton("text_strikethrough", self.toggleStrikeThrough,
             _(shortcut), _("Strikethrough text ({})".format(shortcut)),
@@ -66,52 +81,52 @@ def setup_buttons(self):
         Utility.set_icon(b, "text_strikethrough", preferences)
 
     # FIXME: think of better symbol to represent a <pre> block
-    if preferences.prefs["Show code block button"]:
+    if preferences.prefs.get(const.PRE):
         shortcut = preferences.get_keybinding(const.PRE)
         b = self._addButton("text_pre", lambda: self.wrap_in_tags("pre",
             preferences.prefs["class_name"]), _(shortcut),
             tip=_("Create a code block ({})".format(shortcut)), check=False)
         Utility.set_icon(b, "text_pre", preferences)
 
-    if preferences.prefs["Show horizontal rule button"]:
+    if preferences.prefs.get(const.HORIZONTAL_RULE):
         shortcut = preferences.get_keybinding(const.HORIZONTAL_RULE)
         b = self._addButton("hor_rule", self.toggleHorizontalLine, _(shortcut),
             tip=_("Create a horizontal rule ({})".format(shortcut)), check=False)
         Utility.set_icon(b, "hor_rule", preferences)
 
-    if preferences.prefs["Show indent button"]:
+    if preferences.prefs.get(const.INDENT):
         shortcut = preferences.get_keybinding(const.INDENT)
         b = self._addButton("indent", self.toggleIndent, _(shortcut),
             _("Indent text or list ({})".format(shortcut)), check=False)
         Utility.set_icon(b, "indent", preferences)
 
-    if preferences.prefs["Show outdent button"]:
+    if preferences.prefs.get(const.OUTDENT):
         shortcut = preferences.get_keybinding(const.OUTDENT)
         b = self._addButton("outdent", self.toggleOutdent, _(shortcut),
             _("Outdent text or list ({})".format(shortcut)), check=False)
         Utility.set_icon(b, "outdent", preferences)
 
     # FIXME: better symbol for <dl>
-    if preferences.prefs["Show definition list button"]:
+    if preferences.prefs.get(const.DEFINITION_LIST):
         shortcut = preferences.get_keybinding(const.DEFINITION_LIST)
         b = self._addButton("deflist", self.toggleDefList, _(shortcut),
             _("Create definition list (shortcut)"), check=False)
         Utility.set_icon(b, "deflist", preferences)
 
-    if preferences.prefs["Show table button"]:
+    if preferences.prefs.get(const.TABLE):
         shortcut = preferences.get_keybinding(const.TABLE)
         b = self._addButton("table", self.toggleTable, _(shortcut),
             _("Create a table ({})".format(shortcut)), check=False)
         Utility.set_icon(b, "table", preferences)
 
-    if preferences.prefs["Show keyboard button"]:
+    if preferences.prefs.get(const.KEYBOARD):
         shortcut = preferences.get_keybinding(const.KEYBOARD)
         b = self._addButton("kbd", lambda: self.wrap_in_tags("kbd"),
             _(shortcut), _("Create a keyboard button ({})".format(shortcut)),
             check=False)
         Utility.set_icon(b, "kbd", preferences)
 
-    if preferences.prefs["Show create link buttons"]:
+    if preferences.prefs.get(const.HYPERLINK):
         shortcut = preferences.get_keybinding(const.HYPERLINK)
         b1 = self._addButton("anchor", self.create_hyperlink, _(shortcut),
             _("Insert link ({})".format(shortcut)), check=False)
@@ -122,7 +137,7 @@ def setup_buttons(self):
             _("Unlink ({})".format(shortcut)), check=False)
         Utility.set_icon(b2, "unlink", preferences)
 
-    if preferences.prefs["Show background color button"]:
+    if preferences.prefs.get(const.BACKGROUND_COLOR):
         shortcut = preferences.get_keybinding(const.BACKGROUND_COLOR)
         b1 = self._addButton("background", self.on_background, _(shortcut),
             _("Set background color ({})".format(shortcut)), text=" ")
@@ -132,14 +147,14 @@ def setup_buttons(self):
           _("Change color ({})".format(shortcut)), text=u"▾")
         b2.setFixedWidth(12)
 
-    if preferences.prefs["Show blockquote button"]:
+    if preferences.prefs.get(const.BLOCKQUOTE):
         shortcut = preferences.get_keybinding(const.BLOCKQUOTE)
         b = self._addButton("blockquote", self.toggleBlockquote,
             _(shortcut), _("Insert blockquote ({})".format(shortcut)),
             check=False)
         Utility.set_icon(b, "blockquote", preferences)
 
-    if preferences.prefs["Show justify buttons"]:
+    if preferences.prefs.get(const.TEXT_ALLIGN):
         shortcut = preferences.get_keybinding(const.TEXT_ALLIGN_FLUSH_LEFT)
         b1 = self._addButton("left", self.justifyLeft,
         _(shortcut), _("Align text left ({})".format(shortcut)),
@@ -164,19 +179,26 @@ def setup_buttons(self):
             check=False)
         Utility.set_icon(b4, "justified", preferences)
 
-    if preferences.prefs["Show heading button"]:
+    if preferences.prefs.get(const.HEADING):
         shortcut = preferences.get_keybinding(const.HEADING)
         b = self._addButton("heading", self.toggleHeading,
             _(shortcut), _("Insert heading ({})".format(shortcut)),
             check=False)
         Utility.set_icon(b, "heading", preferences)
 
-    if preferences.prefs["Show abbreviation button"]:
+    if preferences.prefs.get(const.ABBREVIATION):
         shortcut = preferences.get_keybinding(const.ABBREVIATION)
-        b = self._addButton("abbreviation", self.toggleAbbreviation,
+        b = self._addButton(const.ABBREVIATION, self.toggleAbbreviation,
             _(shortcut), _("Insert abbreviation ({})".format(shortcut)),
             check=False)
-        Utility.set_icon(b, "abbreviation", preferences)
+        Utility.set_icon(b, const.ABBREVIATION, preferences)
+
+    if preferences.prefs.get(const.MARKDOWN):
+        shortcut = preferences.get_keybinding(const.MARKDOWN)
+        b = self._addButton(const.MARKDOWN, self.toggleMarkdown,
+            _(shortcut), _("Toggle Markdown ({})".format(shortcut)),
+            check=False)
+        Utility.set_icon(b, const.MARKDOWN, preferences)
 
 def wrap_in_tags(self, tag, class_name=None):
     """Wrap selected text in a tag, optionally giving it a class."""
@@ -1124,6 +1146,49 @@ def toggleAbbreviation(self):
     selected = self.web.selectedText()
     abbreviation = Abbreviation(self, self.parentWindow, selected)
 
+def toggleMarkdown(self):
+    self.saveNow()
+    html_field = self.note.fields[self.currentField]
+    MarkdownParser(self, html_field)
+    self.web.setFocus()
+    self.web.eval("focusField(%d);" % self.currentField)
+    self.saveNow()
+
+class MarkdownParser(object):
+    def __init__(self, other, html):
+        self.other  = other
+        self.html   = html
+        self.apply_markdown()
+
+    def apply_markdown(self):
+        print "HTML: ", self.html
+        md_text = html2text.html2text(self.html)
+        # remove white lines
+        clean_md = ""
+        for line in md_text.split("\n"):
+            if line:
+                clean_md += (line + "\n")
+        print "Markdown: ", clean_md
+        sys.path.insert(0, os.path.join(preferences.addons_folder(),
+                                        "extra_buttons"))
+        new_html = markdown.markdown(clean_md, extensions=[
+                SmartEmphasisExtension(),
+                FencedCodeExtension(),
+                FootnoteExtension(),
+                AttrListExtension(),
+                DefListExtension(),
+                TableExtension(),
+                AbbrExtension(),
+                Nl2BrExtension(),
+                AdmonitionExtension(),
+                CodeHiliteExtension(noclasses=True)
+            ])
+        print "New HTML: ", new_html
+        self.other.web.eval("""
+            document.getElementById('f%s').innerHTML = %s;
+        """ % (self.other.currentField, json.dumps(unicode(new_html))))
+
+editor.Editor.toggleMarkdown = toggleMarkdown
 editor.Editor.toggleAbbreviation = toggleAbbreviation
 editor.Editor.remove_garbage = remove_garbage
 editor.Editor.cleanup_headers = cleanup_headers

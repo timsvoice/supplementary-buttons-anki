@@ -34,7 +34,7 @@ class Utility(object):
     ##################################################
 
     const.PROGRAM_NAME  = "Supplementary Buttons for Anki"
-    const.VERSION       = "0.7.0"
+    const.VERSION       = "0.8.0"
     const.YEAR_START    = 2014
     const.YEAR_LAST     = 2015
     const.ANKIWEB_URL   = "https://ankiweb.net/shared/info/162313389"
@@ -78,12 +78,17 @@ class Utility(object):
     const.BACKGROUND_COLOR              = "background_color"
     const.BACKGROUND_COLOR_CHANGE       = "background_color_change"
     const.BLOCKQUOTE                    = "blockquote"
+    const.TEXT_ALLIGN                   = "text_align"
     const.TEXT_ALLIGN_FLUSH_LEFT        = "text_align_flush_left"
     const.TEXT_ALLIGN_FLUSH_RIGHT       = "text_align_flush_right"
     const.TEXT_ALLIGN_JUSTIFIED         = "text_align_justified"
     const.TEXT_ALLIGN_CENTERED          = "text_align_centered"
     const.HEADING                       = "heading"
     const.ABBREVIATION                  = "abbreviation"
+    const.MARKDOWN                      = "markdown"
+    const.CODE_CLASS                    = "code_class"
+    const.LAST_BG_COLOR                 = "last_bg_color"
+    const.FIXED_OL_TYPE                 = "fixed_ol_type"
 
     # constants for key sequence
     const.KEY_MODIFIERS                 = ("ctrl", "alt", "shift")

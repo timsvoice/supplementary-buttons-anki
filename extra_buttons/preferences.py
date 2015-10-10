@@ -26,6 +26,7 @@ from anki.utils import json
 import const
 from utility import Utility
 
+# this should be a singleton
 class Preferences(object):
 
     def __init__(self, main_window):

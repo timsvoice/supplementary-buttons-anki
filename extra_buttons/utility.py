@@ -47,7 +47,7 @@ class Utility(object):
             "cygwin": "Windows",
             "darwin": "Mac OS X"
     }
-    const.PLATFORM = sys.platform
+    const.PLATFORM      = sys.platform
 
     # size of the dialog windows
     const.DIALOG_SIZE_X = 350
@@ -185,7 +185,7 @@ class Utility(object):
         for key in user_prefs.keys()[:]:
             if default_prefs.get(key) is None:
                 del user_prefs[key]
-        print "In use:", user_prefs
+        # print "In use:", user_prefs
 
     @staticmethod
     def split_string(text, splitlist):
@@ -218,7 +218,7 @@ class Utility(object):
             parts += list(sequence[-1:])
         else:
             parts = Utility.split_string(sequence, "+-")
-        print parts
+        # print parts
         parts = Utility.filter_duplicates(parts)
         # sequence can only contain one function key and cannot be used
         # in combination with a character key
@@ -241,9 +241,9 @@ class Utility(object):
         for word in parts:
             # unknown modifiers or non-modifiers are not allowed
             if not word in modkeys + const.KEYS_SEQUENCE + const.FUNCTION_KEYS:
-                print "RETURNING THE EMPTY STRING"
+                # print "RETURNING THE EMPTY STRING"
                 return ""
-        print "returning:", Utility.create_pretty_sequence(parts)
+        # print "returning:", Utility.create_pretty_sequence(parts)
         return Utility.create_pretty_sequence(parts)
 
     @staticmethod

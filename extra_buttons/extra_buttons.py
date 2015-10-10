@@ -1181,7 +1181,7 @@ class MarkdownParser(object):
                 AbbrExtension(),
                 Nl2BrExtension(),
                 AdmonitionExtension(),
-                CodeHiliteExtension(noclasses=True)
+                CodeHiliteExtension(noclasses=True, pygments_style="tango")
             ])
         print "New HTML: ", new_html
         self.other.web.eval("""

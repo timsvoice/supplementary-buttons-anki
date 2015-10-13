@@ -18,7 +18,7 @@
 # with Supplementary Buttons for Anki. If not, see http://www.gnu.org/licenses/.
 
 from PyQt4 import QtGui, QtCore
-
+import os
 import const
 from utility import Utility
 
@@ -63,11 +63,7 @@ class ExtraButtons_Options(QtGui.QMenu):
                 "&About {0}...".format(const.PROGRAM_NAME), self.main_window)
         about_action.triggered.connect(self.show_about_dialog)
 
-        # custom_css = QtGui.QAction("&Alter <code> and <pre> CSS...", main_window)
-        # custom_css.triggered.connect(self.preferences.set_css_class_name_code_pre)
-
         sub_menu.addAction(options_action)
-        # sub_menu.addAction(custom_css)
         sub_menu.addAction(about_action)
 
     def show_about_dialog(self):
@@ -99,12 +95,12 @@ class ExtraButtons_Options(QtGui.QMenu):
         option_dialog.setWindowTitle("Options for Supplementary Buttons")
 
         grid = QtGui.QGridLayout()
-
-        # create a dict that has all the relevant buttons to be displayed
-        l = [k for k in self.preferences.prefs.keys() if k not in
-                ("class_name", "last_bg_color", "fixed_ol_type")]
-
-        # determine number of items in each column in the grid
+        l = [k for k in self.preferences.prefs.keys() if k not in (
+                                                const.CODE_CLASS,
+                                                const.LAST_BG_COLOR,
+                                                const.FIXED_OL_TYPE,
+                                                const.MARKDOWN_SYNTAX_STYLE
+                                            )]
         num_items = len(l) / 2.0
         num_items = num_items + 0.5 if (num_items % 1.0 > 0.0) else num_items
 
@@ -123,13 +119,13 @@ class ExtraButtons_Options(QtGui.QMenu):
         cssClassLabel = QtGui.QLabel(
                 "CSS class for &lt;code&gt; and &lt;pre&gt; code blocks", self)
         cssClassText = QtGui.QLineEdit(
-                self.preferences.prefs.get("class_name"), self)
+                self.preferences.prefs.get(const.CODE_CLASS), self)
         cssClassHBox = QtGui.QHBoxLayout()
         cssClassHBox.addWidget(cssClassLabel)
         cssClassHBox.addWidget(cssClassText)
 
         checkBox = QtGui.QCheckBox("Fix ordered list type", self)
-        if self.preferences.prefs["fixed_ol_type"]:
+        if self.preferences.prefs.get(const.FIXED_OL_TYPE):
             checkBox.setChecked(True)
         else:
             checkBox.setChecked(False)
@@ -142,7 +138,7 @@ class ExtraButtons_Options(QtGui.QMenu):
             rb = self.create_radiobutton(type_ol)
             self.listOfRadioButtons.append(rb)
 
-        ol_type = self.preferences.prefs.get("fixed_ol_type")
+        ol_type = self.preferences.prefs.get(const.FIXED_OL_TYPE)
         if not ol_type:
             self.listOfRadioButtons[0].toggle()
         else:
@@ -165,8 +161,36 @@ class ExtraButtons_Options(QtGui.QMenu):
                 rb.setEnabled(False)
             hbox.addWidget(rb)
 
-        button_box = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok |
-                QtGui.QDialogButtonBox.Cancel)
+        # Markdown syntax highlighting
+
+        md_style_label = QtGui.QLabel('Markdown syntax highlighting style', self)
+        md_style_combo = QtGui.QComboBox(self)
+        md_style_files = os.listdir(os.path.join(
+            self.preferences.addons_folder(), const.FOLDER_NAME, 'pygments', 'styles'))
+        print 'Files in style folder:\n',
+        print md_style_files
+
+        # pretty print styles
+        for filename in sorted(md_style_files):
+            if filename.startswith('_') or filename.endswith('.pyc'):
+                continue
+            (style, _) = os.path.splitext(filename)
+            style = style.replace('_', ' ')
+            md_style_combo.addItem(style.capitalize())
+
+        all_items_in_combo = \
+            [md_style_combo.itemText(i) for i in xrange(md_style_combo.count())]
+        current_style = self.preferences.prefs.get(const.MARKDOWN_SYNTAX_STYLE)
+        if current_style and current_style in all_items_in_combo:
+            index_current_style = all_items_in_combo.index(current_style)
+            md_style_combo.setCurrentIndex(index_current_style)
+
+        md_style_hbox = QtGui.QHBoxLayout()
+        md_style_hbox.addWidget(md_style_label)
+        md_style_hbox.addWidget(md_style_combo)
+
+        button_box = QtGui.QDialogButtonBox(
+                QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel)
         button_box.accepted.connect(option_dialog.accept)
         button_box.rejected.connect(option_dialog.reject)
 
@@ -176,6 +200,8 @@ class ExtraButtons_Options(QtGui.QMenu):
         vbox.addLayout(cssClassHBox)
         vbox.addWidget(Utility.create_horizontal_rule())
         vbox.addLayout(hbox)
+        vbox.addWidget(Utility.create_horizontal_rule())
+        vbox.addLayout(md_style_hbox)
         vbox.addWidget(button_box)
 
         option_dialog.setLayout(vbox)
@@ -183,15 +209,12 @@ class ExtraButtons_Options(QtGui.QMenu):
         if option_dialog.exec_() == QtGui.QDialog.Accepted:
             if checkBox.isChecked():
                 selectedRadioButton = buttonGroup.id(buttonGroup.checkedButton())
-                self.preferences.prefs["fixed_ol_type"] = (
-                        self.listOfRadioButtons[selectedRadioButton].text())
+                self.preferences.prefs[const.FIXED_OL_TYPE] = \
+                    self.listOfRadioButtons[selectedRadioButton].text()
             else:
-                self.preferences.prefs["fixed_ol_type"] = ""
-
-            # change CSS class for <code> and <pre>
-            self.preferences.prefs["class_name"] = cssClassText.text()
-
-            # save preferences to disk
+                self.preferences.prefs[const.FIXED_OL_TYPE] = ''
+            chosen_style = str(md_style_combo.currentText())
+            chosen_style = chosen_style.lower().replace(' ', '_')
+            self.preferences.prefs[const.MARKDOWN_SYNTAX_STYLE] = chosen_style
+            self.preferences.prefs[const.CODE_CLASS] = cssClassText.text()
             self.preferences.save_prefs()
-
-

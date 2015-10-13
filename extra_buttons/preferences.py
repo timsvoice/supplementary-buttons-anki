@@ -26,44 +26,44 @@ from anki.utils import json
 import const
 from utility import Utility
 
-# this should be a singleton
 class Preferences(object):
 
     def __init__(self, main_window):
         self.main_window = main_window
         self.prefs_path = os.path.join(self.addons_folder(),
-                "extra_buttons", ".extra_buttons_prefs")
+                    const.FOLDER_NAME, ".extra_buttons_prefs")
         if const.PLATFORM.startswith("darwin"):
             self.keybindings_path = os.path.join(self.addons_folder(),
-                    "extra_buttons", "keybindings_macosx.json")
+                    const.FOLDER_NAME, "keybindings_macosx.json")
         else:
             self.keybindings_path = os.path.join(self.addons_folder(),
-                    "extra_buttons", "keybindings_linux_windows.json")
+                    const.FOLDER_NAME, "keybindings_linux_windows.json")
 
         # the default preferences that are used when no custom preferences
         # are found, or when the user preferences are corrupted
         self._default_conf = {
-                const.CODE_CLASS:           const.CODE_AND_PRE_CLASS,
-                const.LAST_BG_COLOR:        "#00f",
-                const.FIXED_OL_TYPE:        "",
-                const.CODE:                 True,
-                const.UNORDERED_LIST:       True,
-                const.ORDERED_LIST:         True,
-                const.STRIKETHROUGH:        True,
-                const.PRE:                  True,
-                const.HORIZONTAL_RULE:      True,
-                const.INDENT:               True,
-                const.OUTDENT:              True,
-                const.DEFINITION_LIST:      True,
-                const.TABLE:                True,
-                const.KEYBOARD:             True,
-                const.HYPERLINK:            True,
-                const.BACKGROUND_COLOR:     True,
-                const.BLOCKQUOTE:           True,
-                const.TEXT_ALLIGN:          True,
-                const.HEADING:              True,
-                const.ABBREVIATION:         True,
-                const.MARKDOWN:             True
+                const.CODE_CLASS:               const.CODE_AND_PRE_CLASS,
+                const.LAST_BG_COLOR:            "#00f",
+                const.FIXED_OL_TYPE:            "",
+                const.MARKDOWN_SYNTAX_STYLE:    "tango",
+                const.CODE:                     True,
+                const.UNORDERED_LIST:           True,
+                const.ORDERED_LIST:             True,
+                const.STRIKETHROUGH:            True,
+                const.PRE:                      True,
+                const.HORIZONTAL_RULE:          True,
+                const.INDENT:                   True,
+                const.OUTDENT:                  True,
+                const.DEFINITION_LIST:          True,
+                const.TABLE:                    True,
+                const.KEYBOARD:                 True,
+                const.HYPERLINK:                True,
+                const.BACKGROUND_COLOR:         True,
+                const.BLOCKQUOTE:               True,
+                const.TEXT_ALLIGN:              True,
+                const.HEADING:                  True,
+                const.ABBREVIATION:             True,
+                const.MARKDOWN:                 True
         }
 
         # the default keybindings that are used when no custom keybindings
@@ -91,7 +91,7 @@ class Preferences(object):
                 const.TEXT_ALLIGN_CENTERED:         "ctrl+shift+alt+b",
                 const.HEADING:                      "ctrl+alt+1",
                 const.ABBREVIATION:                 "shift+alt+a",
-                const.MARKDOWN:                     "ctrl+shift+alt+m"
+                const.MARKDOWN:                     "ctrl+shift+d"
         }
         # Mac OS Xbindings are the same as Linux/Windows bindings,
         # except for the following
@@ -151,6 +151,9 @@ class Preferences(object):
                     self.keybindings)
             self.keybindings = Utility.check_user_keybindings(
                     self._default_keybindings, self.keybindings, const.PLATFORM)
+
+        # initialize database for Markdown
+        Utility._prepare_db(self)
 
     def get_keybinding(self, name_of_key):
         """Return the keybinding indicated by name_of_key, and capitalize

@@ -23,8 +23,10 @@ import os
 import re
 
 from PyQt4 import QtGui, QtCore
+import sqlite3 as lite
 
 import const
+
 
 class Utility(object):
     """Utility class with all helper functions that are needed throughout
@@ -40,6 +42,7 @@ class Utility(object):
     const.ANKIWEB_URL   = "https://ankiweb.net/shared/info/162313389"
     const.GITHUB_URL    = "https://github.com/Neftas/supplementary-buttons-anki"
     const.EMAIL         = "srvandenakker.dev@gmail.com"
+    const.FOLDER_NAME   = "extra_buttons"
 
     const.OPERATING_SYSTEMS = {
             "linux2": "Linux",
@@ -89,6 +92,7 @@ class Utility(object):
     const.CODE_CLASS                    = "code_class"
     const.LAST_BG_COLOR                 = "last_bg_color"
     const.FIXED_OL_TYPE                 = "fixed_ol_type"
+    const.MARKDOWN_SYNTAX_STYLE         = "markdown_syntax_style"
 
     # constants for key sequence
     const.KEY_MODIFIERS                 = ("ctrl", "alt", "shift")
@@ -98,6 +102,65 @@ class Utility(object):
                                           tuple(string.digits)
     const.FUNCTION_KEYS                 = ("f1", "f2", "f3", "f4", "f5", "f6",
                                            "f7", "f8", "f9", "f10", "f11", "f12")
+
+    # Storage of Markdown syntax
+    ##################################################
+
+    const.MARKDOWN_DB_NAME  = "markdown"
+
+    @staticmethod
+    def _prepare_db(preferences):
+        db_path = os.path.join(preferences.addons_folder(),
+                               const.FOLDER_NAME,
+                               const.MARKDOWN_DB_NAME + ".db")
+        # path should be unicode
+        if isinstance(db_path, str):
+            db_path = unicode(db_path, sys.getfilesystemencoding())
+        print "DATABASE PATH:", repr(db_path)
+
+        const.MD_DB_PATH = db_path
+
+        create_db = not os.path.exists(const.MD_DB_PATH)
+        con = lite.connect(db_path)
+        with con:
+            cur = con.cursor()
+            if create_db:
+                Utility._initDB(cur)
+        print con
+
+    @staticmethod
+    def _init_db(cur):
+        print "INITIALIZING DATABASE MARKDOWN"
+        cur.executescript("""
+create table if not exists markdown (
+    id text primary key,
+    isconverted text not null,
+    md text not null
+);
+        """)
+
+    @staticmethod
+    def execute_query(sql, *args):
+        # path should exist
+        try:
+            const.MD_DB_PATH
+        except AttributeError:
+            Utility._prepare_db()
+        print "SQL:", sql
+        print "Args:", args
+
+        # certain SQL statements do not return a result set
+        return_resultset = True
+        if any(sql.startswith(word for word in "insert", "update", "delete")):
+            return_resultset = False
+
+        con = lite.connect(const.MD_DB_PATH)
+        with con:
+            cur = con.cursor()
+            cur.execute(sql, *args)
+            if return_resultset:
+                resultset = cur.fetchall()
+                return resultset
 
     # Methods
     ##################################################
@@ -115,7 +178,7 @@ class Utility(object):
         """Define the path for the icon the corresponding
         button should have."""
         icon_path = os.path.join(current_preferences.addons_folder(),
-            "extra_buttons", "icons", "{}.png".format(name))
+            const.FOLDER_NAME, "icons", "{}.png".format(name))
         button.setIcon(QtGui.QIcon(icon_path))
 
     @staticmethod

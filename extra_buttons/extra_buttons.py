@@ -19,10 +19,13 @@
 
 
 import re
+import sys
+import os
 
 from anki.utils import json
 from aqt import editor, mw
 from anki.hooks import wrap
+from anki.db import DB
 from PyQt4 import QtGui, QtCore
 import BeautifulSoup
 
@@ -43,8 +46,6 @@ from markdown.extensions.abbr import AbbrExtension
 from markdown.extensions.nl2br import Nl2BrExtension
 from markdown.extensions.admonition import AdmonitionExtension
 from markdown.extensions.codehilite import CodeHiliteExtension
-import sys
-import os
 
 
 # Buttons
@@ -55,7 +56,7 @@ def setup_buttons(self):
     if preferences.prefs.get(const.CODE):
         shortcut = preferences.get_keybinding(const.CODE)
         b = self._addButton("text_code", lambda: self.wrap_in_tags("code",
-            preferences.prefs["class_name"]), _(shortcut),
+            preferences.prefs[const.CODE_CLASS]), _(shortcut),
             _("Code format text ({})".format(shortcut)),
             check=False)
         Utility.set_icon(b, "text_code", preferences)
@@ -1148,45 +1149,81 @@ def toggleAbbreviation(self):
 
 def toggleMarkdown(self):
     self.saveNow()
+    current_field = self.currentField
     html_field = self.note.fields[self.currentField]
-    MarkdownParser(self, html_field)
+    MarkdownParser(self, preferences, self.note, html_field, current_field)
     self.web.setFocus()
     self.web.eval("focusField(%d);" % self.currentField)
     self.saveNow()
 
 class MarkdownParser(object):
-    def __init__(self, other, html):
-        self.other  = other
-        self.html   = html
+    def __init__(self, other, preferences, note, html, current_field):
+        self.other                      = other
+        self.preferences                = preferences
+        self.note                       = note
+        self.html                       = html
+        self.current_field              = current_field
+        self.current_note_id_and_field  = str(self.note.id) + \
+                                          "-{:03}".format(self.current_field)
         self.apply_markdown()
 
     def apply_markdown(self):
-        print "HTML: ", self.html
-        md_text = html2text.html2text(self.html)
-        # remove white lines
-        clean_md = ""
-        for line in md_text.split("\n"):
-            if line:
-                clean_md += (line + "\n")
-        print "Markdown: ", clean_md
-        sys.path.insert(0, os.path.join(preferences.addons_folder(),
-                                        "extra_buttons"))
-        new_html = markdown.markdown(clean_md, extensions=[
-                SmartEmphasisExtension(),
-                FencedCodeExtension(),
-                FootnoteExtension(),
-                AttrListExtension(),
-                DefListExtension(),
-                TableExtension(),
-                AbbrExtension(),
-                Nl2BrExtension(),
-                AdmonitionExtension(),
-                CodeHiliteExtension(noclasses=True, pygments_style="tango")
-            ])
-        print "New HTML: ", new_html
-        self.other.web.eval("""
-            document.getElementById('f%s').innerHTML = %s;
-        """ % (self.other.currentField, json.dumps(unicode(new_html))))
+        sql = "select * from markdown where id = '?'"
+        data = execute_query(sql, self.current_note_id_and_field)
+        # data_not_empty = self.markdown_data.get(self.current_note_id_and_field)
+        if data and data[0][1] == "True":
+            print "REVERTING TO OLD MARKDOWN"
+            print "CONTENTS OF MARKDOWN DICT:\n", self.markdown_data
+            Utility._MARKDOWN_DATA.get(current_note_id_and_field)["is_converted"] = False
+            new_html = data_not_empty.get("markdown")
+            self.other.web.eval("""
+                document.getElementById('f%s').innerHTML = %s;
+            """ % (self.other.currentField, json.dumps(unicode(new_html))))
+            return
+        else:
+            print "APPLYING MARKDOWN"
+            print "HTML: ", self.html
+            h = html2text.HTML2Text()
+            h.body_width = 0
+            md_text = h.handle(self.html)
+            print "Dirty markdown:\n", md_text
+            # remove white lines
+            clean_md = ""
+            for line in md_text.split("\n"):
+                if line:
+                    clean_md += (line + "\n")
+            print "Markdown: ", clean_md
+            sys.path.insert(0, os.path.join(preferences.addons_folder(),
+                                            "extra_buttons"))
+            new_html = markdown.markdown(clean_md, extensions=[
+                    SmartEmphasisExtension(),
+                    FencedCodeExtension(),
+                    FootnoteExtension(),
+                    AttrListExtension(),
+                    DefListExtension(),
+                    TableExtension(),
+                    AbbrExtension(),
+                    Nl2BrExtension(),
+                    AdmonitionExtension(),
+                    CodeHiliteExtension(noclasses=True,
+                        pygments_style=preferences.prefs.get(const.MARKDOWN_SYNTAX_STYLE))
+                ])
+            print "New HTML: ", new_html
+            self.other.web.eval("""
+                document.getElementById('f%s').innerHTML = %s;
+            """ % (self.other.currentField, json.dumps(unicode(new_html))))
+            # store the Markdown so we can reuse it when the button gets toggled
+            if clean_md:
+                # if not Utility._MARKDOWN_DATA.get(current_note_id_and_field):
+                #     Utility._MARKDOWN_DATA[current_note_id_and_field] = dict()
+                # Utility._MARKDOWN_DATA[current_note_id_and_field]["markdown"] = self.html
+                # Utility._MARKDOWN_DATA[current_note_id_and_field]["is_converted"] = True
+                insert_sql = """\
+                        insert into markdown (id, isconverted, md)
+                        values (?, ?, ?)
+                """
+                Utility.execute_query(insert_sql, self.current_note_id_and_field,
+                        "True", self.html)
 
 editor.Editor.toggleMarkdown = toggleMarkdown
 editor.Editor.toggleAbbreviation = toggleAbbreviation

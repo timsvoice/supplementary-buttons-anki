@@ -106,7 +106,7 @@ class Utility(object):
     # Storage of Markdown syntax
     ##################################################
 
-    const.MARKDOWN_DB_NAME  = "markdown"
+    const.MARKDOWN_DB_NAME  = "extra_buttons"
 
     @staticmethod
     def _prepare_db(preferences):
@@ -125,7 +125,8 @@ class Utility(object):
         with con:
             cur = con.cursor()
             if create_db:
-                Utility._initDB(cur)
+                Utility._init_db(cur)
+        con.close()
         print con
 
     @staticmethod
@@ -135,7 +136,8 @@ class Utility(object):
 create table if not exists markdown (
     id text primary key,
     isconverted text not null,
-    md text not null
+    md text not null,
+    html text not null
 );
         """)
 
@@ -151,13 +153,13 @@ create table if not exists markdown (
 
         # certain SQL statements do not return a result set
         return_resultset = True
-        if any(sql.startswith(word for word in "insert", "update", "delete")):
+        if any(sql.startswith(word) for word in ("insert", "update", "delete")):
             return_resultset = False
 
         con = lite.connect(const.MD_DB_PATH)
         with con:
             cur = con.cursor()
-            cur.execute(sql, *args)
+            cur.execute(sql, args)
             if return_resultset:
                 resultset = cur.fetchall()
                 return resultset

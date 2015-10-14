@@ -1167,18 +1167,26 @@ class MarkdownParser(object):
                                           "-{:03}".format(self.current_field)
         self.apply_markdown()
 
+    def get_data_from_db(self):
+        sql = "select * from markdown where id=?"
+        data = Utility.execute_query(sql, self.current_note_id_and_field)
+        return data
+
     def apply_markdown(self):
-        sql = "select * from markdown where id = '?'"
-        data = execute_query(sql, self.current_note_id_and_field)
+        data = self.get_data_from_db()
+        print "DATA WE GOT BACK FROM DB:", data
         # data_not_empty = self.markdown_data.get(self.current_note_id_and_field)
         if data and data[0][1] == "True":
             print "REVERTING TO OLD MARKDOWN"
-            print "CONTENTS OF MARKDOWN DICT:\n", self.markdown_data
-            Utility._MARKDOWN_DATA.get(current_note_id_and_field)["is_converted"] = False
-            new_html = data_not_empty.get("markdown")
+            # print "CONTENTS OF MARKDOWN DICT:\n", self.markdown_data
+            # Utility._MARKDOWN_DATA.get(current_note_id_and_field)["is_converted"] = False
+            # new_html = data_not_empty.get("markdown")
+            new_html = data[0][2]
             self.other.web.eval("""
                 document.getElementById('f%s').innerHTML = %s;
             """ % (self.other.currentField, json.dumps(unicode(new_html))))
+            sql = "update markdown set isconverted=? where id=?"
+            Utility.execute_query(sql, "False", self.current_note_id_and_field)
             return
         else:
             print "APPLYING MARKDOWN"
@@ -1218,12 +1226,21 @@ class MarkdownParser(object):
                 #     Utility._MARKDOWN_DATA[current_note_id_and_field] = dict()
                 # Utility._MARKDOWN_DATA[current_note_id_and_field]["markdown"] = self.html
                 # Utility._MARKDOWN_DATA[current_note_id_and_field]["is_converted"] = True
-                insert_sql = """\
-                        insert into markdown (id, isconverted, md)
-                        values (?, ?, ?)
+                update_sql = """\
+                        update markdown
+                        set isconverted=?, md=?, html=?
+                        where id=?
                 """
-                Utility.execute_query(insert_sql, self.current_note_id_and_field,
-                        "True", self.html)
+                insert_sql = """\
+                        insert into markdown (id, isconverted, md, html)
+                        values (?, ?, ?, ?)
+                """
+                if data:
+                    Utility.execute_query(update_sql, "True", self.html, new_html,
+                            self.current_note_id_and_field)
+                else:
+                    Utility.execute_query(insert_sql, self.current_note_id_and_field,
+                            "True", self.html, new_html)
 
 editor.Editor.toggleMarkdown = toggleMarkdown
 editor.Editor.toggleAbbreviation = toggleAbbreviation

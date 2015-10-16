@@ -25,8 +25,21 @@ import re
 from PyQt4 import QtGui, QtCore
 import sqlite3 as lite
 
+from html2text import html2text
 import const
 
+import markdown
+from markdown.extensions import Extension
+from markdown.extensions.fenced_code import FencedCodeExtension
+from markdown.extensions.smart_strong import SmartEmphasisExtension
+from markdown.extensions.footnotes import FootnoteExtension
+from markdown.extensions.attr_list import AttrListExtension
+from markdown.extensions.def_list import DefListExtension
+from markdown.extensions.tables import TableExtension
+from markdown.extensions.abbr import AbbrExtension
+from markdown.extensions.nl2br import Nl2BrExtension
+from markdown.extensions.admonition import AdmonitionExtension
+from markdown.extensions.codehilite import CodeHiliteExtension
 
 class Utility(object):
     """Utility class with all helper functions that are needed throughout
@@ -166,6 +179,47 @@ create table if not exists markdown (
 
     # Methods
     ##################################################
+
+    @staticmethod
+    def convert_html_to_markdown(html):
+        """
+        Take html and return to Markdown. Empty lines are removed from
+        the result.
+        """
+        h = html2text.HTML2Text()
+        h.body_width = 0
+        md_text = h.handle(html)
+        print "Dirty markdown:\n", md_text
+        # remove white lines
+        clean_md = ""
+        for line in md_text.split("\n"):
+            if line:
+                clean_md += (line + "\n")
+        print "Markdown: ", clean_md
+        return clean_md
+
+    @staticmethod
+    def convert_markdown_to_html(preferences, clean_md):
+        print "APPLYING MARKDOWN"
+        # sys.path.insert(0, os.path.join(preferences.addons_folder(),
+        #                                 "extra_buttons"))
+        new_html = markdown.markdown(clean_md,
+            extensions=[
+                SmartEmphasisExtension(),
+                FencedCodeExtension(),
+                FootnoteExtension(),
+                AttrListExtension(),
+                DefListExtension(),
+                TableExtension(),
+                AbbrExtension(),
+                Nl2BrExtension(),
+                AdmonitionExtension(),
+                CodeHiliteExtension(noclasses=True,
+                    pygments_style=preferences.prefs.get(const.MARKDOWN_SYNTAX_STYLE))
+            ])
+        print "New HTML: ", new_html
+        return new_html
+
 
     @staticmethod
     def counter(start=0, step=1):

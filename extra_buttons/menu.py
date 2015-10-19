@@ -41,8 +41,11 @@ class ExtraButtons_Options(QtGui.QMenu):
             self.preferences.prefs[name] = not current_state
 
     def create_checkbox(self, name, main_window):
-        checkbox = QtGui.QCheckBox(name, self)
-        if self.preferences.prefs[name]:
+        # TODO: better names, maybe stored in properties file
+        # prettify option name
+        pretty_name = name.replace("_", " ").capitalize()
+        checkbox = QtGui.QCheckBox(pretty_name, self)
+        if self.preferences.prefs.get(name):
             checkbox.setChecked(True)
         checkbox.stateChanged.connect(self.button_switch)
         return checkbox

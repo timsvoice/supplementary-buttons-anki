@@ -25,7 +25,6 @@ import os
 from anki.utils import json
 from aqt import editor, mw
 from anki.hooks import wrap
-from anki.db import DB
 from PyQt4 import QtGui, QtCore
 import BeautifulSoup
 
@@ -34,18 +33,7 @@ from utility import Utility
 from preferences import Preferences
 from menu import ExtraButtons_Options
 from html2text import html2text
-import markdown
-from markdown.extensions import Extension
-from markdown.extensions.fenced_code import FencedCodeExtension
-from markdown.extensions.smart_strong import SmartEmphasisExtension
-from markdown.extensions.footnotes import FootnoteExtension
-from markdown.extensions.attr_list import AttrListExtension
-from markdown.extensions.def_list import DefListExtension
-from markdown.extensions.tables import TableExtension
-from markdown.extensions.abbr import AbbrExtension
-from markdown.extensions.nl2br import Nl2BrExtension
-from markdown.extensions.admonition import AdmonitionExtension
-from markdown.extensions.codehilite import CodeHiliteExtension
+from markdowner import Markdowner
 
 
 # Buttons
@@ -264,7 +252,7 @@ def wrap_in_tags(self, tag, class_name=None):
             html[end+len_p:])
 
     # cleanup HTML: change all non-breakable spaces to normal spaces
-    html = html.replace("&nbsp;", " ")
+    # html = html.replace("&nbsp;", " ")
 
     # delete the current HTML and replace it by our new & improved one
     self.note.fields[self.currentField] = html
@@ -1149,136 +1137,19 @@ def toggleAbbreviation(self):
 
 def toggleMarkdown(self):
     self.saveNow()
+    selected = self.web.selectedHtml()
+    print "Selected text:", repr(selected)
     current_field = self.currentField
     html_field = self.note.fields[self.currentField]
     Markdowner(self, self.parentWindow, preferences, self.note,
-                    html_field, current_field)
+                    html_field, current_field, selected)
     self.web.setFocus()
     self.web.eval("focusField(%d);" % self.currentField)
     self.saveNow()
+    self.web.setFocus()
+    self.web.eval("focusField(%d);" % self.currentField)
 
-class Markdowner(object):
-    def __init__(self, other, parent_window, preferences,
-                    note, html, current_field):
-        self.other                      = other
-        self.parent_window              = parent_window
-        self.preferences                = preferences
-        self.note                       = note
-        self.html                       = html
-        self.current_field              = current_field
-        self.current_note_id_and_field  = str(self.note.id) + \
-                                          "-{:03}".format(self.current_field)
-        self.data                       = self.get_data_from_db()
-        self.apply_markdown()
 
-    def get_data_from_db(self):
-        """
-        Return a row of markup information from the database.
-        """
-        sql = "select * from markdown where id=?"
-        data = Utility.execute_query(sql, self.current_note_id_and_field)
-        return data
-
-    def insert_new_markup(self, markdown):
-        self.other.web.eval("""
-            document.getElementById('f%s').innerHTML = %s;
-        """ % (self.other.currentField, json.dumps(unicode(markdown))))
-
-    def is_same_html(self, stored_html):
-        """
-        Check if the HTML from the database is the same as the current HTML.
-        Return True when the HTML is the same, False otherwise.
-        """
-        return self.html == stored_html
-
-    def handle_conflict(self):
-        overwrite = False
-        ret = self.show_overwrite_warning()
-        if ret == 0:
-            self.revert_to_stored_markdown()
-        elif ret == 1:
-            # overwrite database
-            self.overwrite_stored_data()
-        else:
-            print "User canceled on warning dialog."
-
-    def overwrite_stored_data(self):
-        """
-        Use the current HTML to update the stored Markdown and HTML in the
-        database. Set the inconverted column to True.
-        """
-        new_md = Utility.convert_html_to_markdown(self.html)
-        new_html = Utility.convert_markdown_to_html(self.preferences, new_md)
-        self.insert_new_markup(new_html)
-        sql = """\
-                update markdown
-                set isconverted=?, md=?, html=?
-                where id=?
-        """
-        Utility.execute_query(sql, "True", new_md, new_html,
-                self.current_note_id_and_field)
-
-    def revert_to_stored_markdown(self):
-        print "REVERTING TO OLD MARKDOWN"
-        new_html = self.data[0][2]
-        self.insert_new_markup(new_html)
-        # store the fact that the Markdown is not converted to HTML
-        sql = "update markdown set isconverted=? where id=?"
-        Utility.execute_query(sql, "False", self.current_note_id_and_field)
-
-    def apply_markdown(self):
-        print "DATA WE GOT BACK FROM DB:", self.data
-        if self.data and self.data[0][1] == "True" and not self.is_same_html(self.data[0][3]):
-            self.handle_conflict()
-            return
-
-        # data is a tuple of tuples: ((id, isconverted, md, html),)
-        if self.data and self.data[0][1] == "True":
-            self.revert_to_stored_markdown()
-        else:
-            clean_md = Utility.convert_html_to_markdown(self.html)
-            new_html = Utility.convert_markdown_to_html(self.preferences, clean_md)
-            self.insert_new_markup(new_html)
-            # store the Markdown so we can reuse it when the button gets toggled
-            if clean_md:
-                update_sql = """\
-                        update markdown
-                        set isconverted=?, md=?, html=?
-                        where id=?
-                """
-                insert_sql = """\
-                        insert into markdown (id, isconverted, md, html)
-                        values (?, ?, ?, ?)
-                """
-                if self.data:
-                    Utility.execute_query(update_sql, "True", self.html, new_html,
-                            self.current_note_id_and_field)
-                else:
-                    Utility.execute_query(insert_sql, self.current_note_id_and_field,
-                            "True", self.html, new_html)
-
-    def show_overwrite_warning(self):
-        """
-        Show a warning modal dialog box, informing the user that the changes
-        have taken place in the formatted text that are not in the Markdown.
-        Returns a 0 for replacing the new changes with the database version of
-        the Markdown, 1 for overwriting the database, and QMessageBox.Cancel for
-        no action.
-        """
-        mess = QtGui.QMessageBox(self.parent_window)
-        mess.setIcon(QtGui.QMessageBox.Warning)
-        mess.setWindowTitle("Content of card changed!")
-        mess.setText("<b>The text of this field seems to have changed while "
-                "Markdown mode was disabled.</b>")
-        mess.setInformativeText("Please choose to either store "
-                "your current version of this field (overwriting the old version), "
-                "replace your current version with the stored version, or cancel.")
-        replaceButton = QtGui.QPushButton("&Replace", mess)
-        mess.addButton(replaceButton, QtGui.QMessageBox.ApplyRole)
-        mess.addButton("&Overwrite", QtGui.QMessageBox.ApplyRole)
-        mess.setStandardButtons(QtGui.QMessageBox.Cancel)
-        mess.setDefaultButton(replaceButton)
-        return mess.exec_()
 
 editor.Editor.toggleMarkdown = toggleMarkdown
 editor.Editor.toggleAbbreviation = toggleAbbreviation

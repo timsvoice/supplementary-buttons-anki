@@ -23,6 +23,7 @@ import os
 import re
 
 from PyQt4 import QtGui, QtCore
+import BeautifulSoup
 import sqlite3 as lite
 
 from html2text import html2text
@@ -40,6 +41,7 @@ from markdown.extensions.abbr import AbbrExtension
 from markdown.extensions.nl2br import Nl2BrExtension
 from markdown.extensions.admonition import AdmonitionExtension
 from markdown.extensions.codehilite import CodeHiliteExtension
+from markdown.extensions.sane_lists import SaneListExtension
 
 class Utility(object):
     """Utility class with all helper functions that are needed throughout
@@ -145,13 +147,14 @@ class Utility(object):
     @staticmethod
     def _init_db(cur):
         print "INITIALIZING DATABASE MARKDOWN"
+        # TODO: add last_modified column
         cur.executescript("""
-create table if not exists markdown (
-    id text primary key,
-    isconverted text not null,
-    md text not null,
-    html text not null
-);
+            create table if not exists markdown (
+                id text primary key,
+                isconverted text not null,
+                md text not null,
+                html text not null
+            );
         """)
 
     @staticmethod
@@ -181,7 +184,7 @@ create table if not exists markdown (
     ##################################################
 
     @staticmethod
-    def convert_html_to_markdown(html):
+    def convert_html_to_markdown(html, keep_empty_lines=False):
         """
         Take html and return to Markdown. Empty lines are removed from
         the result.
@@ -189,21 +192,64 @@ create table if not exists markdown (
         h = html2text.HTML2Text()
         h.body_width = 0
         md_text = h.handle(html)
-        print "Dirty markdown:\n", md_text
-        # remove white lines
-        clean_md = ""
-        for line in md_text.split("\n"):
-            if line:
-                clean_md += (line + "\n")
-        print "Markdown: ", clean_md
+        print "Dirty markdown:\n", repr(md_text)
+        if keep_empty_lines:
+            clean_md = md_text
+        else:
+            # remove white lines
+            clean_md = ""
+            for line in md_text.split("\n"):
+                if line:
+                    clean_md += (line + "\n")
+        print "Markdown: ", repr(clean_md)
+        # undo the html2text escaping of dots which interferes with
+        # the creation of ordered lists
+        regex = re.compile(r"(\d+)\\(\.\s)")
+        clean_md = re.sub(regex, r"\g<1>\g<2>", clean_md)
         return clean_md
+
+    @staticmethod
+    def convert_clean_md_to_html(md, put_breaks=False):
+        """
+        Convert a string containing Markdown syntax to a string with HTML that
+        Anki expects.
+        """
+        result = "<div>"
+        location_last_nbsp = -999999999
+        last_char = ""
+        for index, char in enumerate(md):
+            if char == "\n":
+                result += "</div><div>"
+            elif char == " ":
+                if (index - location_last_nbsp) == 1:
+                    result += char
+                else:
+                    if last_char == "\n" or last_char in " ":
+                        result += "&nbsp;"
+                        location_last_nbsp = index
+                    else:
+                        result += char
+            else:
+                result += char
+            last_char = char
+        # remove last opening <div> tag
+        if result.endswith("<div>"):
+            result = result[:(len(result) - len("<div>"))]
+        # or add a closing <div> tag
+        else:
+            result += "</div>"
+        if put_breaks:
+            soup = BeautifulSoup.BeautifulSoup(result)
+            for elem in soup.findAll("div"):
+                if not elem.contents:
+                    elem.append(BeautifulSoup.BeautifulSoup("<br />"))
+            result = str(soup)
+        return result
 
     @staticmethod
     def convert_markdown_to_html(preferences, clean_md):
         print "APPLYING MARKDOWN"
-        # sys.path.insert(0, os.path.join(preferences.addons_folder(),
-        #                                 "extra_buttons"))
-        new_html = markdown.markdown(clean_md,
+        new_html = markdown.markdown(clean_md, output_format="xhtml1",
             extensions=[
                 SmartEmphasisExtension(),
                 FencedCodeExtension(),
@@ -213,17 +259,47 @@ create table if not exists markdown (
                 TableExtension(),
                 AbbrExtension(),
                 Nl2BrExtension(),
-                AdmonitionExtension(),
                 CodeHiliteExtension(noclasses=True,
-                    pygments_style=preferences.prefs.get(const.MARKDOWN_SYNTAX_STYLE))
-            ])
+                    pygments_style=preferences.prefs.get(const.MARKDOWN_SYNTAX_STYLE)),
+                SaneListExtension()
+            ], lazy_ol=False)
         print "New HTML: ", new_html
         return new_html
 
+    @staticmethod
+    def is_same_html(html_one, html_two):
+        """
+        Return True when html_one is the same as html_two, False otherwise.
+        """
+        return html_one == html_two
+
+    @staticmethod
+    def is_same_markdown(md_one, md_two):
+        """
+        Return True when md_one is the same as md_two, False otherwise.
+        """
+        print "md_one before:\n", repr(md_one)
+        print "md_two before:\n", repr(md_two)
+        compare_one = Utility.remove_white_space(md_one)
+        compare_two = Utility.remove_white_space(md_two)
+        return compare_one == compare_two
+
+    @staticmethod
+    def is_same_text(text_one, text_two):
+        """
+        Return True when text_one is the same as text_two, False otherwise.
+        """
+        return text_one == text_two
+
+    @staticmethod
+    def remove_white_space(s):
+        return "".join(char for char in s if not char.isspace())
 
     @staticmethod
     def counter(start=0, step=1):
-        """Generator that creates infinite numbers."""
+        """
+        Generator that creates infinite numbers.
+        """
         num = start
         while True:
             yield num
@@ -231,15 +307,18 @@ create table if not exists markdown (
 
     @staticmethod
     def set_icon(button, name, current_preferences):
-        """Define the path for the icon the corresponding
-        button should have."""
+        """
+        Define the path for the icon the corresponding button should have.
+        """
         icon_path = os.path.join(current_preferences.addons_folder(),
             const.FOLDER_NAME, "icons", "{}.png".format(name))
         button.setIcon(QtGui.QIcon(icon_path))
 
     @staticmethod
     def escape_html_chars(s):
-        """Escape HTML characters in a string. Return a safe string."""
+        """
+        Escape HTML characters in a string. Return a safe string.
+        """
         html_escape_table = {
             "&": "&amp;",
             '"': "&quot;",
@@ -252,8 +331,10 @@ create table if not exists markdown (
 
     @staticmethod
     def check_alignment(s):
-        """Return the alignment of a table based on input s. If s not in the
-        list, return the default value."""
+        """
+        Return the alignment of a table based on input s. If s not in the
+        list, return the default value.
+        """
         alignments = {":-": "left", ":-:": "center", "-:": "right"}
         default = "left"
         if not s in alignments:
@@ -262,8 +343,10 @@ create table if not exists markdown (
 
     @staticmethod
     def check_size_heading(s):
-        """Determine by counting the number of leading hashes in the string the
-        size of the heading. Return an int that is the length of the hashes."""
+        """
+        Determine by counting the number of leading hashes in the string the
+        size of the heading. Return an int that is the length of the hashes.
+        """
         regex = re.compile(r"^(#+)")
         if s.strip().startswith("#"):
             return len(regex.match(s).group(1))
@@ -272,8 +355,10 @@ create table if not exists markdown (
 
     @staticmethod
     def strip_leading_whitespace(s):
-        """Remove leading whitespace from a string s. Whitespace is defined as
-        a space, a tab or a non-breakable space."""
+        """
+        Remove leading whitespace from a string s. Whitespace is defined as
+        a space, a tab or a non-breakable space.
+        """
         while True:
             if s.startswith(" "):
                 s = s.lstrip()
@@ -285,7 +370,9 @@ create table if not exists markdown (
 
     @staticmethod
     def create_horizontal_rule():
-        """Returns a QFrame that is a sunken, horizontal rule."""
+        """
+        Returns a QFrame that is a sunken, horizontal rule.
+        """
         frame = QtGui.QFrame()
         frame.setFrameShape(QtGui.QFrame.HLine)
         frame.setFrameShadow(QtGui.QFrame.Sunken)
@@ -293,9 +380,11 @@ create table if not exists markdown (
 
     @staticmethod
     def normalize_user_prefs(default_prefs, user_prefs):
-        """Check if the user preferences are compatible with the currently
+        """
+        Check if the user preferences are compatible with the currently
         used preferences within the addon. Adds keys if they don't exist, and
-        removes those that are not recognized."""
+        removes those that are not recognized.
+        """
         # add items that are not in prefs, but should be (e.g. after update)
         for key, value in default_prefs.iteritems():
             if user_prefs.get(key) is None:
@@ -308,10 +397,12 @@ create table if not exists markdown (
 
     @staticmethod
     def split_string(text, splitlist):
-        """Change all separators defined in a string splitlist to the first
+        """
+        Change all separators defined in a string splitlist to the first
         separator in splitlist and then split the text on that one separator.
         Return a list with the original string if splitlist is the empty string
-        or None. Return a list of strings, with no empty strings in it."""
+        or None. Return a list of strings, with no empty strings in it.
+        """
         if not splitlist:
             return [text]
         for sep in splitlist:
@@ -320,10 +411,12 @@ create table if not exists markdown (
 
     @staticmethod
     def validate_key_sequence(sequence, platform=""):
-        """Check a string that contains a key sequence and determine whether it
+        """
+        Check a string that contains a key sequence and determine whether it
         fulfills the key sequence contract: one non-modifier key, and optionaly
         one or more modifier keys. Return a prettified key sequence when the
-        key sequence is valid, or else an empty string."""
+        key sequence is valid, or else an empty string.
+        """
         if not sequence: return ""
         modkeys = const.KEY_MODIFIERS
         # Mac OS X has a special modifier, the Cmd key
@@ -367,16 +460,20 @@ create table if not exists markdown (
 
     @staticmethod
     def filter_duplicates(sequence):
-        """Return a list of elements without duplicates. The order of the
-        original collection may be changed in the returned list."""
+        """
+        Return a list of elements without duplicates. The order of the
+        original collection may be changed in the returned list.
+        """
         if not sequence: return list()
         return list(set(sequence))
 
     @staticmethod
     def create_pretty_sequence(sequence):
-        """Return an ordered string created from a key sequence that contains
+        """
+        Return an ordered string created from a key sequence that contains
         modifier and non-modifier keys. The returned order is ctrl, meta, shift,
-        alt, non-modifier."""
+        alt, non-modifier.
+        """
         if not sequence: return ""
         seq = sequence[:]
         pretty_sequence = list()
@@ -397,9 +494,11 @@ create table if not exists markdown (
 
     @staticmethod
     def check_user_keybindings(default_keybindings, user_keybindings, platform=""):
-        """Check the correctness of the user keybindings. If not correct, the
+        """
+        Check the correctness of the user keybindings. If not correct, the
         default binding will be used instead. Return a check dictionary of
-        valid keybindings."""
+        valid keybindings.
+        """
         validated_keybindings = dict()
         for key, value in user_keybindings.iteritems():
             val_binding = Utility.validate_key_sequence(value, platform)

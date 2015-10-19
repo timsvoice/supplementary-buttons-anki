@@ -181,6 +181,7 @@ class ExtraButtons_Options(QtGui.QMenu):
         all_items_in_combo = \
             [md_style_combo.itemText(i) for i in xrange(md_style_combo.count())]
         current_style = self.preferences.prefs.get(const.MARKDOWN_SYNTAX_STYLE)
+        current_style = current_style.replace("_", " ").capitalize()
         if current_style and current_style in all_items_in_combo:
             index_current_style = all_items_in_combo.index(current_style)
             md_style_combo.setCurrentIndex(index_current_style)
@@ -215,6 +216,7 @@ class ExtraButtons_Options(QtGui.QMenu):
                 self.preferences.prefs[const.FIXED_OL_TYPE] = ''
             chosen_style = str(md_style_combo.currentText())
             chosen_style = chosen_style.lower().replace(' ', '_')
+            print chosen_style
             self.preferences.prefs[const.MARKDOWN_SYNTAX_STYLE] = chosen_style
             self.preferences.prefs[const.CODE_CLASS] = cssClassText.text()
             self.preferences.save_prefs()

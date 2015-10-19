@@ -32,7 +32,7 @@ BLUE = "#06b6ef"
 PURPLE = "#815ba4"
 
 
-class ParaisoLightStyle(Style):
+class Paraiso_LightStyle(Style):
 
     default_style = ''
 

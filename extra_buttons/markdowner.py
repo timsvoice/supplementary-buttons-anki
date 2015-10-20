@@ -19,7 +19,8 @@
 
 import re
 
-from anki.utils import json
+from anki.utils import json, intTime
+from aqt import mw
 from PyQt4 import QtGui
 
 from utility import Utility
@@ -35,6 +36,7 @@ class Markdowner(object):
                     note, html, current_field, selected_html):
         self.other                      = other
         self.parent_window              = parent_window
+        self.db                         = mw.col.db
         self.preferences                = preferences
         self.note                       = note
         self.html                       = html
@@ -42,16 +44,28 @@ class Markdowner(object):
         self.selected_html              = selected_html
         self.current_note_id_and_field  = str(self.note.id) + \
                                           "-{:03}".format(self.current_field)
-        self.data                       = self.get_data_from_db()
+        self._init_db(self.db)
+        self.has_data                   = self.get_data_from_db()
         self.apply_markdown()
 
+    def _init_db(self, db):
+        db.executescript("""
+            create table if not exists markdown (
+                id text primary key,
+                isconverted text not null,
+                md text not null,
+                html text not null,
+                lastmodified integer not null
+            );
+        """)
+        print "SUCCESFULLY INITIALIZED DATABASE"
+
     def apply_markdown(self):
-        print "DATA WE GOT BACK FROM DB:", self.data
-        # data is a list of tuples: [(id, isconverted, md, html)]
+        # data is a list of tuples: [(id, isconverted, md, html, lastmodified)]
         clean_md = Utility.convert_html_to_markdown(self.html)
         print "clean_md from apply_markdown:\n", clean_md
         # check for changed Markdown between the database and the current text
-        if (self.data and self.data[0][1] == "True"):
+        if (self.has_data and self.isconverted == "True"):
             if self.selected_html:
                 # only convert the selected text
                 clean_md = Utility.convert_html_to_markdown(self.selected_html)
@@ -63,8 +77,7 @@ class Markdowner(object):
                 self.store_new_markdown_version(new_html)
                 return
 
-            # clean_md_from_db = Utility.convert_html_to_markdown(self.data[0][2])
-            if not Utility.is_same_markdown(clean_md, self.data[0][2]):
+            if not Utility.is_same_markdown(clean_md, self.md):
                 self.handle_conflict()
             else:
                 self.revert_to_stored_markdown()
@@ -77,11 +90,21 @@ class Markdowner(object):
 
     def get_data_from_db(self):
         """
-        Return a row of markup information from the database.
+        Set the first row of markup information from the database to variables.
+        Return True when data is retrieved, False if the result set is empty.
         """
         sql = "select * from markdown where id=?"
-        data = Utility.execute_query(sql, self.current_note_id_and_field)
-        return data
+        # data = Utility.execute_query(sql, self.current_note_id_and_field)
+        data = self.db.first(sql, self.current_note_id_and_field)
+        print "DATA WE GOT BACK FROM DB:", data
+        if data:
+            (self.id,
+             self.isconverted,
+             self.md,
+             self._html,
+             self.lastmodified) = data
+            return True
+        return False
 
     def insert_new_markup(self, markup):
         """
@@ -108,7 +131,7 @@ class Markdowner(object):
     def overwrite_stored_data(self):
         """
         Use the current HTML to update the stored Markdown and HTML in the
-        database. Set the inconverted column to True.
+        database. Set the isconverted column to True.
         """
         clean_md = Utility.convert_html_to_markdown(self.html, keep_empty_lines=True)
         new_html = Utility.convert_clean_md_to_html(clean_md, put_breaks=True)
@@ -124,20 +147,27 @@ class Markdowner(object):
         #         self.current_note_id_and_field)
         sql = """\
                 update markdown
-                set isconverted=?, md=?
+                set isconverted=?, md=?, lastmodified=?
                 where id=?
         """
-        Utility.execute_query(sql, "False", clean_md, self.current_note_id_and_field)
+        # Utility.execute_query(sql, "False", clean_md,
+        #         intTime(1000), self.current_note_id_and_field)
+        self.db.execute(sql, "False", clean_md,
+                intTime(1000), self.current_note_id_and_field)
+        self.db.commit()
 
     def revert_to_stored_markdown(self):
         print "REVERTING TO OLD MARKDOWN"
-        stored_md = self.data[0][2]
-        new_html = Utility.convert_clean_md_to_html(stored_md)
-        print repr(stored_md)
+        # stored_md = self.data[0][2]
+        new_html = Utility.convert_clean_md_to_html(self.md)
+        print repr(self.md)
         self.insert_new_markup(new_html)
         # store the fact that the Markdown is currently not converted to HTML
-        sql = "update markdown set isconverted=? where id=?"
-        Utility.execute_query(sql, "False", self.current_note_id_and_field)
+        sql = "update markdown set isconverted=?, lastmodified=? where id=?"
+        # Utility.execute_query(sql, "False", self.current_note_id_and_field)
+        self.db.execute(sql, "False",
+                intTime(1000), self.current_note_id_and_field)
+        self.db.commit()
 
     def store_new_markdown_version(self, clean_md, new_html):
         """
@@ -146,19 +176,24 @@ class Markdowner(object):
         """
         update_sql = """\
                 update markdown
-                set isconverted=?, md=?, html=?
+                set isconverted=?, md=?, html=?, lastmodified=?
                 where id=?
         """
         insert_sql = """\
-                insert into markdown (id, isconverted, md, html)
-                values (?, ?, ?, ?)
+                insert into markdown (id, isconverted, md, html, lastmodified)
+                values (?, ?, ?, ?, ?)
         """
-        if self.data:
-            Utility.execute_query(update_sql, "True", clean_md, new_html,
-                    self.current_note_id_and_field)
+        if self.has_data:
+            # Utility.execute_query(update_sql, "True", clean_md, new_html,
+            #         self.current_note_id_and_field)
+            self.db.execute(update_sql, "True", clean_md, new_html,
+                    intTime(1000), self.current_note_id_and_field)
         else:
-            Utility.execute_query(insert_sql, self.current_note_id_and_field,
-                    "True", clean_md, new_html)
+            # Utility.execute_query(insert_sql, self.current_note_id_and_field,
+            #         "True", clean_md, new_html)
+            self.db.execute(insert_sql, self.current_note_id_and_field,
+                    "True", clean_md, new_html, intTime(1000))
+        self.db.commit()
 
 
     def show_overwrite_warning(self):

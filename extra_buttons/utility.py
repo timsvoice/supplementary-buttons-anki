@@ -25,6 +25,8 @@ import re
 from PyQt4 import QtGui, QtCore
 import BeautifulSoup
 import sqlite3 as lite
+from anki.db import DB
+from anki.utils import intTime
 
 from html2text import html2text
 import const
@@ -153,7 +155,8 @@ class Utility(object):
                 id text primary key,
                 isconverted text not null,
                 md text not null,
-                html text not null
+                html text not null,
+                lastmodified integer not null
             );
         """)
 

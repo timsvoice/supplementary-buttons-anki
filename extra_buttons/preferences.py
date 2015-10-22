@@ -153,7 +153,7 @@ class Preferences(object):
                     self._default_keybindings, self.keybindings, const.PLATFORM)
 
         # initialize database for Markdown
-        Utility._prepare_db(self)
+        # Utility._prepare_db(self)
 
     def get_keybinding(self, name_of_key):
         """Return the keybinding indicated by name_of_key, and capitalize

@@ -63,7 +63,7 @@ class Markdowner(object):
     def apply_markdown(self):
         # data is a list of tuples: [(id, isconverted, md, html, lastmodified)]
         clean_md = Utility.convert_html_to_markdown(self.html)
-        print "clean_md from apply_markdown:\n", clean_md
+        print "CLEAN_MD FROM APPLY_MARKDOWN:\n", clean_md
         # check for changed Markdown between the database and the current text
         if (self.has_data and self.isconverted == "True"):
             if self.selected_html:
@@ -174,6 +174,8 @@ class Markdowner(object):
         Update current database with new data, or insert a new row into the
         database when there is no prior data.
         """
+        # save clean markdown with escaped characters
+        clean_md = Utility.escape_html_chars(clean_md)
         update_sql = """\
                 update markdown
                 set isconverted=?, md=?, html=?, lastmodified=?

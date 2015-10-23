@@ -18,6 +18,7 @@
 # with Supplementary Buttons for Anki. If not, see http://www.gnu.org/licenses/.
 
 import re
+import sqlite3
 
 from anki.utils import json, intTime
 from aqt import mw
@@ -48,7 +49,7 @@ class Markdowner(object):
         self.has_data                   = self.get_data_from_db()
         self.apply_markdown()
 
-    def _init_db(self, db):
+    def _init_db_old(self, db):
         db.executescript("""
             create table if not exists markdown (
                 id text primary key,
@@ -59,6 +60,15 @@ class Markdowner(object):
             );
         """)
         print "SUCCESFULLY INITIALIZED DATABASE"
+
+    def _init_db(self, db):
+        try:
+            db.execute("select markdown from notes")
+            print "COLUMN markdown ALREADY ADDED TO TABLE notes"
+            return
+        except sqlite3.OperationalError as e:
+            db.executescript("alter table notes add markdown text;")
+            print "ADDED COLUMN markdown TO TABLE notes"
 
     def apply_markdown(self):
         # data is a list of tuples: [(id, isconverted, md, html, lastmodified)]
@@ -88,7 +98,7 @@ class Markdowner(object):
             if clean_md:
                 self.store_new_markdown_version(clean_md, new_html)
 
-    def get_data_from_db(self):
+    def get_data_from_db_old(self):
         """
         Set the first row of markup information from the database to variables.
         Return True when data is retrieved, False if the result set is empty.
@@ -103,6 +113,37 @@ class Markdowner(object):
              self.md,
              self._html,
              self.lastmodified) = data
+            return True
+        return False
+
+    def get_md_data_from_dict(self, data):
+        """
+        Set the markdown data associated with the note and field. Return True if
+        data was found, False otherwise.
+        """
+        result = None
+        for entry in data.keys():
+            if entry == self.current_note_id_and_field:
+                result = data[entry]
+                break
+        if result:
+            md              = result.get("md")
+            isconverted     = result.get("isconverted")
+            lastmodified    = result.get("lastmodified")
+            print "DATA FROM DATABASE: {} : {} : {}".format(md, isconverted, lastmodified)
+            return True
+        return False
+
+    def get_data_from_db(self):
+        """
+        Fill a variable with information from the database, if any.
+        Return True when data is retrieved, False if the result set is empty.
+        """
+        sql = "select markdown from notes where id=?"
+        resultset = self.db.first(sql, self.note.id)
+        print "DATA WE GOT BACK FROM DB:", resultset
+        if resultset:
+            self.data = json.loads(resultset[0])
             return True
         return False
 

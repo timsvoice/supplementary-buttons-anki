@@ -299,6 +299,33 @@ class Utility(object):
         return "".join(char for char in s if not char.isspace())
 
     @staticmethod
+    def put_md_data_in_dict(note, field, md, html, isconverted):
+        """
+        Return a dictionary with information that is needed for the database and
+        can be parsed with JSON.
+        """
+        unique_id = note + "-{:03}".format(field)
+        d = {
+                unique_id: {
+                    "md": md,
+                    "html": html,
+                    "isconverted": isconverted,
+                    "lastmodified": intTime(1000)
+                }
+            }
+        return d
+
+    @staticmethod
+    def merge_dicts(existing, new):
+        """
+        Merge two dictionaries. The values from 'new' dictionary take
+        precedence over the values from the 'existing' dictionary where
+        there are duplicate keys. Return a dictionary that contains the
+        key-value pairs from both dicts.
+        """
+        return dict(existing.items() + new.items())
+
+    @staticmethod
     def counter(start=0, step=1):
         """
         Generator that creates infinite numbers.

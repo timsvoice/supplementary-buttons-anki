@@ -26,7 +26,7 @@ from PyQt4 import QtGui, QtCore
 import BeautifulSoup
 import sqlite3 as lite
 from anki.db import DB
-from anki.utils import intTime
+from anki.utils import intTime, json
 
 from html2text import html2text
 import const
@@ -299,10 +299,9 @@ class Utility(object):
         return "".join(char for char in s if not char.isspace())
 
     @staticmethod
-    def put_md_data_in_dict(note, field, md, html, isconverted):
+    def put_md_data_in_json_format(note_id, field, md, html, isconverted):
         """
-        Return a dictionary with information that is needed for the database and
-        can be parsed with JSON.
+        Return a JSON string with information that is needed for the database.
         """
         unique_id = note + "-{:03}".format(field)
         d = {
@@ -313,7 +312,7 @@ class Utility(object):
                     "lastmodified": intTime(1000)
                 }
             }
-        return d
+        return json.dumps(d)
 
     @staticmethod
     def merge_dicts(existing, new):

@@ -38,6 +38,7 @@ class Markdowner(object):
         self.other                      = other
         self.parent_window              = parent_window
         self.col                        = mw.col
+        print "self.server:", self.col.server
         self.db                         = mw.col.db
         self.preferences                = preferences
         self.note                       = note
@@ -205,10 +206,11 @@ class Markdowner(object):
         # store the fact that the Markdown is currently not converted to HTML
         sql = """
             update markdown
-            set isconverted=?
+            set isconverted=?, mod=?, usn=?
             where id=?
         """
-        self.db.execute(sql, "False", self.current_note_id_and_field)
+        self.db.execute(sql, "False", intTime(), self.col.usn(),
+                self.current_note_id_and_field)
         self.db.commit()
 
     def store_new_markdown_version(self, new_md, new_html):

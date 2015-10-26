@@ -98,11 +98,13 @@ _setupProxy()
 class Syncer(object):
 
     def __init__(self, col, server=None):
+        print "THE SYNCER OBJECT FROM EXTRA BUTTONS"
         self.col = col
         self.server = server
 
     def sync(self):
         "Returns 'noChanges', 'fullSync', 'success', etc"
+        print "WE ARE IN THE SYNC METHOD"
         self.syncMsg = ""
         self.uname = ""
         # if the deck has any pending changes, flush them first and bump mod
@@ -282,6 +284,7 @@ class Syncer(object):
         return dict(status="ok")
 
     def usnLim(self):
+        print "in sync, self.col.server =", self.col.server
         if self.col.server:
             return "usn >= %d" % self.minUsn
         else:
@@ -516,9 +519,10 @@ from markdown where %s""" % d)
 
     def mergeMarkdown(self, markdown):
         rows = self.newerRows(markdown, "markdown", 4)
-        self.col.db.executemany(
-            "insert or replace into markdown values (?,?,?,?,?,?)",
-            rows)
+        self.col.db.executemany("""
+            insert or replace into markdown (id, isconverted, md, html, mod, usn)
+            values (?,?,?,?,?,?)
+            """, rows)
         self.col.updateFieldCache([f[0] for f in rows])
 
     # Col config

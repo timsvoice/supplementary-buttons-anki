@@ -25,7 +25,7 @@ import os
 from anki.utils import json, stripHTMLMedia, fieldChecksum, intTime
 from aqt import editor, mw
 from anki.hooks import wrap
-import anki.sync
+import anki, aqt
 from PyQt4 import QtGui, QtCore
 import BeautifulSoup
 
@@ -35,11 +35,20 @@ from preferences import Preferences
 from menu import ExtraButtons_Options
 from html2text import html2text
 from markdowner import Markdowner
-from anki_modules import sync
+# from anki_modules import sync as mysync
+from anki_modules.anki import sync as ankisync
+from anki_modules.aqt import sync as aqtsync
 
 # Overrides
 ##################################################
-anki.sync = sync
+sys.modules["aqt.sync"] = aqtsync
+print "everything with sync in it:\n"
+for item in sys.modules.keys():
+    if "sync" in item:
+        print item
+print "contains anki.sync:", sys.modules["anki.sync"]
+sys.modules["anki.sync"] = ankisync
+print "contains anki.sync:", sys.modules["anki.sync"]
 
 # Buttons
 ##################################################

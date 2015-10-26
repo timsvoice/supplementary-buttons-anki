@@ -269,7 +269,6 @@ class Syncer(object):
             list(self.col.sched.counts()),
             self.col.db.scalar("select count() from cards"),
             self.col.db.scalar("select count() from notes"),
-            self.col.db.scalar("select count() from markdown"),
             self.col.db.scalar("select count() from revlog"),
             self.col.db.scalar("select count() from graves"),
             len(self.col.models.all()),

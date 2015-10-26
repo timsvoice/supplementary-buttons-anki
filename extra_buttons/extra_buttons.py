@@ -22,9 +22,10 @@ import re
 import sys
 import os
 
-from anki.utils import json
+from anki.utils import json, stripHTMLMedia, fieldChecksum, intTime
 from aqt import editor, mw
 from anki.hooks import wrap
+import anki.sync
 from PyQt4 import QtGui, QtCore
 import BeautifulSoup
 
@@ -34,7 +35,11 @@ from preferences import Preferences
 from menu import ExtraButtons_Options
 from html2text import html2text
 from markdowner import Markdowner
+from anki_modules import sync
 
+# Overrides
+##################################################
+anki.sync = sync
 
 # Buttons
 ##################################################

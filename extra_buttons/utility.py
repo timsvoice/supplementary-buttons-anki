@@ -195,7 +195,7 @@ class Utility(object):
         h = html2text.HTML2Text()
         h.body_width = 0
         md_text = h.handle(html)
-        print "Dirty markdown:\n", repr(md_text)
+        # print "Dirty markdown:\n", repr(md_text)
         if keep_empty_lines:
             clean_md = md_text
         else:
@@ -204,7 +204,7 @@ class Utility(object):
             for line in md_text.split("\n"):
                 if line:
                     clean_md += (line + "\n")
-        print "Markdown: ", repr(clean_md)
+        # print "Markdown: ", repr(clean_md)
         # undo the html2text escaping of dots which interferes with
         # the creation of ordered lists
         regex = re.compile(r"(\d+)\\(\.\s)")
@@ -266,7 +266,7 @@ class Utility(object):
                     pygments_style=preferences.prefs.get(const.MARKDOWN_SYNTAX_STYLE)),
                 SaneListExtension()
             ], lazy_ol=False)
-        print "New HTML: ", new_html
+        # print "New HTML: ", new_html
         return new_html
 
     @staticmethod
@@ -281,8 +281,8 @@ class Utility(object):
         """
         Return True when md_one is the same as md_two, False otherwise.
         """
-        print "md_one before:\n", repr(md_one)
-        print "md_two before:\n", repr(md_two)
+        # print "md_one before:\n", repr(md_one)
+        # print "md_two before:\n", repr(md_two)
         compare_one = Utility.remove_white_space(md_one)
         compare_two = Utility.remove_white_space(md_two)
         return compare_one == compare_two
@@ -303,7 +303,7 @@ class Utility(object):
         """
         Return a JSON string with information that is needed for the database.
         """
-        unique_id = note + "-{:03}".format(field)
+        unique_id = str(note_id) + "-{:03}".format(field)
         d = {
                 unique_id: {
                     "md": md,

@@ -38,6 +38,8 @@ from markdowner import Markdowner
 # from anki_modules import sync as mysync
 from anki_modules.anki import sync as ankisync
 from anki_modules.aqt import sync as aqtsync
+from anki_modules.anki import collection as mycollection
+from anki_modules.anki import storage as mystorage
 
 # Overrides
 ##################################################
@@ -48,6 +50,8 @@ for item in sys.modules.keys():
         print item
 print "contains anki.sync:", sys.modules["anki.sync"]
 sys.modules["anki.sync"] = ankisync
+sys.modules["anki.collection"] = mycollection
+sys.modules["anki.storage"] = mystorage
 print "contains anki.sync:", sys.modules["anki.sync"]
 
 # Buttons

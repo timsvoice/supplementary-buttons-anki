@@ -21,6 +21,7 @@ import string
 import sys
 import os
 import re
+import base64
 
 from PyQt4 import QtGui, QtCore
 import BeautifulSoup
@@ -119,6 +120,10 @@ class Utility(object):
                                           tuple(string.digits)
     const.FUNCTION_KEYS                 = ("f1", "f2", "f3", "f4", "f5", "f6",
                                            "f7", "f8", "f9", "f10", "f11", "f12")
+
+    # markers to be wrapped around Markdown data in fields
+    const.START_HTML_MARKER             = "<!----SBAdata:"
+    const.END_HTML_MARKER               = "---->"
 
     # Storage of Markdown syntax
     ##################################################
@@ -299,20 +304,17 @@ class Utility(object):
         return "".join(char for char in s if not char.isspace())
 
     @staticmethod
-    def put_md_data_in_json_format(note_id, field, md, html, isconverted):
+    def put_md_data_in_json_format(unique_id, isconverted, md, html):
         """
-        Return a JSON string with information that is needed for the database.
+        Return a dictionary with information that is needed for the database.
         """
-        unique_id = str(note_id) + "-{:03}".format(field)
-        d = {
-                unique_id: {
-                    "md": md,
-                    "html": html,
-                    "isconverted": isconverted,
-                    "lastmodified": intTime(1000)
+        return  {
+                "id": unique_id,
+                "isconverted": isconverted,
+                "md": md,
+                "html": html,
+                "lastmodified": intTime()
                 }
-            }
-        return json.dumps(d)
 
     @staticmethod
     def merge_dicts(existing, new):
@@ -323,6 +325,65 @@ class Utility(object):
         key-value pairs from both dicts.
         """
         return dict(existing.items() + new.items())
+
+    @staticmethod
+    def json_dump_and_compress(data):
+        print "DATA IN:", repr(data)
+        ret = base64.b64encode(json.dumps(data))
+        print repr(ret)
+        return ret
+
+    @staticmethod
+    def decompress_and_json_load(data):
+        print "DATA OUT:", repr(data)
+        ret = json.loads(base64.b64decode(data))
+        print repr(ret)
+        return ret
+
+    @staticmethod
+    def wrap_string(at_start, a_string, at_end):
+        """
+        Return a string `a_string` that has the `at_start` string prepended and
+        the `at_end` string appended to it.
+        """
+        return at_start + a_string + at_end
+
+    @staticmethod
+    def append_data_to_string(html, wrapped_compr_data):
+        """
+        Return a string that contains compressed data at the end. The data
+        is wrapped in a marker to signify it is data and not to be displayed
+        in the field.
+        """
+        return html + wrapped_compr_data
+
+    @staticmethod
+    def make_data_ready_to_insert(unique_id, isconverted, md, html):
+        md_dict = Utility.put_md_data_in_json_format(
+                unique_id, isconverted, md, html)
+        md_dict_compr = Utility.json_dump_and_compress(md_dict)
+        wrapped_md_dict_compr = Utility.wrap_string(const.START_HTML_MARKER,
+                                                    md_dict_compr,
+                                                    const.END_HTML_MARKER)
+        return Utility.append_data_to_string(html, wrapped_md_dict_compr)
+
+
+    @staticmethod
+    def get_md_data_from_string(html):
+        """
+        Read a string `html` and extract compressed Markdown data from it, if it is
+        available. Return a dictionary that contains this data, otherwise
+        return None.
+        """
+        if not const.START_HTML_MARKER in html:
+            return None
+        start = html.find(const.START_HTML_MARKER) + \
+                len(const.START_HTML_MARKER)
+        end = html.find(const.END_HTML_MARKER, start)
+        if start == -1 or end == -1:
+            return None
+        compr_str = html[start:end]
+        return Utility.decompress_and_json_load(compr_str)
 
     @staticmethod
     def counter(start=0, step=1):

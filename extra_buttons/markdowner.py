@@ -53,24 +53,45 @@ class Markdowner(object):
         self.md                         = None
         self._html                      = None
         self._lastmodified              = None
-        self._usn                       = None
-        self.has_data                   = self.get_data_from_db()
+        self.has_data                   = self.get_data_from_field()
+        self.check_for_data_existence()
         self.apply_markdown()
 
+    def check_for_data_existence(self):
+        """
+        Check if data is attached to field. If not, check for the existence
+        of Markdown data in the database. If it exists there, put it also in
+        the field. Otherwise, do nothing.
+        """
+        if self.has_data:
+            self.store_new_markdown_version_in_db(
+                    self.isconverted, self.md, self._html)
+        else:
+            # check database
+            self.has_data = self.get_data_from_db()
+            if self.has_data:
+                # and put data in field
+                new_html = Utility.make_data_ready_to_insert(
+                        self._id, self.isconverted, self.md, self._html)
+                self.insert_markup_in_field(new_html, self.other.currentField)
+
     def _init_db(self, db):
+        """
+        Initialize the markdown database.
+        """
         self.db.executescript("""
                 create table if not exists markdown (
                     id              text primary key,
                     isconverted     text not null,
                     md              text not null,
                     html            text not null,
-                    mod             integer not null,
-                    usn             integer not null
+                    mod             integer not null
                 );""")
         print "INITIALIAZE DATABASE"
 
     def apply_markdown(self):
         clean_md = Utility.convert_html_to_markdown(self.html)
+        clean_md_escaped = Utility.escape_html_chars(clean_md)
         # check for changed Markdown between the database and the current text
         if (self.has_data and self.isconverted == "True"):
             # if self.selected_html:
@@ -81,7 +102,7 @@ class Markdowner(object):
             #     self.other.web.eval(
             #             "document.execCommand('insertHTML', false, %s);"
             #             % json.dumps(new_html))
-            #     self.store_new_markdown_version(new_html)
+            #     self.store_new_markdown_version_in_db(new_html)
             #     return
 
             if not Utility.is_same_markdown(clean_md, self.md):
@@ -89,12 +110,16 @@ class Markdowner(object):
             else:
                 self.revert_to_stored_markdown()
         else:
-            new_html = Utility.convert_markdown_to_html(self.preferences, clean_md)
-            self.insert_markup_in_field(new_html, self.other.currentField)
+            new_html = Utility.convert_markdown_to_html(self.preferences,
+                                                        clean_md)
+            html_with_data = Utility.make_data_ready_to_insert(
+                    self.current_note_id_and_field, "True",
+                    clean_md_escaped, new_html)
+            self.insert_markup_in_field(html_with_data, self.other.currentField)
             # store the Markdown so we can reuse it when the button gets toggled
             if clean_md:
-                clean_md = Utility.escape_html_chars(clean_md)
-                self.store_new_markdown_version(clean_md, new_html)
+                self.store_new_markdown_version_in_db(
+                        "True", clean_md_escaped, new_html)
 
     # def get_data_from_db_old(self):
     #     """
@@ -147,8 +172,26 @@ class Markdowner(object):
              self.isconverted,
              self.md,
              self._html,
-             self._lastmodified,
-             self._usn) = resultset
+             self._lastmodified) = resultset
+            return True
+        return False
+
+    def get_data_from_field(self):
+        """
+        Get the HTML from the current field and try to extract Markdown data
+        from it. The side effect of calling this function is that several
+        instance variables get set. Return True when data was found in the
+        field, False otherwise.
+        """
+        md_dict = Utility.get_md_data_from_string(self.html)
+        if md_dict:
+            self._id            = md_dict.get("id")
+            self.md             = md_dict.get("md")
+            self._html          = md_dict.get("html")
+            self.isconverted    = md_dict.get("isconverted")
+            self._lastmodified  = md_dict.get("lastmodified")
+            print "DATA FROM FIELD:\n{}\n{}\n{}\n{}".format(
+                    self.md, self._html, self.isconverted, self._lastmodified)
             return True
         return False
 
@@ -185,54 +228,48 @@ class Markdowner(object):
         Use the current HTML to update the stored Markdown and HTML in the
         database. Set the isconverted column to True.
         """
-        clean_md = Utility.convert_html_to_markdown(self.html, keep_empty_lines=True)
-        new_html = Utility.convert_clean_md_to_html(clean_md, put_breaks=True)
+        clean_md = Utility.convert_html_to_markdown(
+                self.html, keep_empty_lines=True)
+        new_html = Utility.convert_clean_md_to_html(
+                clean_md, put_breaks=True)
         print "INSERTING THIS:\n", new_html
         self.insert_markup_in_field(new_html, self.other.currentField)
-        sql = """\
-                update markdown
-                set md=?, html=?, usn=?, mod=?
-                where id=?
+        sql = """
+            update markdown
+            set md=?, html=?, mod=?
+            where id=?
         """
-        self.db.execute(sql, clean_md, new_html, self.col.usn(), intTime(),
+        self.db.execute(sql, clean_md, new_html, intTime(),
                 self.current_note_id_and_field)
         self.db.commit()
 
     def revert_to_stored_markdown(self):
         print "REVERTING TO OLD MARKDOWN"
         new_html = Utility.convert_clean_md_to_html(self.md)
-        # print repr(new_html)
+        new_html = Utility.make_data_ready_to_insert(
+                self.current_note_id_and_field, "False", self.md, new_html)
+        print repr(new_html)
         self.insert_markup_in_field(new_html, self.other.currentField)
         # store the fact that the Markdown is currently not converted to HTML
         sql = """
             update markdown
-            set isconverted=?, mod=?, usn=?
+            set isconverted=?, mod=?
             where id=?
         """
-        self.db.execute(sql, "False", intTime(), self.col.usn(),
-                self.current_note_id_and_field)
+        self.db.execute(sql, "False", intTime(), self.current_note_id_and_field)
         self.db.commit()
 
-    def store_new_markdown_version(self, new_md, new_html):
+    def store_new_markdown_version_in_db(self, isconverted, new_md, new_html):
         """
         Update current database with new data, or insert a new row into the
         database when there is no prior data.
         """
-        update_stmt = """
-            update markdown
-            set isconverted=?, md=?, html=?, mod=?, usn=?
-            where id=?
+        replace_stmt = """
+            insert or replace into markdown (id, isconverted, md, html, mod)
+            values (?, ?, ?, ?, ?)
         """
-        insert_stmt = """
-            insert into markdown (id, isconverted, md, html, mod, usn)
-            values (?, ?, ?, ?, ?, ?)
-        """
-        if self.has_data:
-            self.db.execute(update_stmt, "True", new_md, new_html,
-                    intTime(), self.col.usn(), self.current_note_id_and_field)
-        else:
-            self.db.execute(insert_stmt, self.current_note_id_and_field,
-                    "True", new_md, new_html, intTime(), self.col.usn())
+        self.db.execute(replace_stmt, self.current_note_id_and_field,
+                        isconverted, new_md, new_html, intTime())
         self.db.commit()
 
     def show_overwrite_warning(self):

@@ -108,6 +108,7 @@ class Markdowner(object):
                     self.isconverted, self.md, self._html, self._lastmodified)
 
     def apply_markdown(self):
+        # convert self.md to html; convert html to markdown; compare
         clean_md = Utility.convert_html_to_markdown(self.html)
         clean_md_escaped = Utility.escape_html_chars(clean_md)
         if not clean_md:
@@ -125,6 +126,7 @@ class Markdowner(object):
             #     self.store_new_markdown_version_in_db(new_html)
             #     return
 
+            # TODO: better compare will result in less popup windows
             if not Utility.is_same_markdown(clean_md, self.md):
                 self.handle_conflict()
             else:
@@ -235,10 +237,12 @@ class Markdowner(object):
         self.other.web.eval("""
             if (document.getElementById('mdwarn%s') === null) {
                 var style_tag = document.getElementsByTagName('style')[0];
-                style_tag.innerHTML += '#f%s { background-color: %s !important; }\\n'
-                console.log('style: ' + style_tag.innerHTML);
+                style_tag.innerHTML += '.mdstyle { background-color: %s !important; }\\n'
+
                 var field = document.getElementById('f%s');
                 field.setAttribute('title', '%s');
+                field.classList.add('mdstyle');
+
                 var warn_div = document.createElement('div');
                 warn_div.id = 'mdwarn%s';
                 warn_div.setAttribute('style', 'margin: 10px 0px;');
@@ -246,21 +250,19 @@ class Markdowner(object):
                 warn_div.appendChild(text);
                 field.parentNode.insertBefore(warn_div, field.nextSibling);
             }
-        """ % (field, field, color, field, warning_text, field, warning_text))
+        """ % (field, color, field, warning_text, field, warning_text))
 
     def remove_warn_msg(self):
         self.other.web.eval("""
             if (document.getElementById('mdwarn%s') !== null) {
-                var style_tag = document.getElementsByTagName('style')[0];
-                style_tag.innerHTML = style_tag.innerHTML.replace(/^#f%s.*/m, '');
                 console.log('style: ' + style_tag.innerHTML);
                 var field = document.getElementById('f%s');
+                field.classList.remove('mdstyle');
                 field.removeAttribute('title');
                 var warn_msg = document.getElementById('mdwarn%s');
                 warn_msg.parentNode.removeChild(warn_msg);
             }
-        """ % (self.current_field, self.current_field, self.current_field,
-                self.current_field))
+        """ % (self.current_field, self.current_field, self.current_field))
 
     def handle_conflict(self):
         """

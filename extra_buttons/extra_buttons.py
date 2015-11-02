@@ -36,9 +36,11 @@ from preferences import Preferences
 from menu import ExtraButtons_Options
 from html2text import html2text
 from markdowner import Markdowner
+from anki_modules.aqt import editor as myeditor
 
 # Overrides
 ##################################################
+editor.Editor.onHtmlEdit = myeditor.onHtmlEdit
 
 # Buttons
 ##################################################
@@ -1162,7 +1164,6 @@ def on_focus_gained(self, note, field):
         markdowner = Markdowner(self, self.parentWindow, preferences, note,
                                 html_field, field, "")
         markdowner.on_focus_gained()
-        Markdowner.button_pressed = True
 
 def init_hook(self, mw, widget, parentWindow, addMode=False):
     addHook("editFocusGained", self.on_focus_gained)

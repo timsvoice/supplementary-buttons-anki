@@ -204,7 +204,10 @@ class Markdowner(object):
         field, False otherwise.
         """
         md_dict = Utility.get_md_data_from_string(self.html)
-        if md_dict:
+        if md_dict and md_dict == "corrupted":
+            # TODO: fallback when JSON is corrupted
+            pass
+        elif md_dict:
             self._id            = md_dict.get("id")
             self.md             = md_dict.get("md")
             self._html          = md_dict.get("html")
@@ -232,9 +235,8 @@ class Markdowner(object):
         self.other.web.eval("""
             if (document.getElementById('mdwarn%s') === null) {
                 var style_tag = document.getElementsByTagName('style')[0];
-                style_tag.innerHTML = style_tag.innerHTML +
-                        '#f%s { background: %s !important; }'
-                console.log('style: ' + style_tag.innerHTML
+                style_tag.innerHTML += '#f%s { background-color: %s !important; }\\n'
+                console.log('style: ' + style_tag.innerHTML);
                 var field = document.getElementById('f%s');
                 field.setAttribute('title', '%s');
                 var warn_div = document.createElement('div');
@@ -245,6 +247,20 @@ class Markdowner(object):
                 field.parentNode.insertBefore(warn_div, field.nextSibling);
             }
         """ % (field, field, color, field, warning_text, field, warning_text))
+
+    def remove_warn_msg(self):
+        self.other.web.eval("""
+            if (document.getElementById('mdwarn%s') !== null) {
+                var style_tag = document.getElementsByTagName('style')[0];
+                style_tag.innerHTML = style_tag.innerHTML.replace(/^#f%s.*/m, '');
+                console.log('style: ' + style_tag.innerHTML);
+                var field = document.getElementById('f%s');
+                field.removeAttribute('title');
+                var warn_msg = document.getElementById('mdwarn%s');
+                warn_msg.parentNode.removeChild(warn_msg);
+            }
+        """ % (self.current_field, self.current_field, self.current_field,
+                self.current_field))
 
     def handle_conflict(self):
         """
@@ -262,8 +278,8 @@ class Markdowner(object):
 
     def overwrite_stored_data(self):
         """
-        Use the current HTML to update the stored Markdown and HTML in the
-        database. Set the isconverted column to True.
+        Create new Markdown from the current HTML. Remove the data about the current
+        field from the database.
         """
         clean_md = Utility.convert_html_to_markdown(
                 self.html, keep_empty_lines=True)
@@ -277,6 +293,7 @@ class Markdowner(object):
         """
         self.db.execute(sql, self.current_note_id_and_field)
         self.db.commit()
+        self.remove_warn_msg()
 
     def revert_to_stored_markdown(self):
         print "REVERTING TO OLD MARKDOWN"
@@ -294,18 +311,7 @@ class Markdowner(object):
         """
         self.db.execute(sql, "False", intTime(), self.current_note_id_and_field)
         self.db.commit()
-        self.other.web.eval("""
-            if (document.getElementById('mdwarn%s') !== null) {
-                var style_tag = document.getElementsByTagName('style')[0];
-                style_tag.innerHTML = style_tag.innerHTML.replace(/^#f%s.*/m, '');
-                console.log('style: ' + style_tag.innerHTML);
-                var field = document.getElementById('f%s');
-                field.removeAttribute('title');
-                var warn_msg = document.getElementById('mdwarn%s');
-                warn_msg.parentNode.removeChild(warn_msg);
-            }
-        """ % (self.current_field, self.current_field, self.current_field,
-                self.current_field))
+        self.remove_warn_msg()
 
     def store_new_markdown_version_in_db(self, isconverted, new_md, new_html,
                                          lastmodified=None):

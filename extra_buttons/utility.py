@@ -28,6 +28,7 @@ import BeautifulSoup
 import sqlite3 as lite
 from anki.db import DB
 from anki.utils import intTime, json
+from aqt.utils import showInfo
 
 from html2text import html2text
 import const
@@ -265,6 +266,7 @@ class Utility(object):
             if elem.string is not None:
                 if all(x in ("&nbsp;", " ") for x in elem.string.split()):
                     elem.setString(BeautifulSoup.Tag(soup, "br"))
+        result = str(soup)
 
         return result
 
@@ -350,9 +352,13 @@ class Utility(object):
     @staticmethod
     def decompress_and_json_load(data):
         print "DATA OUT:", repr(data)
-        ret = json.loads(base64.b64decode(data))
-        print repr(ret)
-        return ret
+        b64data = base64.b64decode(data)
+        try:
+            ret = json.loads(b64data)
+            print repr(ret)
+            return ret
+        except:
+            return "corrupted"
 
     @staticmethod
     def wrap_string(at_start, a_string, at_end):

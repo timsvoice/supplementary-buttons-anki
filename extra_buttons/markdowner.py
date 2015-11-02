@@ -23,8 +23,10 @@ import sqlite3
 from anki.utils import json, intTime
 from aqt import mw
 from PyQt4 import QtGui
+from anki.hooks import addHook
 
 from utility import Utility
+import const
 
 
 class Markdowner(object):
@@ -33,12 +35,14 @@ class Markdowner(object):
     database. Revert to previous Markdown or overwrite the data when conflicts
     arise.
     """
-    def __init__(self, other, parent_window, preferences,
-                    note, html, current_field, selected_html):
+    # signal that we don't want the onEdit focus behavior
+    button_pressed = False
+
+    def __init__(self, other, parent_window, preferences, note, html,
+                 current_field, selected_html):
         self.other                      = other
         self.parent_window              = parent_window
         self.col                        = mw.col
-        print "self.server:", self.col.server
         self.db                         = mw.col.db
         self.preferences                = preferences
         self.note                       = note
@@ -55,25 +59,6 @@ class Markdowner(object):
         self._lastmodified              = None
         self.has_data                   = self.get_data_from_field()
         self.check_for_data_existence()
-        self.apply_markdown()
-
-    def check_for_data_existence(self):
-        """
-        Check if data is attached to field. If not, check for the existence
-        of Markdown data in the database. If it exists there, put it also in
-        the field. Otherwise, do nothing.
-        """
-        if self.has_data:
-            self.store_new_markdown_version_in_db(
-                    self.isconverted, self.md, self._html)
-        else:
-            # check database
-            self.has_data = self.get_data_from_db()
-            if self.has_data:
-                # and put data in field
-                new_html = Utility.make_data_ready_to_insert(
-                        self._id, self.isconverted, self.md, self._html)
-                self.insert_markup_in_field(new_html, self.other.currentField)
 
     def _init_db(self, db):
         """
@@ -89,9 +74,44 @@ class Markdowner(object):
                 );""")
         print "INITIALIAZE DATABASE"
 
+    def on_focus_gained(self):
+        if self.isconverted:
+            self.warn_about_changes(self.current_field, const.MARKDOWN_BG_COLOR)
+
+    def current_field_exists_in_db(self):
+        """
+        Check if the current field exists in the database. Return True if
+        it does, False otherwise.
+        """
+        sql = "select 1 from markdown where id=?"
+        if self.db.first(sql, self.current_note_id_and_field):
+            return True
+        return False
+
+    def check_for_data_existence(self):
+        """
+        Check if the data from the field also exists in the database. If it
+        exists, but differs, update the database to reflect the changes.
+        """
+        if self.has_data and self.current_field_exists_in_db():
+        # check timestamps and store if newer version
+            timestamp_field = self._lastmodified
+            timestamp_db = self.db.first("select mod from markdown where id=?",
+                                         self.current_note_id_and_field)[0]
+            print "timestamp db:", repr(timestamp_db)
+            print "timestamp field:", repr(timestamp_field)
+            print "field >= db:", timestamp_field >= timestamp_db
+            assert timestamp_field >= timestamp_db, \
+                    "field timestamp is older than db timestamp!"
+            if timestamp_field > timestamp_db:
+                self.store_new_markdown_version_in_db(
+                    self.isconverted, self.md, self._html, self._lastmodified)
+
     def apply_markdown(self):
         clean_md = Utility.convert_html_to_markdown(self.html)
         clean_md_escaped = Utility.escape_html_chars(clean_md)
+        if not clean_md:
+            return
         # check for changed Markdown between the database and the current text
         if (self.has_data and self.isconverted == "True"):
             # if self.selected_html:
@@ -117,9 +137,9 @@ class Markdowner(object):
                     clean_md_escaped, new_html)
             self.insert_markup_in_field(html_with_data, self.other.currentField)
             # store the Markdown so we can reuse it when the button gets toggled
-            if clean_md:
-                self.store_new_markdown_version_in_db(
-                        "True", clean_md_escaped, new_html)
+            self.store_new_markdown_version_in_db(
+                    "True", clean_md_escaped, new_html)
+            self.warn_about_changes(self.current_field, const.MARKDOWN_BG_COLOR)
 
     # def get_data_from_db_old(self):
     #     """
@@ -203,11 +223,28 @@ class Markdowner(object):
             document.getElementById('f%s').innerHTML = %s;
         """ % (field, json.dumps(unicode(markup))))
 
-    def disable_field(self, field):
+    def warn_about_changes(self, field, color):
         """
         Disable the specified contenteditable field.
         """
-        pass
+        warning_text = "WARNING: changes you make here will be lost when you " + \
+        "toggle the Markdown button again."
+        self.other.web.eval("""
+            if (document.getElementById('mdwarn%s') === null) {
+                var style_tag = document.getElementsByTagName('style')[0];
+                style_tag.innerHTML = style_tag.innerHTML +
+                        '#f%s { background: %s !important; }'
+                console.log('style: ' + style_tag.innerHTML
+                var field = document.getElementById('f%s');
+                field.setAttribute('title', '%s');
+                var warn_div = document.createElement('div');
+                warn_div.id = 'mdwarn%s';
+                warn_div.setAttribute('style', 'margin: 10px 0px;');
+                var text = document.createTextNode('%s');
+                warn_div.appendChild(text);
+                field.parentNode.insertBefore(warn_div, field.nextSibling);
+            }
+        """ % (field, field, color, field, warning_text, field, warning_text))
 
     def handle_conflict(self):
         """
@@ -235,21 +272,20 @@ class Markdowner(object):
         print "INSERTING THIS:\n", new_html
         self.insert_markup_in_field(new_html, self.other.currentField)
         sql = """
-            update markdown
-            set md=?, html=?, mod=?
+            delete from markdown
             where id=?
         """
-        self.db.execute(sql, clean_md, new_html, intTime(),
-                self.current_note_id_and_field)
+        self.db.execute(sql, self.current_note_id_and_field)
         self.db.commit()
 
     def revert_to_stored_markdown(self):
         print "REVERTING TO OLD MARKDOWN"
         new_html = Utility.convert_clean_md_to_html(self.md)
-        new_html = Utility.make_data_ready_to_insert(
-                self.current_note_id_and_field, "False", self.md, new_html)
-        print repr(new_html)
+        # new_html = Utility.make_data_ready_to_insert(
+        #         self.current_note_id_and_field, "False", self.md, new_html)
+        print "Inserting this:", repr(new_html)
         self.insert_markup_in_field(new_html, self.other.currentField)
+        self.other.saveNow()
         # store the fact that the Markdown is currently not converted to HTML
         sql = """
             update markdown
@@ -258,8 +294,21 @@ class Markdowner(object):
         """
         self.db.execute(sql, "False", intTime(), self.current_note_id_and_field)
         self.db.commit()
+        self.other.web.eval("""
+            if (document.getElementById('mdwarn%s') !== null) {
+                var style_tag = document.getElementsByTagName('style')[0];
+                style_tag.innerHTML = style_tag.innerHTML.replace(/^#f%s.*/m, '');
+                console.log('style: ' + style_tag.innerHTML);
+                var field = document.getElementById('f%s');
+                field.removeAttribute('title');
+                var warn_msg = document.getElementById('mdwarn%s');
+                warn_msg.parentNode.removeChild(warn_msg);
+            }
+        """ % (self.current_field, self.current_field, self.current_field,
+                self.current_field))
 
-    def store_new_markdown_version_in_db(self, isconverted, new_md, new_html):
+    def store_new_markdown_version_in_db(self, isconverted, new_md, new_html,
+                                         lastmodified=None):
         """
         Update current database with new data, or insert a new row into the
         database when there is no prior data.
@@ -269,7 +318,8 @@ class Markdowner(object):
             values (?, ?, ?, ?, ?)
         """
         self.db.execute(replace_stmt, self.current_note_id_and_field,
-                        isconverted, new_md, new_html, intTime())
+                        isconverted, new_md, new_html,
+                        intTime() if lastmodified is None else lastmodified)
         self.db.commit()
 
     def show_overwrite_warning(self):

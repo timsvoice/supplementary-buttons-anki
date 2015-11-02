@@ -26,6 +26,7 @@ from anki.utils import json, stripHTMLMedia, fieldChecksum, intTime
 from aqt import editor, mw
 from anki.hooks import wrap
 import anki, aqt
+from anki.hooks import addHook
 from PyQt4 import QtGui, QtCore
 import BeautifulSoup
 
@@ -35,6 +36,9 @@ from preferences import Preferences
 from menu import ExtraButtons_Options
 from html2text import html2text
 from markdowner import Markdowner
+
+# Overrides
+##################################################
 
 # Buttons
 ##################################################
@@ -1136,18 +1140,35 @@ def toggleAbbreviation(self):
     abbreviation = Abbreviation(self, self.parentWindow, selected)
 
 def toggleMarkdown(self):
+    Markdowner.button_pressed = True
     self.saveNow()
     selected = self.web.selectedHtml()
     print "Selected text:", repr(selected)
     current_field = self.currentField
     html_field = self.note.fields[self.currentField]
-    Markdowner(self, self.parentWindow, preferences, self.note,
-                    html_field, current_field, selected)
+    markdowner = Markdowner(self, self.parentWindow, preferences, self.note,
+                            html_field, current_field, selected)
+    markdowner.apply_markdown()
     self.web.setFocus()
     self.web.eval("focusField(%d);" % self.currentField)
     self.saveNow()
     self.web.setFocus()
     self.web.eval("focusField(%d);" % self.currentField)
+    Markdowner.button_pressed = False
+
+def on_focus_gained(self, note, field):
+    if not Markdowner.button_pressed:
+        html_field = note.fields[field]
+        markdowner = Markdowner(self, self.parentWindow, preferences, note,
+                                html_field, field, "")
+        markdowner.on_focus_gained()
+        Markdowner.button_pressed = True
+
+def init_hook(self, mw, widget, parentWindow, addMode=False):
+    addHook("editFocusGained", self.on_focus_gained)
+
+editor.Editor.on_focus_gained = on_focus_gained
+editor.Editor.__init__ = wrap(editor.Editor.__init__, init_hook)
 
 
 

@@ -125,6 +125,9 @@ class Utility(object):
     const.START_HTML_MARKER             = "<!----SBAdata:"
     const.END_HTML_MARKER               = "---->"
 
+    # change field to this background color
+    const.MARKDOWN_BG_COLOR             = "#FFEDD3"
+
     # Storage of Markdown syntax
     ##################################################
 
@@ -246,12 +249,23 @@ class Utility(object):
         # or add a closing <div> tag
         else:
             result += "</div>"
+
+        # <div></div> needs to be a visible empty line
         if put_breaks:
             soup = BeautifulSoup.BeautifulSoup(result)
             for elem in soup.findAll("div"):
                 if not elem.contents:
-                    elem.append(BeautifulSoup.BeautifulSoup("<br />"))
+                    elem.append(BeautifulSoup.Tag(soup, "br"))
             result = str(soup)
+            soup = None
+
+        # remove "empty" lines that consist solely of (non-breakable) spaces
+        soup = BeautifulSoup.BeautifulSoup(result)
+        for elem in soup.findAll("div"):
+            if elem.string is not None:
+                if all(x in ("&nbsp;", " ") for x in elem.string.split()):
+                    elem.setString(BeautifulSoup.Tag(soup, "br"))
+
         return result
 
     @staticmethod

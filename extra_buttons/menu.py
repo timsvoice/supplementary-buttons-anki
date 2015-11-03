@@ -36,7 +36,11 @@ class ExtraButtons_Options(QtGui.QMenu):
         """Puts a button either on or off. Reverses current state."""
         source = self.sender()
         name = source.text()
-        current_state = self.preferences.prefs[name]
+        # deprettify
+        name = name.lower().replace(" ", "_")
+        current_state = self.preferences.prefs.get(name)
+        if current_state is None:
+            raise Exception("{!r} not in preferences".format(name))
         if bool(state) != current_state:
             self.preferences.prefs[name] = not current_state
 

@@ -2,8 +2,8 @@ from aqt.qt import *
 from aqt.utils import openHelp, showInfo
 import aqt
 from BeautifulSoup import BeautifulSoup
-from utility import Utility
-import const
+from ...utility import Utility
+from ... import const
 
 def onHtmlEdit(self):
     self.saveNow()

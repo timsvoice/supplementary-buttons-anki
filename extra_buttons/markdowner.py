@@ -38,13 +38,12 @@ class Markdowner(object):
     # signal that we don't want the onEdit focus behavior
     button_pressed = False
 
-    def __init__(self, other, parent_window, preferences, note, html,
+    def __init__(self, other, parent_window, note, html,
                  current_field, selected_html):
         self.other                      = other
         self.parent_window              = parent_window
         self.col                        = mw.col
         self.db                         = mw.col.db
-        self.preferences                = preferences
         self.note                       = note
         self.html                       = html
         self.current_field              = current_field
@@ -117,23 +116,25 @@ class Markdowner(object):
         if (self.has_data and self.isconverted == "True"):
             # if self.selected_html:
             #     # only convert the selected text
-            #     clean_md = Utility.convert_html_to_markdown(self.selected_html)
-            #     new_html = Utility.convert_markdown_to_html(self.preferences,
-            #                                                 clean_md)
+            #     selected_clean_md = Utility.convert_html_to_markdown(
+            #             self.selected_html)
+            #     selected_new_html = Utility.convert_markdown_to_html(
+            #             selected_clean_md)
             #     self.other.web.eval(
             #             "document.execCommand('insertHTML', false, %s);"
             #             % json.dumps(new_html))
+            #     new_html = self.note.fields[self.current_field]
             #     self.store_new_markdown_version_in_db(new_html)
             #     return
 
-            # TODO: better compare will result in less popup windows
-            if not Utility.is_same_markdown(clean_md, self.md):
+            compare_md = Utility.convert_markdown_to_html(self.md)
+            compare_md = Utility.convert_html_to_markdown(compare_md)
+            if not Utility.is_same_markdown(clean_md_escaped, compare_md):
                 self.handle_conflict()
             else:
                 self.revert_to_stored_markdown()
         else:
-            new_html = Utility.convert_markdown_to_html(self.preferences,
-                                                        clean_md)
+            new_html = Utility.convert_markdown_to_html(clean_md)
             html_with_data = Utility.make_data_ready_to_insert(
                     self.current_note_id_and_field, "True",
                     clean_md_escaped, new_html)
@@ -237,7 +238,9 @@ class Markdowner(object):
         self.other.web.eval("""
             if (document.getElementById('mdwarn%s') === null) {
                 var style_tag = document.getElementsByTagName('style')[0];
-                style_tag.innerHTML += '.mdstyle { background-color: %s !important; }\\n'
+                if (style_tag.innerHTML.indexOf('mdstyle') === -1) {
+                    style_tag.innerHTML += '.mdstyle { background-color: %s !important; }\\n'
+                }
 
                 var field = document.getElementById('f%s');
                 field.setAttribute('title', '%s');
@@ -304,14 +307,13 @@ class Markdowner(object):
         #         self.current_note_id_and_field, "False", self.md, new_html)
         print "Inserting this:", repr(new_html)
         self.insert_markup_in_field(new_html, self.other.currentField)
-        self.other.saveNow()
         # store the fact that the Markdown is currently not converted to HTML
         sql = """
             update markdown
             set isconverted=?, mod=?
             where id=?
         """
-        self.db.execute(sql, "False", intTime(), self.current_note_id_and_field)
+        self.db.execute(sql, "False", self._lastmodified, self.current_note_id_and_field)
         self.db.commit()
         self.remove_warn_msg()
 
@@ -345,11 +347,11 @@ class Markdowner(object):
         mess.setText("<b>The text of this field seems to have changed while "
                 "Markdown mode was disabled, or the original syntax cannot be "
                 "automatically restored.</b>")
-        mess.setInformativeText("Please choose to either store "
+        mess.setInformativeText("Please choose whether to store "
                 "your current version of this field (overwriting the old "
                 "version), replace your current version with the stored "
                 "version, or cancel.\n\nWARNING: Overwriting may result "
-                "in the loss of of some of your stored Markdown syntax.")
+                "in the loss of of some of your original Markdown syntax.")
         replaceButton = QtGui.QPushButton("&Replace", mess)
         mess.addButton(replaceButton, QtGui.QMessageBox.ApplyRole)
         mess.addButton("&Overwrite", QtGui.QMessageBox.ApplyRole)

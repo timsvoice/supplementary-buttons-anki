@@ -271,7 +271,7 @@ class Utility(object):
         return result
 
     @staticmethod
-    def convert_markdown_to_html(preferences, clean_md):
+    def convert_markdown_to_html(clean_md):
         print "APPLYING MARKDOWN"
         new_html = markdown.markdown(clean_md, output_format="xhtml1",
             extensions=[
@@ -283,8 +283,9 @@ class Utility(object):
                 TableExtension(),
                 AbbrExtension(),
                 Nl2BrExtension(),
-                CodeHiliteExtension(noclasses=True,
-                    pygments_style=preferences.prefs.get(const.MARKDOWN_SYNTAX_STYLE)),
+                CodeHiliteExtension(
+                    noclasses=True,
+                    pygments_style=const.preferences.prefs.get(const.MARKDOWN_SYNTAX_STYLE)),
                 SaneListExtension()
             ], lazy_ol=False)
         # print "New HTML: ", new_html
@@ -302,8 +303,8 @@ class Utility(object):
         """
         Return True when md_one is the same as md_two, False otherwise.
         """
-        # print "md_one before:\n", repr(md_one)
-        # print "md_two before:\n", repr(md_two)
+        print "md_one before:\n", repr(md_one)
+        print "md_two before:\n", repr(md_two)
         compare_one = Utility.remove_white_space(md_one)
         compare_two = Utility.remove_white_space(md_two)
         return compare_one == compare_two
@@ -416,11 +417,11 @@ class Utility(object):
             num += step
 
     @staticmethod
-    def set_icon(button, name, current_preferences):
+    def set_icon(button, name):
         """
         Define the path for the icon the corresponding button should have.
         """
-        icon_path = os.path.join(current_preferences.addons_folder(),
+        icon_path = os.path.join(const.preferences.addons_folder(),
             const.FOLDER_NAME, "icons", "{}.png".format(name))
         button.setIcon(QtGui.QIcon(icon_path))
 

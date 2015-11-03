@@ -53,27 +53,27 @@ def setup_buttons(self):
             preferences.prefs[const.CODE_CLASS]), _(shortcut),
             _("Code format text ({})".format(shortcut)),
             check=False)
-        Utility.set_icon(b, "text_code", preferences)
+        Utility.set_icon(b, "text_code")
 
     if preferences.prefs.get(const.UNORDERED_LIST):
         shortcut = preferences.get_keybinding(const.UNORDERED_LIST)
         b = self._addButton("unordered_list", self.toggleUnorderedList,
             _(shortcut), _("Create unordered list ({})".format(shortcut)),
             check=False)
-        Utility.set_icon(b, "unordered_list", preferences)
+        Utility.set_icon(b, "unordered_list")
 
     if preferences.prefs.get(const.ORDERED_LIST):
         shortcut = preferences.get_keybinding(const.ORDERED_LIST)
         b = self._addButton("ordered_list", self.toggleOrderedList, _(shortcut),
             _("Create ordered list ({})".format(shortcut)), check=False)
-        Utility.set_icon(b, "ordered_list", preferences)
+        Utility.set_icon(b, "ordered_list")
 
     if preferences.prefs.get(const.STRIKETHROUGH):
         shortcut = preferences.get_keybinding(const.STRIKETHROUGH)
         b = self._addButton("text_strikethrough", self.toggleStrikeThrough,
             _(shortcut), _("Strikethrough text ({})".format(shortcut)),
             check=True)
-        Utility.set_icon(b, "text_strikethrough", preferences)
+        Utility.set_icon(b, "text_strikethrough")
 
     # FIXME: think of better symbol to represent a <pre> block
     if preferences.prefs.get(const.PRE):
@@ -81,56 +81,56 @@ def setup_buttons(self):
         b = self._addButton("text_pre", lambda: self.wrap_in_tags("pre",
             preferences.prefs["class_name"]), _(shortcut),
             tip=_("Create a code block ({})".format(shortcut)), check=False)
-        Utility.set_icon(b, "text_pre", preferences)
+        Utility.set_icon(b, "text_pre")
 
     if preferences.prefs.get(const.HORIZONTAL_RULE):
         shortcut = preferences.get_keybinding(const.HORIZONTAL_RULE)
         b = self._addButton("hor_rule", self.toggleHorizontalLine, _(shortcut),
             tip=_("Create a horizontal rule ({})".format(shortcut)), check=False)
-        Utility.set_icon(b, "hor_rule", preferences)
+        Utility.set_icon(b, "hor_rule")
 
     if preferences.prefs.get(const.INDENT):
         shortcut = preferences.get_keybinding(const.INDENT)
         b = self._addButton("indent", self.toggleIndent, _(shortcut),
             _("Indent text or list ({})".format(shortcut)), check=False)
-        Utility.set_icon(b, "indent", preferences)
+        Utility.set_icon(b, "indent")
 
     if preferences.prefs.get(const.OUTDENT):
         shortcut = preferences.get_keybinding(const.OUTDENT)
         b = self._addButton("outdent", self.toggleOutdent, _(shortcut),
             _("Outdent text or list ({})".format(shortcut)), check=False)
-        Utility.set_icon(b, "outdent", preferences)
+        Utility.set_icon(b, "outdent")
 
     # FIXME: better symbol for <dl>
     if preferences.prefs.get(const.DEFINITION_LIST):
         shortcut = preferences.get_keybinding(const.DEFINITION_LIST)
         b = self._addButton("deflist", self.toggleDefList, _(shortcut),
             _("Create definition list (shortcut)"), check=False)
-        Utility.set_icon(b, "deflist", preferences)
+        Utility.set_icon(b, "deflist")
 
     if preferences.prefs.get(const.TABLE):
         shortcut = preferences.get_keybinding(const.TABLE)
         b = self._addButton("table", self.toggleTable, _(shortcut),
             _("Create a table ({})".format(shortcut)), check=False)
-        Utility.set_icon(b, "table", preferences)
+        Utility.set_icon(b, "table")
 
     if preferences.prefs.get(const.KEYBOARD):
         shortcut = preferences.get_keybinding(const.KEYBOARD)
         b = self._addButton("kbd", lambda: self.wrap_in_tags("kbd"),
             _(shortcut), _("Create a keyboard button ({})".format(shortcut)),
             check=False)
-        Utility.set_icon(b, "kbd", preferences)
+        Utility.set_icon(b, "kbd")
 
     if preferences.prefs.get(const.HYPERLINK):
         shortcut = preferences.get_keybinding(const.HYPERLINK)
         b1 = self._addButton("anchor", self.create_hyperlink, _(shortcut),
             _("Insert link ({})".format(shortcut)), check=False)
-        Utility.set_icon(b1, "anchor", preferences)
+        Utility.set_icon(b1, "anchor")
 
         shortcut = preferences.get_keybinding(const.REMOVE_HYPERLINK)
         b2 = self._addButton("unlink", self.unlink, _(shortcut),
             _("Unlink ({})".format(shortcut)), check=False)
-        Utility.set_icon(b2, "unlink", preferences)
+        Utility.set_icon(b2, "unlink")
 
     if preferences.prefs.get(const.BACKGROUND_COLOR):
         shortcut = preferences.get_keybinding(const.BACKGROUND_COLOR)
@@ -147,53 +147,53 @@ def setup_buttons(self):
         b = self._addButton("blockquote", self.toggleBlockquote,
             _(shortcut), _("Insert blockquote ({})".format(shortcut)),
             check=False)
-        Utility.set_icon(b, "blockquote", preferences)
+        Utility.set_icon(b, "blockquote")
 
     if preferences.prefs.get(const.TEXT_ALLIGN):
         shortcut = preferences.get_keybinding(const.TEXT_ALLIGN_FLUSH_LEFT)
         b1 = self._addButton("left", self.justifyLeft,
         _(shortcut), _("Align text left ({})".format(shortcut)),
         check=False)
-        Utility.set_icon(b1, "left", preferences)
+        Utility.set_icon(b1, "left")
 
         shortcut = preferences.get_keybinding(const.TEXT_ALLIGN_CENTERED)
         b2 = self._addButton("center", self.justifyCenter,
             _(shortcut), _("Align text center ({})".format(shortcut)),
             check=False)
-        Utility.set_icon(b2, "center", preferences)
+        Utility.set_icon(b2, "center")
 
         shortcut = preferences.get_keybinding(const.TEXT_ALLIGN_FLUSH_RIGHT)
         b3 = self._addButton("right", self.justifyRight,
             _(shortcut), _("Align text right ({})".format(shortcut)),
             check=False)
-        Utility.set_icon(b3, "right", preferences)
+        Utility.set_icon(b3, "right")
 
         shortcut = preferences.get_keybinding(const.TEXT_ALLIGN_JUSTIFIED)
         b4 = self._addButton("justified", self.justifyFull,
             _(shortcut), _("Justify text ({})".format(shortcut)),
             check=False)
-        Utility.set_icon(b4, "justified", preferences)
+        Utility.set_icon(b4, "justified")
 
     if preferences.prefs.get(const.HEADING):
         shortcut = preferences.get_keybinding(const.HEADING)
         b = self._addButton("heading", self.toggleHeading,
             _(shortcut), _("Insert heading ({})".format(shortcut)),
             check=False)
-        Utility.set_icon(b, "heading", preferences)
+        Utility.set_icon(b, "heading")
 
     if preferences.prefs.get(const.ABBREVIATION):
         shortcut = preferences.get_keybinding(const.ABBREVIATION)
         b = self._addButton(const.ABBREVIATION, self.toggleAbbreviation,
             _(shortcut), _("Insert abbreviation ({})".format(shortcut)),
             check=False)
-        Utility.set_icon(b, const.ABBREVIATION, preferences)
+        Utility.set_icon(b, const.ABBREVIATION)
 
     if preferences.prefs.get(const.MARKDOWN):
         shortcut = preferences.get_keybinding(const.MARKDOWN)
         b = self._addButton(const.MARKDOWN, self.toggleMarkdown,
             _(shortcut), _("Toggle Markdown ({})".format(shortcut)),
             check=False)
-        Utility.set_icon(b, const.MARKDOWN, preferences)
+        Utility.set_icon(b, const.MARKDOWN)
 
 def wrap_in_tags(self, tag, class_name=None):
     """Wrap selected text in a tag, optionally giving it a class."""
@@ -1142,28 +1142,38 @@ def toggleAbbreviation(self):
     abbreviation = Abbreviation(self, self.parentWindow, selected)
 
 def toggleMarkdown(self):
+    print "START SAFE BLOCK"
     Markdowner.button_pressed = True
     self.saveNow()
     selected = self.web.selectedHtml()
     print "Selected text:", repr(selected)
     current_field = self.currentField
     html_field = self.note.fields[self.currentField]
-    markdowner = Markdowner(self, self.parentWindow, preferences, self.note,
+    markdowner = Markdowner(self, self.parentWindow, self.note,
                             html_field, current_field, selected)
     markdowner.apply_markdown()
-    self.web.setFocus()
-    self.web.eval("focusField(%d);" % self.currentField)
     self.saveNow()
     self.web.setFocus()
     self.web.eval("focusField(%d);" % self.currentField)
     Markdowner.button_pressed = False
+    print "END SAFE BLOCK"
 
 def on_focus_gained(self, note, field):
+    if Markdowner.button_pressed:
+        print "PREVENTED ONFOCUS"
     if not Markdowner.button_pressed:
+        print "ALLOWED ONFOCUS"
+        print "START SAFE BLOCK ONFOCUS"
+        Markdowner.button_pressed = True
+        self.saveNow()
         html_field = note.fields[field]
-        markdowner = Markdowner(self, self.parentWindow, preferences, note,
+        markdowner = Markdowner(self, self.parentWindow, note,
                                 html_field, field, "")
         markdowner.on_focus_gained()
+        self.web.setFocus()
+        self.web.eval("focusField(%d);" % self.currentField)
+        print "END SAFE BLOCK ONFOCUS"
+        Markdowner.button_pressed = False
 
 def init_hook(self, mw, widget, parentWindow, addMode=False):
     addHook("editFocusGained", self.on_focus_gained)
@@ -1209,5 +1219,9 @@ editor.Editor.toggleTable = toggleTable
 editor.Editor.setupButtons = wrap(editor.Editor.setupButtons, setup_buttons)
 
 preferences = Preferences(mw)
+try:
+    const.preferences
+except AttributeError:
+    const.preferences = preferences
 mw.ExtraButtons_Options = ExtraButtons_Options(mw, preferences)
 mw.ExtraButtons_Options.setup_extra_buttons_options()

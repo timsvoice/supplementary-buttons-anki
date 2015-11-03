@@ -112,6 +112,7 @@ class Utility(object):
     const.LAST_BG_COLOR                 = "last_bg_color"
     const.FIXED_OL_TYPE                 = "fixed_ol_type"
     const.MARKDOWN_SYNTAX_STYLE         = "markdown_syntax_style"
+    const.MARKDOWN_LINE_NUMS            = "markdown_line_nums"
 
     # constants for key sequence
     const.KEY_MODIFIERS                 = ("ctrl", "alt", "shift")
@@ -285,7 +286,8 @@ class Utility(object):
                 Nl2BrExtension(),
                 CodeHiliteExtension(
                     noclasses=True,
-                    pygments_style=const.preferences.prefs.get(const.MARKDOWN_SYNTAX_STYLE)),
+                    pygments_style=const.preferences.prefs.get(const.MARKDOWN_SYNTAX_STYLE),
+                    linenums=const.preferences.prefs.get(const.MARKDOWN_LINE_NUMS)),
                 SaneListExtension()
             ], lazy_ol=False)
         # print "New HTML: ", new_html

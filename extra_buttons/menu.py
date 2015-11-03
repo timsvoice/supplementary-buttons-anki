@@ -106,7 +106,8 @@ class ExtraButtons_Options(QtGui.QMenu):
                                                 const.CODE_CLASS,
                                                 const.LAST_BG_COLOR,
                                                 const.FIXED_OL_TYPE,
-                                                const.MARKDOWN_SYNTAX_STYLE
+                                                const.MARKDOWN_SYNTAX_STYLE,
+                                                const.MARKDOWN_LINE_NUMS
                                             )]
         num_items = len(l) / 2.0
         num_items = num_items + 0.5 if (num_items % 1.0 > 0.0) else num_items
@@ -170,20 +171,20 @@ class ExtraButtons_Options(QtGui.QMenu):
 
         # Markdown syntax highlighting
 
-        md_style_label = QtGui.QLabel('Markdown syntax highlighting style', self)
+        md_style_label = QtGui.QLabel("Markdown syntax highlighting style", self)
         md_style_combo = QtGui.QComboBox(self)
         md_style_files = os.listdir(os.path.join(
-            self.preferences.addons_folder(), const.FOLDER_NAME, 'pygments', 'styles'))
-        print 'Files in style folder:\n',
+            self.preferences.addons_folder(), const.FOLDER_NAME, "pygments", "styles"))
+        print "Files in style folder:\n",
         print md_style_files
 
         # pretty print styles
         for filename in sorted(md_style_files):
-            if filename.startswith('_') or filename.endswith('.pyc'):
+            if filename.startswith("_") or filename.endswith(".pyc"):
                 continue
             (style, _) = os.path.splitext(filename)
-            style = style.replace('_', ' ')
-            md_style_combo.addItem(style.capitalize())
+            style = style.replace("_", " ").capitalize()
+            md_style_combo.addItem(style)
 
         all_items_in_combo = \
             [md_style_combo.itemText(i) for i in xrange(md_style_combo.count())]

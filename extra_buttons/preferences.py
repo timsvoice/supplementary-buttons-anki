@@ -46,6 +46,7 @@ class Preferences(object):
                 const.LAST_BG_COLOR:            "#00f",
                 const.FIXED_OL_TYPE:            "",
                 const.MARKDOWN_SYNTAX_STYLE:    "tango",
+                const.MARKDOWN_LINE_NUMS:       False,
                 const.CODE:                     True,
                 const.UNORDERED_LIST:           True,
                 const.ORDERED_LIST:             True,

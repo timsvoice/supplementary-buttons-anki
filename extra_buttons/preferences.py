@@ -153,9 +153,6 @@ class Preferences(object):
             self.keybindings = Utility.check_user_keybindings(
                     self._default_keybindings, self.keybindings, const.PLATFORM)
 
-        # initialize database for Markdown
-        # Utility._prepare_db(self)
-
     def get_keybinding(self, name_of_key):
         """Return the keybinding indicated by name_of_key, and capitalize
         the name of each key before the delimiter +."""
@@ -172,9 +169,9 @@ class Preferences(object):
             json.dump(self.prefs, f)
 
     def create_keybindings_file(self):
-        """Creates a default keybindings file with comments. This function is
+        """Create a default keybindings file with comments. This function is
         called when Supplementary Buttons for Anki cannot find an existing
-        keybindings file. Overrides any changes made to an existing file."""
+        keybindings file. Override any changes made to an existing file."""
 
         contents = """\
 // This file contains the keybindings that are used for Supplementary Buttons

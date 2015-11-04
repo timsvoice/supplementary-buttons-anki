@@ -44,7 +44,7 @@ class ExtraButtons_Options(QtGui.QMenu):
         if bool(state) != current_state:
             self.preferences.prefs[name] = not current_state
 
-    def create_checkbox(self, name, main_window):
+    def create_checkbox(self, name):
         # TODO: better names, maybe stored in properties file
         # prettify option name
         pretty_name = name.replace("_", " ").capitalize()
@@ -114,7 +114,7 @@ class ExtraButtons_Options(QtGui.QMenu):
 
         # go through the keys in the prefs and make QCheckBoxes for them
         for index, option in enumerate(sorted(l)):
-            checkbox = self.create_checkbox(option, self.main_window)
+            checkbox = self.create_checkbox(option)
             if index >= num_items:
                 col = 1
                 row = index - num_items
@@ -198,6 +198,15 @@ class ExtraButtons_Options(QtGui.QMenu):
         md_style_hbox.addWidget(md_style_label)
         md_style_hbox.addWidget(md_style_combo)
 
+        # line numbers code highlighting
+        linenums_cb = QtGui.QCheckBox(
+                "Toggle line numbers code highlighting", self)
+        if const.preferences.prefs.get(const.MARKDOWN_LINE_NUMS):
+            linenums_cb.setChecked(True)
+
+        linenums_hbox = QtGui.QHBoxLayout()
+        linenums_hbox.addWidget(linenums_cb)
+
         button_box = QtGui.QDialogButtonBox(
                 QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel)
         button_box.accepted.connect(option_dialog.accept)
@@ -211,20 +220,31 @@ class ExtraButtons_Options(QtGui.QMenu):
         vbox.addLayout(hbox)
         vbox.addWidget(Utility.create_horizontal_rule())
         vbox.addLayout(md_style_hbox)
+        vbox.addLayout(linenums_hbox)
         vbox.addWidget(button_box)
 
         option_dialog.setLayout(vbox)
 
         if option_dialog.exec_() == QtGui.QDialog.Accepted:
+            # fixed ordered list type
             if checkBox.isChecked():
                 selectedRadioButton = buttonGroup.id(buttonGroup.checkedButton())
                 self.preferences.prefs[const.FIXED_OL_TYPE] = \
                     self.listOfRadioButtons[selectedRadioButton].text()
             else:
-                self.preferences.prefs[const.FIXED_OL_TYPE] = ''
+                self.preferences.prefs[const.FIXED_OL_TYPE] = ""
+
+            # line numbers for code highlighting
+            if linenums_cb.isChecked():
+                const.preferences.prefs[const.MARKDOWN_LINE_NUMS] = True
+            else:
+                const.preferences.prefs[const.MARKDOWN_LINE_NUMS] = False
+
+            # style for code highlighting
             chosen_style = str(md_style_combo.currentText())
-            chosen_style = chosen_style.lower().replace(' ', '_')
-            print chosen_style
+            chosen_style = chosen_style.lower().replace(" ", "_")
             self.preferences.prefs[const.MARKDOWN_SYNTAX_STYLE] = chosen_style
+
             self.preferences.prefs[const.CODE_CLASS] = cssClassText.text()
+
             self.preferences.save_prefs()

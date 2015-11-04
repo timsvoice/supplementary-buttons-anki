@@ -239,7 +239,7 @@ class Markdowner(object):
             if (document.getElementById('mdwarn%s') === null) {
                 var style_tag = document.getElementsByTagName('style')[0];
                 if (style_tag.innerHTML.indexOf('mdstyle') === -1) {
-                    style_tag.innerHTML += '.mdstyle { background-color: %s !important; }\\n'
+                    style_tag.innerHTML += '.mdstyle { background-color: %s !important; }\\n';
                 }
 
                 var field = document.getElementById('f%s');

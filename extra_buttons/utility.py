@@ -27,7 +27,7 @@ from PyQt4 import QtGui, QtCore
 import BeautifulSoup
 import sqlite3 as lite
 from anki.db import DB
-from anki.utils import intTime, json
+from anki.utils import intTime, json, isWin, isMac
 from aqt.utils import showInfo
 
 from html2text import html2text
@@ -533,7 +533,7 @@ class Utility(object):
         if not sequence: return ""
         modkeys = const.KEY_MODIFIERS
         # Mac OS X has a special modifier, the Cmd key
-        if platform.startswith("darwin"):
+        if isMac:
             modkeys += const.KEY_MODIFIERS_MACOSX
         sequence = sequence.lower()
         # the plus and minus signs can also be part of the key sequence

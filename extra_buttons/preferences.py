@@ -21,7 +21,7 @@ import os
 import string
 import copy
 
-from anki.utils import json
+from anki.utils import json, isWin, isMac
 
 import const
 from utility import Utility
@@ -32,7 +32,7 @@ class Preferences(object):
         self.main_window = main_window
         self.prefs_path = os.path.join(self.addons_folder(),
                     const.FOLDER_NAME, ".extra_buttons_prefs")
-        if const.PLATFORM.startswith("darwin"):
+        if isMac:
             self.keybindings_path = os.path.join(self.addons_folder(),
                     const.FOLDER_NAME, "keybindings_macosx.json")
         else:
@@ -102,7 +102,7 @@ class Preferences(object):
         self._default_keybindings_macosx[const.PRE] = "ctrl+shift+."
 
         self._default_keybindings = None
-        if const.PLATFORM.startswith("darwin"):
+        if isMac:
             self._default_keybindings = self._default_keybindings_macosx
         else:
             self._default_keybindings = self._default_keybindings_linux_windows

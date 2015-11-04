@@ -1,9 +1,14 @@
 from aqt.qt import *
 from aqt.utils import openHelp, showInfo
+from anki.utils import isWin, isMac
 import aqt
 from BeautifulSoup import BeautifulSoup
-from ...utility import Utility
-from ... import const
+if isWin:
+    from utility import Utility
+    import const
+else:
+    from ...utility import Utility
+    from ... import const
 
 def onHtmlEdit(self):
     self.saveNow()

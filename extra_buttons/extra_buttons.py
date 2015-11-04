@@ -25,6 +25,7 @@ import os
 from anki.utils import json, stripHTMLMedia, fieldChecksum, intTime
 from aqt import editor, mw
 from anki.hooks import wrap
+from anki.utils import isWin, isMac
 import anki, aqt
 from anki.hooks import addHook
 from PyQt4 import QtGui, QtCore
@@ -867,7 +868,7 @@ def _wrap_with_bg_color(self, color):
         }
         """ % (color, color))
 
-    if not const.PLATFORM.startswith("linux"):
+    if isWin or isMac:
         # remove all Apple style classes thus enabling
         # text highlighting for other platforms besides Linux
         self.web.eval("""
@@ -901,7 +902,8 @@ def power_remove_format(self):
     # deselect all text
     self.web.eval("window.getSelection().removeAllRanges();")
 
-    if const.PLATFORM.startswith("linux"):
+    # on Linux just refocus the field
+    if not isWin and not isMac:
         # refocus on the field we're editing
         self.web.eval("focusField(%d);" % self.currentField)
         return

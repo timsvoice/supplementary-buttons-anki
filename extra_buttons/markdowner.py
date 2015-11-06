@@ -75,7 +75,10 @@ class Markdowner(object):
 
     def on_focus_gained(self):
         if self.isconverted:
+            const.MARKDOWN_PREFS["disable_buttons"] = True
             self.warn_about_changes(self.current_field, const.MARKDOWN_BG_COLOR)
+        else:
+            const.MARKDOWN_PREFS["disable_buttons"] = False
 
     def current_field_exists_in_db(self):
         """
@@ -124,7 +127,7 @@ class Markdowner(object):
             #             "document.execCommand('insertHTML', false, %s);"
             #             % json.dumps(new_html))
             #     new_html = self.note.fields[self.current_field]
-            #     self.store_new_markdown_version_in_db(new_html)
+            #     self.store_new_markdown_version_in_db("True", new_html)
             #     return
 
             compare_md = Utility.convert_markdown_to_html(self.md)
@@ -139,9 +142,16 @@ class Markdowner(object):
                     self.current_note_id_and_field, "True",
                     clean_md_escaped, new_html)
             self.insert_markup_in_field(html_with_data, self.other.currentField)
+            self.other.web.eval("""
+                var elems = document.getElementsByClassName('codehilite');
+                for (var i = 0; i < elems.length; i++) {
+                    elems[i].setAttribute('align', 'left');
+                }
+            """)
             # store the Markdown so we can reuse it when the button gets toggled
             self.store_new_markdown_version_in_db(
                     "True", clean_md_escaped, new_html)
+            const.MARKDOWN_PREFS["disable_buttons"] = True
             self.warn_about_changes(self.current_field, const.MARKDOWN_BG_COLOR)
 
     # def get_data_from_db_old(self):
@@ -298,6 +308,7 @@ class Markdowner(object):
         """
         self.db.execute(sql, self.current_note_id_and_field)
         self.db.commit()
+        const.MARKDOWN_PREFS["disable_buttons"] = False
         self.remove_warn_msg()
 
     def revert_to_stored_markdown(self):
@@ -315,6 +326,7 @@ class Markdowner(object):
         """
         self.db.execute(sql, "False", self._lastmodified, self.current_note_id_and_field)
         self.db.commit()
+        const.MARKDOWN_PREFS["disable_buttons"] = False
         self.remove_warn_msg()
 
     def store_new_markdown_version_in_db(self, isconverted, new_md, new_html,

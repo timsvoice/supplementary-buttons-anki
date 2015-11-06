@@ -20,6 +20,7 @@
 import os
 import string
 import copy
+import base64
 
 from anki.utils import json, isWin, isMac
 
@@ -113,7 +114,9 @@ class Preferences(object):
         # load the preferences
         try:
             with open(self.prefs_path, "r") as f:
-                self.prefs = json.load(f)
+                encoded_prefs = f.read(const.MAX_BYTES_PREFS)
+                decoded_prefs = base64.b64decode(encoded_prefs)
+                self.prefs = json.loads(decoded_prefs)
         except:
             # file does not exist or is corrupted: fall back to default
             with open(self.prefs_path, "w") as f:
@@ -164,9 +167,10 @@ class Preferences(object):
         return self.main_window.pm.addonFolder()
 
     def save_prefs(self):
-        """Save the preferences to disk."""
+        """Save the preferences to disk, encoded."""
+        encoded_prefs = base64.b64encode(json.dumps(self.prefs))
         with open(self.prefs_path, "w") as f:
-            json.dump(self.prefs, f)
+            f.write(encoded_prefs)
 
     def create_keybindings_file(self):
         """Create a default keybindings file with comments. This function is

@@ -50,7 +50,7 @@ def setup_buttons(self):
 
     if preferences.prefs.get(const.CODE):
         shortcut = preferences.get_keybinding(const.CODE)
-        b = self._addButton("text_code", lambda: self.wrap_in_tags("code",
+        b = self._addButton(const.CODE, lambda: self.wrap_in_tags("code",
             preferences.prefs[const.CODE_CLASS]), _(shortcut),
             _("Code format text ({})".format(shortcut)),
             check=False)
@@ -1161,6 +1161,13 @@ def toggleMarkdown(self):
     print "END SAFE BLOCK"
 
 def on_focus_gained(self, note, field):
+    if const.MARKDOWN_PREFS.get("disable_buttons"):
+        print "DISABLING BUTTONS"
+        # disable all buttons except for the Markdown toggle
+        self.disableButtons()
+        markdown_button = self._buttons.get(const.MARKDOWN)
+        if markdown_button:
+            markdown_button.setEnabled(True)
     if Markdowner.button_pressed:
         print "PREVENTED ONFOCUS"
     if not Markdowner.button_pressed:

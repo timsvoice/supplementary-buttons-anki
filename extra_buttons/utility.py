@@ -130,6 +130,12 @@ class Utility(object):
     # change field to this background color
     const.MARKDOWN_BG_COLOR             = "#FFEDD3"
 
+    # dictionary to store Markdown data
+    const.MARKDOWN_PREFS                = dict(disable_buttons=False)
+
+    # max number of bytes read from preference file
+    const.MAX_BYTES_PREFS               = 32768
+
     # Storage of Markdown syntax
     ##################################################
 
@@ -495,12 +501,13 @@ class Utility(object):
     def normalize_user_prefs(default_prefs, user_prefs):
         """
         Check if the user preferences are compatible with the currently
-        used preferences within the addon. Adds keys if they don't exist, and
-        removes those that are not recognized.
+        used preferences within the addon. Add keys if they don't exist, and
+        remove those that are not recognized.
         """
         # add items that are not in prefs, but should be (e.g. after update)
         for key, value in default_prefs.iteritems():
-            if user_prefs.get(key) is None:
+            user_val = user_prefs.get(key)
+            if user_val is None:
                 user_prefs[key] = value
         # delete items in prefs that should not be there (e.g. after update)
         for key in user_prefs.keys()[:]:

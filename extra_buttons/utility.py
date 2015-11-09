@@ -22,6 +22,7 @@ import sys
 import os
 import re
 import base64
+import time
 
 from PyQt4 import QtGui, QtCore
 import BeautifulSoup
@@ -81,7 +82,7 @@ class Utility(object):
 
     const.HEADING_TAGS  = ("h1", "h2", "h3", "h4", "h5", "h6")
 
-    const.CODE_AND_PRE_CLASS = "c"
+    const.CODE_AND_PRE_CLASS = "myCodeClass"
 
     # names of the buttons used for the keybindings
     const.CODE                          = "code"
@@ -113,6 +114,7 @@ class Utility(object):
     const.FIXED_OL_TYPE                 = "fixed_ol_type"
     const.MARKDOWN_SYNTAX_STYLE         = "markdown_syntax_style"
     const.MARKDOWN_LINE_NUMS            = "markdown_line_nums"
+    const.MARKDOWN_ALWAYS_REVERT        = "markdown_always_revert"
 
     # constants for key sequence
     const.KEY_MODIFIERS                 = ("ctrl", "alt", "shift")
@@ -131,7 +133,11 @@ class Utility(object):
     const.MARKDOWN_BG_COLOR             = "#FFEDD3"
 
     # dictionary to store Markdown data
-    const.MARKDOWN_PREFS                = dict(disable_buttons=False)
+    const.MARKDOWN_PREFS                = dict(disable_buttons=False,
+                                               safe_block=False,
+                                               start_time=0.0,
+                                               isconverted=None)
+    const.ONFOCUS_TIMEOUT               = 0.25
 
     # max number of bytes read from preference file
     const.MAX_BYTES_PREFS               = 32768
@@ -208,6 +214,9 @@ class Utility(object):
         Take html and return to Markdown. Empty lines are removed from
         the result.
         """
+        if not html:
+            print "HTML IN CONVERT HTML TO MARKDOWN:", repr(html)
+            return u''
         h = html2text.HTML2Text()
         h.body_width = 0
         md_text = h.handle(html)
@@ -219,12 +228,14 @@ class Utility(object):
             clean_md = ""
             for line in md_text.split("\n"):
                 if line:
-                    clean_md += (line + "\n")
+                    clean_md += (line + u"\n")
         # print "Markdown: ", repr(clean_md)
         # undo the html2text escaping of dots which interferes with
         # the creation of ordered lists
         regex = re.compile(r"(\d+)\\(\.\s)")
         clean_md = re.sub(regex, r"\g<1>\g<2>", clean_md)
+        print "CLEAN_MD FROM CONVERT_HTML_TO_MARKDOWN:", repr(clean_md)
+        assert isinstance(clean_md, unicode)
         return clean_md
 
     @staticmethod
@@ -233,18 +244,18 @@ class Utility(object):
         Convert a string containing Markdown syntax to a string with HTML that
         Anki expects.
         """
-        result = "<div>"
+        result = u"<div>"
         location_last_nbsp = -999999999
         last_char = ""
         for index, char in enumerate(md):
             if char == "\n":
-                result += "</div><div>"
+                result += u"</div><div>"
             elif char == " ":
                 if (index - location_last_nbsp) == 1:
                     result += char
                 else:
                     if last_char == "\n" or last_char in " ":
-                        result += "&nbsp;"
+                        result += u"&nbsp;"
                         location_last_nbsp = index
                     else:
                         result += char
@@ -256,7 +267,7 @@ class Utility(object):
             result = result[:(len(result) - len("<div>"))]
         # or add a closing <div> tag
         else:
-            result += "</div>"
+            result += u"</div>"
 
         # <div></div> needs to be a visible empty line
         if put_breaks:
@@ -273,8 +284,9 @@ class Utility(object):
             if elem.string is not None:
                 if all(x in ("&nbsp;", " ") for x in elem.string.split()):
                     elem.setString(BeautifulSoup.Tag(soup, "br"))
-        result = str(soup)
+        result = unicode(soup)
 
+        assert isinstance(result, unicode)
         return result
 
     @staticmethod
@@ -297,6 +309,7 @@ class Utility(object):
                 SaneListExtension()
             ], lazy_ol=False)
         # print "New HTML: ", new_html
+        assert isinstance(new_html, unicode)
         return new_html
 
     @staticmethod
@@ -438,6 +451,9 @@ class Utility(object):
         """
         Escape HTML characters in a string. Return a safe string.
         """
+        if not s:
+            return u''
+
         html_escape_table = {
             "&": "&amp;",
             '"': "&quot;",
@@ -446,7 +462,9 @@ class Utility(object):
             "<": "&lt;",
         }
 
-        return "".join(html_escape_table.get(c, c) for c in s)
+        result = "".join(html_escape_table.get(c, c) for c in s)
+        assert isinstance(result, unicode)
+        return result
 
     @staticmethod
     def check_alignment(s):
@@ -627,3 +645,19 @@ class Utility(object):
             else:
                 validated_keybindings[key] = val_binding
         return validated_keybindings
+
+    @staticmethod
+    def start_safe_block(hashmap):
+        if not all(key in hashmap for key in ("start_time", "safe_block")):
+            return
+        print "START SAFE BLOCK ONFOCUS"
+        hashmap["safe_block"] = True
+        print "SET TIMEOUT FOR SAFE BLOCK"
+        hashmap["start_time"] = time.time()
+
+    @staticmethod
+    def end_safe_block(hashmap):
+        if not all(key in hashmap for key in ("start_time", "safe_block")):
+            return
+        print "END SAFE BLOCK ONFOCUS"
+        hashmap["safe_block"] = False

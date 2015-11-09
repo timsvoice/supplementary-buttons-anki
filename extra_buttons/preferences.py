@@ -48,6 +48,7 @@ class Preferences(object):
                 const.FIXED_OL_TYPE:            "",
                 const.MARKDOWN_SYNTAX_STYLE:    "tango",
                 const.MARKDOWN_LINE_NUMS:       False,
+                const.MARKDOWN_ALWAYS_REVERT:   False,
                 const.CODE:                     True,
                 const.UNORDERED_LIST:           True,
                 const.ORDERED_LIST:             True,

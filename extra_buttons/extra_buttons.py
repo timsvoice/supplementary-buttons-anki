@@ -21,6 +21,7 @@
 import re
 import sys
 import os
+import time
 
 from anki.utils import json, stripHTMLMedia, fieldChecksum, intTime
 from aqt import editor, mw
@@ -42,6 +43,22 @@ from anki_modules.aqt import editor as myeditor
 # Overrides
 ##################################################
 editor.Editor.onHtmlEdit = myeditor.onHtmlEdit
+
+# Markdown initialization
+##################################################
+def _init_md_db(self):
+    """
+    Initialize the markdown database.
+    """
+    mw.col.db.executescript("""
+            create table if not exists markdown (
+                id              text primary key,
+                isconverted     text not null,
+                md              text not null,
+                html            text not null,
+                mod             integer not null
+            );""")
+    print "INITIALIAZE DATABASE"
 
 # Buttons
 ##################################################
@@ -140,8 +157,10 @@ def setup_buttons(self):
             _("Set background color ({})".format(shortcut)), text=" ")
         self.setup_background_button(b1)
         shortcut = preferences.get_keybinding(const.BACKGROUND_COLOR_CHANGE)
-        b2 = self._addButton(const.BACKGROUND_COLOR, self.on_change_col, _(shortcut),
-          _("Change color ({})".format(shortcut)), text=u"▾")
+        b2 = self._addButton(const.BACKGROUND_COLOR_CHANGE,
+                             self.on_change_col, _(shortcut),
+                             _("Change color ({})".format(shortcut)),
+                             text=u"▾")
         b2.setFixedWidth(12)
 
     if preferences.prefs.get(const.BLOCKQUOTE):
@@ -156,7 +175,7 @@ def setup_buttons(self):
         b1 = self._addButton(const.TEXT_ALLIGN_FLUSH_LEFT, self.justifyLeft,
         _(shortcut), _("Align text left ({})".format(shortcut)),
         check=False)
-        Utility.set_icon(b1, const.TEXT_ALLIGN)
+        Utility.set_icon(b1, const.TEXT_ALLIGN_FLUSH_LEFT)
 
         shortcut = preferences.get_keybinding(const.TEXT_ALLIGN_CENTERED)
         b2 = self._addButton(const.TEXT_ALLIGN_CENTERED, self.justifyCenter,
@@ -1145,8 +1164,7 @@ def toggleAbbreviation(self):
     abbreviation = Abbreviation(self, self.parentWindow, selected)
 
 def toggleMarkdown(self):
-    print "START SAFE BLOCK"
-    Markdowner.button_pressed = True
+    Utility.start_safe_block(const.MARKDOWN_PREFS)
     self.saveNow()
     selected = self.web.selectedHtml()
     print "Selected text:", repr(selected)
@@ -1158,8 +1176,7 @@ def toggleMarkdown(self):
     self.saveNow()
     self.web.setFocus()
     self.web.eval("focusField(%d);" % self.currentField)
-    Markdowner.button_pressed = False
-    print "END SAFE BLOCK"
+    Utility.end_safe_block(const.MARKDOWN_PREFS)
 
 def on_focus_gained(self, note, field):
     if const.MARKDOWN_PREFS.get("disable_buttons"):
@@ -1169,12 +1186,21 @@ def on_focus_gained(self, note, field):
         markdown_button = self._buttons.get(const.MARKDOWN)
         if markdown_button:
             markdown_button.setEnabled(True)
-    if Markdowner.button_pressed:
+    if const.MARKDOWN_PREFS.get("safe_block"):
         print "PREVENTED ONFOCUS"
-    if not Markdowner.button_pressed:
+        return
+    # start_time = const.MARKDOWN_PREFS.get("start_time")
+    # if (start_time != 0.0 and
+    #         ((time.time() - start_time) < const.ONFOCUS_TIMEOUT)):
+    #     if const.MARKDOWN_PREFS.get("isconverted"):
+    #         Markdowner.warn_about_changes(self,
+    #                                       self.currentField,
+    #                                       const.MARKDOWN_BG_COLOR)
+    #     else:
+    #         Markdowner.remove_warn_msg(self, self.currentField)
+    if not const.MARKDOWN_PREFS.get("safe_block"):
         print "ALLOWED ONFOCUS"
-        print "START SAFE BLOCK ONFOCUS"
-        Markdowner.button_pressed = True
+        Utility.start_safe_block(const.MARKDOWN_PREFS)
         self.saveNow()
         html_field = note.fields[field]
         markdowner = Markdowner(self, self.parentWindow, note,
@@ -1182,16 +1208,15 @@ def on_focus_gained(self, note, field):
         markdowner.on_focus_gained()
         self.web.setFocus()
         self.web.eval("focusField(%d);" % self.currentField)
-        print "END SAFE BLOCK ONFOCUS"
-        Markdowner.button_pressed = False
+        Utility.end_safe_block(const.MARKDOWN_PREFS)
 
 def init_hook(self, mw, widget, parentWindow, addMode=False):
+    self._init_md_db()
     addHook("editFocusGained", self.on_focus_gained)
 
+editor.Editor._init_md_db = _init_md_db
 editor.Editor.on_focus_gained = on_focus_gained
 editor.Editor.__init__ = wrap(editor.Editor.__init__, init_hook)
-
-
 
 editor.Editor.toggleMarkdown = toggleMarkdown
 editor.Editor.toggleAbbreviation = toggleAbbreviation
@@ -1233,5 +1258,6 @@ try:
     const.preferences
 except AttributeError:
     const.preferences = preferences
+
 mw.ExtraButtons_Options = ExtraButtons_Options(mw, preferences)
 mw.ExtraButtons_Options.setup_extra_buttons_options()

@@ -36,7 +36,7 @@ This add-on adds the following supplementary formatting buttons to Anki:
 
 * a **strikethrough** button (shortcut <kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>5</kbd>):
 
-    ~~strikethrough text example~~
+    <del>strikethrough text example</del>
 
 * a **code block** button (shortcut <kbd>Ctrl</kbd> + <kbd>.</kbd>) that creates a `<pre>` block element around the selected element. This works the same way the code button works. You can specify the CSS class you want to use in combination with <code>&lt;pre&gt;</code> by going to <i>Tools &gt; Supplementary buttons add-on (options) &gt; Alter &lt;code&gt; CSS...</i>
 
@@ -50,22 +50,33 @@ This add-on adds the following supplementary formatting buttons to Anki:
 
 * a **table** button (shortcut <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>3</kbd>):
 
-    header | header
-    --- | ---
-    content | content
-    
-    Select the text you want to create a table from. This works very much the same as a Markdown list: 
-    
+    <table>
+        <thead>
+            <tr>
+                <th>header</th>
+                <th>header</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>content</td>
+                <td>content</td>
+            </tr>
+        </tbody>
+    </table>
+
+    Select the text you want to create a table from. This works very much the same as a Markdown list:
+
         header1 | header2
         -|-
         elem1 | elem2
-    
+
     This will create a list with two columns and two rows. The `-|-` part is optional, but can be used to align the column to the left (`:-`), right (`-:`) or to the center (`:-:`). You can skip this line completely, but do make sure you add a pipe character `|` between elements to designate a border.
-    
+
     Alternatively, if you do not select any text, upon clicking the <kbd>Create a table</kbd> button you will be presented with a dialog window asking you to specify the number of rows and columns.
-    
+
 * a **keyboard key** button (shortcut <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>K</kbd>):
-    
+
     This will create a keyboard key, for example <kbd>Esc</kbd>. By itself, the text that is wrapped in `<kbd>` will not look any different from the rest of the text. You have to style it first by going to the *Styling* section of *Cards* and add CSS to your liking. For example:
 
 
@@ -87,27 +98,37 @@ This add-on adds the following supplementary formatting buttons to Anki:
 * a **hyperlink** button (shortcut <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>H</kbd>):
 
     Upon pressing the button, you will be presented with a dialog window where you can enter both a link and text. To unlink a hyperlink, use the unlink button.
-    
+
 * a **text highlight** button (shortcut <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>N</kbd> to select color, <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>B</kbd> to apply it):
 
     Highlight your text with any color you would like.
-    
+
 * a **blockquote** button (shortcut <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Y</kbd>):
 
     Cite your source distinctively from the rest of the text. You can add an author by putting brackets around the text:
-    
+
         Do not pray for easy lives. Pray to be stronger men. [[John F. Kennedy]]
-    
-    > Do not pray for easy lives. Pray to be stronger men.  
+
+    > Do not pray for easy lives. Pray to be stronger men.<br />
     > _John F. Kennedy_
 
 * **alignment** buttons:
 
     Align your text left, right, center or justified. Shortcuts are <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Alt</kbd> + <kbd>L</kbd>, <kbd>R</kbd>, <kbd>B</kbd> and <kbd>J</kbd>, respectively.
-    
+
 * a **heading** button (shortcut <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>1</kbd>):
 
     You can either create a heading by prepending text with hashes: `#` for a `<h1>` heading, `######` for a `<h6>` heading. If you do not prepend any hashes, or if you select no text at all, a dialog will appear where you can create your own heading.
+
+## Markdown
+
+* learn about Markdown (tutorial)
+* how the Markdown button works
+* specific examples for Python Markdown implementation
+    * code blocks
+    * definition lists
+    * footnotes
+    * abbreviations
 
 ## Custom user-defined keybindings
 

@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License along
 # with Supplementary Buttons for Anki. If not, see http://www.gnu.org/licenses/.
 
-from PyQt4 import QtGui, QtCore
+from PyQt4 import QtGui, QtCore, QtWebKit
 import os
 import const
 from utility import Utility
@@ -70,8 +70,41 @@ class ExtraButtons_Options(QtGui.QMenu):
                 "&About {0}...".format(const.PROGRAM_NAME), self.main_window)
         about_action.triggered.connect(self.show_about_dialog)
 
+        doc_action = QtGui.QAction("&Documentation...", self.main_window)
+        doc_action.triggered.connect(self.show_doc_dialog)
+
         sub_menu.addAction(options_action)
         sub_menu.addAction(about_action)
+        sub_menu.addAction(doc_action)
+
+    def show_doc_dialog(self):
+        dialog = QtGui.QDialog(self)
+        dialog.setWindowTitle("Supplementary Buttons for Anki Documentation")
+
+        filename = os.path.join(self.preferences.addons_folder(),
+                                "extra_buttons",
+                                "docs",
+                                "doc_start.html")
+
+        if not os.path.exists(filename):
+            print "FILENAME {!r} DOES NOT EXIST".format(filename)
+            return
+
+        help_buttons = QtGui.QDialogButtonBox(dialog)
+        help_buttons.setStandardButtons(QtGui.QDialogButtonBox.Ok)
+
+        help_buttons.accepted.connect(dialog.accept)
+
+        view = QtWebKit.QWebView(dialog)
+        view.load(QtCore.QUrl(filename))
+
+        help_vbox = QtGui.QVBoxLayout()
+        help_vbox.addWidget(view)
+        help_vbox.addWidget(help_buttons)
+
+        dialog.setLayout(help_vbox)
+
+        dialog.exec_()
 
     def show_about_dialog(self):
         about_dialog = QtGui.QMessageBox.about(self.main_window,
@@ -107,7 +140,8 @@ class ExtraButtons_Options(QtGui.QMenu):
                                                 const.LAST_BG_COLOR,
                                                 const.FIXED_OL_TYPE,
                                                 const.MARKDOWN_SYNTAX_STYLE,
-                                                const.MARKDOWN_LINE_NUMS
+                                                const.MARKDOWN_LINE_NUMS,
+                                                const.MARKDOWN_ALWAYS_REVERT
                                             )]
         num_items = len(l) / 2.0
         num_items = num_items + 0.5 if (num_items % 1.0 > 0.0) else num_items
@@ -126,6 +160,12 @@ class ExtraButtons_Options(QtGui.QMenu):
 
         cssClassLabel = QtGui.QLabel(
                 "CSS class for &lt;code&gt; and &lt;pre&gt; code blocks", self)
+        cssClassLabel.setToolTip("""\
+This class will be automatically added when you use the code and pre buttons.
+You can add the CSS you want in your stylesheet and refer to this class. E.g.
+.myCodeClass { color: red; } will color the text of your code and pre elements
+red.\
+        """)
         cssClassText = QtGui.QLineEdit(
                 self.preferences.prefs.get(const.CODE_CLASS), self)
         cssClassHBox = QtGui.QHBoxLayout()
@@ -133,6 +173,8 @@ class ExtraButtons_Options(QtGui.QMenu):
         cssClassHBox.addWidget(cssClassText)
 
         checkBox = QtGui.QCheckBox("Fix ordered list type", self)
+        checkBox.setToolTip("Do not show the choice dialog each time, "
+                "but always use the selected list type.")
         if self.preferences.prefs.get(const.FIXED_OL_TYPE):
             checkBox.setChecked(True)
         else:
@@ -198,7 +240,7 @@ class ExtraButtons_Options(QtGui.QMenu):
         md_style_hbox.addWidget(md_style_label)
         md_style_hbox.addWidget(md_style_combo)
 
-        # line numbers code highlighting
+        # line numbers Markdown code highlighting
         linenums_cb = QtGui.QCheckBox(
                 "Toggle line numbers code highlighting", self)
         if const.preferences.prefs.get(const.MARKDOWN_LINE_NUMS):
@@ -206,6 +248,20 @@ class ExtraButtons_Options(QtGui.QMenu):
 
         linenums_hbox = QtGui.QHBoxLayout()
         linenums_hbox.addWidget(linenums_cb)
+
+        # always revert automatically back to old Markdown
+        # and skip the warning dialog
+        automatic_revert_cb = QtGui.QCheckBox(
+                "Always revert automatically back to old Markdown", self)
+        automatic_revert_cb.setToolTip("""\
+Do not show the warning dialog each time a conflict occurs, but revert back to
+the old Markdown, discarding any changes made.\
+""")
+        if const.preferences.prefs.get(const.MARKDOWN_ALWAYS_REVERT):
+            automatic_revert_cb.setChecked(True)
+
+        automatic_revert_hbox = QtGui.QHBoxLayout()
+        automatic_revert_hbox.addWidget(automatic_revert_cb)
 
         button_box = QtGui.QDialogButtonBox(
                 QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel)
@@ -221,6 +277,7 @@ class ExtraButtons_Options(QtGui.QMenu):
         vbox.addWidget(Utility.create_horizontal_rule())
         vbox.addLayout(md_style_hbox)
         vbox.addLayout(linenums_hbox)
+        vbox.addLayout(automatic_revert_hbox)
         vbox.addWidget(button_box)
 
         option_dialog.setLayout(vbox)
@@ -234,11 +291,17 @@ class ExtraButtons_Options(QtGui.QMenu):
             else:
                 self.preferences.prefs[const.FIXED_OL_TYPE] = ""
 
-            # line numbers for code highlighting
+            # line numbers for Markdown code highlighting
             if linenums_cb.isChecked():
                 const.preferences.prefs[const.MARKDOWN_LINE_NUMS] = True
             else:
                 const.preferences.prefs[const.MARKDOWN_LINE_NUMS] = False
+
+            # always revert automatically back to old Markdown
+            if automatic_revert_cb.isChecked():
+                const.preferences.prefs[const.MARKDOWN_ALWAYS_REVERT] = True
+            else:
+                const.preferences.prefs[const.MARKDOWN_ALWAYS_REVERT] = False
 
             # style for code highlighting
             chosen_style = str(md_style_combo.currentText())

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link href="github-markdown.css" type="text/css" rel="stylesheet">
+</head>
+<body class="markdown-body">
+
+<h2>New buttons</h2>
+
+<p>This add-on adds the following supplementary formatting buttons to Anki:</p>
+
+<ul>
+<li><p>a <strong>code</strong> button that will wrap selected text in a <code>&lt;code&gt;</code> (shortcut: <kbd>Ctrl</kbd> + <kbd>,</kbd>). You can specify the CSS class you want to use in combination with <code>&lt;code&gt;</code>. For example, we have a CSS class named <code>c</code> defined in the <em>Styling</em> section of <em>Cards</em>:</p>
+
+<pre><code>.c {
+    font-family: droid sans mono;
+    background-color: #f2f2f2;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+</code></pre>
+
+<p>In the options <em>Tools &gt; Supplementary buttons add-on (options) &gt; Alter &lt;code&gt; CSS...</em> we can specify the class name, so that our <code>&lt;code&gt;</code> elements will be automatically transformed to <code>&lt;code class="c"&gt;</code>.</p></li>
+<li><p>an <strong>unordered list</strong> button (shortcut <kbd>Ctrl</kbd> + <kbd>[</kbd>):</p>
+
+<ul>
+<li>One</li>
+<li>Two</li>
+<li>Three</li>
+</ul></li>
+<li><p>an <strong>ordered list</strong> button (shortcut <kbd>Ctrl</kbd> + <kbd>]</kbd>):</p>
+
+<ol>
+<li>One</li>
+<li>Two</li>
+<li>Three</li>
+</ol></li>
+<li><p>an <strong>indent</strong> button (shortcut <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>]</kbd>) to indent text or lists:</p>
+
+<ol>
+<li>One
+<ul>
+<li>Two
+<ol>
+<li>Three</li>
+</ol></li>
+</ul></li>
+</ol></li>
+<li><p>an <strong>outdent</strong> button (shortcut <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>[</kbd>) to outdent text or lists</p></li>
+<li><p>a <strong>strikethrough</strong> button (shortcut <kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>5</kbd>):</p>
+
+<p><del>strikethrough text example</del></p></li>
+<li><p>a <strong>code block</strong> button (shortcut <kbd>Ctrl</kbd> + <kbd>.</kbd>) that creates a <code>&lt;pre&gt;</code> block element around the selected element. This works the same way the code button works. You can specify the CSS class you want to use in combination with <code>&lt;pre&gt;</code> by going to <i>Tools &gt; Supplementary buttons add-on (options) &gt; Alter &lt;code&gt; CSS...</i></p></li>
+<li><p>a <strong>horizontal rule</strong> button (shortcut <kbd>Ctrl</kbd> + <kbd>H</kbd>) that inserts a horizontal rule after the current position of the cursor</p></li>
+<li><p>a <strong>definition list</strong> button (shortcut <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>D</kbd>):</p>
+
+<p><dl><dt>definition term</dt><dd>definition description</dd></p>
+
+<p>Upon clicking the button, a popup will appear where you can enter your terms and descriptions.</p></li>
+<li><p>a <strong>table</strong> button (shortcut <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>3</kbd>):</p>
+
+<table>
+    <thead>
+        <tr>
+            <th>header</th>
+            <th>header</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>content</td>
+            <td>content</td>
+        </tr>
+    </tbody>
+</table>
+
+<p>Select the text you want to create a table from. This works very much the same as a Markdown list:</p>
+
+<pre><code>header1 | header2
+-|-
+elem1 | elem2
+</code></pre>
+
+<p>This will create a list with two columns and two rows. The <code>-|-</code> part is optional, but can be used to align the column to the left (<code>:-</code>), right (<code>-:</code>) or to the center (<code>:-:</code>). You can skip this line completely, but do make sure you add a pipe character <code>|</code> between elements to designate a border.</p>
+
+<p>Alternatively, if you do not select any text, upon clicking the <kbd>Create a table</kbd> button you will be presented with a dialog window asking you to specify the number of rows and columns.</p></li>
+<li><p>a <strong>keyboard key</strong> button (shortcut <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>K</kbd>):</p>
+
+<p>This will create a keyboard key, for example <kbd>Esc</kbd>. By itself, the text that is wrapped in <code>&lt;kbd&gt;</code> will not look any different from the rest of the text. You have to style it first by going to the <em>Styling</em> section of <em>Cards</em> and add CSS to your liking. For example:</p>
+
+<pre><code>kbd {
+    box-shadow: inset 0px 1px 0px 0px #ffffff;
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0.05, #f9f9f9), color-stop(1, #e9e9e9) );
+    background-color: #f9f9f9;
+    border-radius: 5px;
+    border: 1px solid #dcdcdc;
+    display: inline-block;
+    font-size: 0.8em;
+    height: 30px;
+    line-height: 30px;
+    padding: 0px 10px;
+    text-align: center;
+    text-shadow: 1px 1px 0px #ffffff;
+}
+</code></pre></li>
+<li><p>a <strong>hyperlink</strong> button (shortcut <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>H</kbd>):</p>
+
+<p>Upon pressing the button, you will be presented with a dialog window where you can enter both a link and text. To unlink a hyperlink, use the unlink button.</p></li>
+<li><p>a <strong>text highlight</strong> button (shortcut <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>N</kbd> to select color, <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>B</kbd> to apply it):</p>
+
+<p>Highlight your text with any color you would like.</p></li>
+<li><p>a <strong>blockquote</strong> button (shortcut <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Y</kbd>):</p>
+
+<p>Cite your source distinctively from the rest of the text. You can add an author by putting brackets around the text:</p>
+
+<pre><code>Do not pray for easy lives. Pray to be stronger men. [[John F. Kennedy]]
+</code></pre>
+
+<blockquote>
+  <p>Do not pray for easy lives. Pray to be stronger men.<br />
+<em>John F. Kennedy</em></p>
+</blockquote></li>
+<li><p><strong>alignment</strong> buttons:</p>
+
+<p>Align your text left, right, center or justified. Shortcuts are <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Alt</kbd> + <kbd>L</kbd>, <kbd>R</kbd>, <kbd>B</kbd> and <kbd>J</kbd>, respectively.</p></li>
+<li><p>a <strong>heading</strong> button (shortcut <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>1</kbd>):</p>
+
+<p>You can either create a heading by prepending text with hashes: <code>#</code> for a <code>&lt;h1&gt;</code> heading, <code>######</code> for a <code>&lt;h6&gt;</code> heading. If you do not prepend any hashes, or if you select no text at all, a dialog will appear where you can create your own heading.</p></li>
+</ul>
+
+<h2>Markdown</h2>
+
+<ul>
+<li>learn about Markdown (tutorial)</li>
+<li>how the Markdown button works</li>
+<li>specific examples for Python Markdown implementation
+<ul>
+<li>code blocks</li>
+<li>definition lists</li>
+<li>footnotes</li>
+<li>abbreviations</li>
+</ul></li>
+</ul>
+
+<h2>Custom user-defined keybindings</h2>
+
+<p>You can change the default keybindings by editing the <code>keybinding.json</code> file in your <code>Anki/addons/extra_buttons</code> folder.  Please keep in mind that there is no check for duplicate keybindings. This means that when a keybinding is already taken by either your OS, Anki, this addon, or some other running program, the result is undefined.</p>
+
+<p>This file needs to contain valid JSON. Basically this means that the key-value pairs should be enclosed in double quotes:</p>
+
+<pre><code>"key": "value"
+</code></pre>
+
+<p>The opening and closing braces in the file <code>{</code> and <code>}</code> are mandatory. Each key-value pair should contain a colon <code>:</code> and should end with a comma, except for the last pair. See the file for valid examples.</p>
+
+<p>Invalid JSON cannot be parsed and will result in the use of the default keybindings. If you find that your new keybindings don't work (i.e. they don't show up in Anki, despite you changing this file), please use a JSON validator to check for faulty JSON.</p>
+
+<p>Modifier keys that can be used include: the function keys (<code>F1</code> through <code>F12</code>), <code>Ctrl</code>, <code>Alt</code>, <code>Shift</code>, ASCII alphanumeric characters, and ASCII punctuation characters. For Mac OS X, be advised that <code>Ctrl</code> maps to the <kbd>Cmd</kbd> key (or "Apple key"), NOT to <kbd>Ctrl</kbd>. If you want to use the <kbd>Ctrl</kbd> key on Mac OS X, use <code>Meta</code> instead. So, <code>Ctrl+Shift+[</code> on Linux or Windows maps to <code>Meta+Shift+[</code> on Mac OS X. The string <code>Ctrl+Shift+[</code> on Mac OS X will require you to type <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>[</kbd> in Anki. Please make sure you understand this before opening bug reports.</p>
+
+<p>The use of an invalid key sequence will silently revert the sequence to the default setting. For example, invalid sequences are:</p>
+
+<ul>
+<li>only modifier keys: <code>Ctrl+Shift</code></li>
+<li>empty sequence</li>
+<li>non-existing modifier keys: <code>Ctrl+Iota+j</code></li>
+</ul>
+
+<p>The order or case of the string sequence is unimportant. <code>Ctrl+Alt+p</code> is the same as <code>ALT+CTRL+P</code> or even <code>p+Ctrl+Alt</code>.</p>
+
+<p>If you want to revert your changes to the default keybindings provided by Supplementary Buttons for Anki, please remove the keybindings JSON file in your addon folder.</p>
+
+<h2>Disabling unused buttons</h2>
+
+<p>The buttons can be enabled or disabled individually in <em>Tools > Supplementary buttons add-on (options)</em>, so feel free to disable the buttons you don't use.</p>
+
+<h2>Installation</h2>
+
+<p>The preferred way to install is using the <a href="https://ankiweb.net/shared/info/162313389">Anki add-on site</a> way by copying the addon code (162313389) into Anki (<em>Tools > Add-ons > Browse &amp; Install...</em>).</p>
+</body>
+</html>

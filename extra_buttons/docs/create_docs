@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# convert markdown from README.md to temp.html
+[ -f ../../README.md ] && markdown ../../README.md > temp.html || exit
+[ -f doc_start.html ] && rm -fv doc_start.html
+
+vim -E -V doc_template.html <<- END
+    /^$
+    :read temp.html
+    :write doc_start.html
+    :quit
+END
+
+[ -f temp.html ] && rm -fv temp.html
+
+
+

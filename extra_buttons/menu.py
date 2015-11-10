@@ -252,7 +252,7 @@ red.\
         # always revert automatically back to old Markdown
         # and skip the warning dialog
         automatic_revert_cb = QtGui.QCheckBox(
-                "Always revert automatically back to old Markdown", self)
+                "Always revert back automatically to old Markdown", self)
         automatic_revert_cb.setToolTip("""\
 Do not show the warning dialog each time a conflict occurs, but revert back to
 the old Markdown, discarding any changes made.\

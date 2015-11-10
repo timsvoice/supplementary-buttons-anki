@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # convert markdown from README.md to temp.html
-[ -f ../../README.md ] && markdown ../../README.md > temp.html || exit
+[ -f ../../README.md ] && markdown_py2 -x toc -x extra ../../README.md > temp.html || exit
 [ -f doc_start.html ] && rm -fv doc_start.html
 
 vim -E -V doc_template.html <<- END

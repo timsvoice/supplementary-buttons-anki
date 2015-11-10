@@ -1,4 +1,9 @@
-## New buttons
+Supplementary Buttons for Anki
+{: style='font-size: 36px; font-weight: bold' }
+
+[TOC]
+
+## Formatting buttons
 
 This add-on adds the following supplementary formatting buttons to Anki:
 
@@ -122,13 +127,136 @@ This add-on adds the following supplementary formatting buttons to Anki:
 
 ## Markdown
 
-* learn about Markdown (tutorial)
-* how the Markdown button works
-* specific examples for Python Markdown implementation
-    * code blocks
-    * definition lists
-    * footnotes
-    * abbreviations
+You can use Markdown to style your cards. Markdown is a text-to-HTML
+conversion tool, that let's you quicky style your cards. If you don't know
+Markdown yet, have a look at [this tutorial](http://markdowntutorial.com/).
+
+When you click the Markdown button, your Markdown syntax will be translated
+into HTML and displayed. You are now in _Markdown mode_. Markdown mode is
+indicated by the changed background color and the warning message under the
+field you are editing. In Markdown mode, you cannot use any of the formatting
+buttons you would normally have access to. This is done to prevent any
+accidental editing of the displayed result. If you want to make changes to the
+card, first toggle the Markdown button again and go back to normal mode.
+
+When you do add text to your card or alter the HTML directly in Markdown mode,
+a dialog box will appear asking whether you want to revert to your previous
+Markdown syntax, or try to incorperate the changes in your card. Be advised,
+however, that the result may lose some of your original Markdown syntax,
+especially if the original syntax was complex (footnotes, tables, code
+blocks).
+
+To make sure you always return to your original syntax when exiting Markdown
+mode, you can check the _Always revert back automatically to old Markdown_
+checkbox in the options. Doing this will never show you the warning dialog box
+and will always discard any changes made in Markdown mode.
+
+### Special syntax
+This addons supports some Markdown syntax not found in
+[John Gruber's original
+Markdown](https://daringfireball.net/projects/markdown/):
+
+#### Code blocks
+Code blocks can be created by indenting four spaces with a white line before
+and after the code block. The syntax can be specified either by:
+
+    :::java
+    public class Test { }
+
+or by using:
+
+    ```python
+    def print_me(this):
+        print "Printing: ", this
+    ```
+
+More (technical) details on code blocks (e.g. highlighting of lines) can be found on the [Python Markdown project](https://pythonhosted.org/Markdown/extensions/code_hilite.html).
+
+#### Definition lists
+A definition list can be created as follows:
+
+    Apple
+    :   Pomaceous fruit of plants of the genus Malus in
+    the family Rosaceae.
+
+    Orange
+    :   The fruit of an evergreen tree of the genus Citrus.
+
+Make sure there is a white line between the different definitions.
+
+#### Footnotes
+
+    Footnotes[^1] have a label[^@#$%] and the footnote's content.
+
+    [^1]: This is a footnote content.
+    [^@#$%]: A footnote on the label: "@#$%".
+
+A footnote label must start with a caret `^` and may contain any inline text
+(including spaces) between a set of square brackets `[]`. Only the first caret
+has any special meaning.
+
+A footnote content must start with the label followed by a colon and at least
+one space. The label used to define the content must exactly match the label
+used in the body (including capitalization and white space). The content would
+then follow the label either on the same line or on the next line. The content
+may contain multiple lines, paragraphs, code blocks, blockquotes and most any
+other markdown syntax. The additional lines must be indented one level (four
+spaces or one tab).
+
+More (technical) details on footnotes (e.g. multiple blocks of content) can be
+found on the [Python Markdown project](https://pythonhosted.org/Markdown/extensions/footnotes.html).
+
+#### Abbreviations
+The Markdown syntax:
+
+    The HTML specification
+    is maintained by the W3C.
+
+    *[HTML]: Hyper Text Markup Language
+    *[W3C]:  World Wide Web Consortium
+
+will be rendered as:
+
+    <p>The <abbr title="Hyper Text Markup Language">HTML</abbr> specification
+    is maintained by the <abbr title="World Wide Web Consortium">W3C</abbr>.</p>
+
+#### Tables
+Tables have the same syntax as described above for the table button. Tables
+can be styled with CSS in your stylesheet.
+
+#### Attributes
+An example attribute list might look like this:
+
+    {: #someid .someclass somekey='some value' }
+
+A word which starts with a hash (`#`) will set the id of an element.
+
+A word which starts with a dot (`.`) will be added to the list of classes
+assigned to an element.
+
+A key/value pair (`somekey='some value'`) will assign that pair to the element.
+
+Be aware that while the dot syntax will add to a class, using key/value pairs
+will always override the previously defined attribute. Consider the following:
+
+    {: #id1 .class1 id=id2 class="class2 class3" .class4 }
+
+The above example would result in the following attributes being defined:
+
+    id="id2" class="class2 class3 class4"
+
+Say you have a CSS class:
+
+    .large { font-size: 32px; }
+
+You can add this class to a paragraph like this:
+
+    A person often meets his destiny on the road he took to avoid it.
+    {: .large}
+
+More (technical) details on attributes (e.g. block-level and inline
+attributes) can be found on the [Python Markdown
+project](https://pythonhosted.org/Markdown/extensions/attr_list.html).
 
 ## Custom user-defined keybindings
 

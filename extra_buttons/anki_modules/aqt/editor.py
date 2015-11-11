@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+# Copyright: Damien Elmes <anki@ichi2.net>
+# Changes: Stefan van den Akker <srvandenakker.dev@gmail.com>
+
 from aqt.qt import *
 from aqt.utils import openHelp, showInfo
 from anki.utils import isWin, isMac

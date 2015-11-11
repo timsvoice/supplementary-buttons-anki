@@ -2,22 +2,8 @@
 #
 # -*- coding: utf-8 -*-
 #
-# Original work: Aaron Swartz <me@aaronsw.com>
-#
-# This file is part of Supplementary Buttons for Anki.
-#
-# Supplementary Buttons for Anki is free software: you can redistribute it
-# and/or modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
-#
-# Supplementary Buttons for Anki is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
-# Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along
-# with Supplementary Buttons for Anki. If not, see http://www.gnu.org/licenses/.
+# Author: Aaron Swartz <me@aaronsw.com>
+# Changes: Stefan van den Akker <srvandenakker.dev@gmail.com>
 
 import re
 """html2text: Turn HTML into equivalent Markdown-structured text."""

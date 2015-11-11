@@ -324,10 +324,10 @@ class Utility(object):
         """
         Return True when md_one is the same as md_two, False otherwise.
         """
-        print "md_one before:\n", repr(md_one)
-        print "md_two before:\n", repr(md_two)
         compare_one = Utility.remove_white_space(md_one)
         compare_two = Utility.remove_white_space(md_two)
+        print "md_one before:\n", repr(compare_one)
+        print "md_two before:\n", repr(compare_two)
         return compare_one == compare_two
 
     @staticmethod

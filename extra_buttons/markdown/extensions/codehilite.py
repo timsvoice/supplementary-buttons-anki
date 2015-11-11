@@ -21,25 +21,19 @@ from . import Extension
 from ..treeprocessors import Treeprocessor
 
 try:
+    import os
+    import sys
+    # hack to put the the addons's path on PYTHONPATH
+    for package in sys.path:
+        if package.endswith("addons"):
+            sys.path.insert(0, os.path.join(package, "extra_buttons"))
+            break
     from pygments import highlight
     from pygments.lexers import get_lexer_by_name, guess_lexer
     from pygments.formatters import get_formatter_by_name
     pygments = True
 except ImportError:
-    try:
-        import os
-        import sys
-        # hack to put the the addons's path on PYTHONPATH
-        for package in sys.path:
-            if package.endswith("addons"):
-                sys.path.insert(0, os.path.join(package, "extra_buttons"))
-                break
-        from pygments import highlight
-        from pygments.lexers import get_lexer_by_name, guess_lexer
-        from pygments.formatters import get_formatter_by_name
-        pygments = True
-    except ImportError:
-        pygments = False
+    pygments = False
 
 
 def parse_hl_lines(expr):

@@ -1179,6 +1179,8 @@ def toggleMarkdown(self):
     Utility.end_safe_block(const.MARKDOWN_PREFS)
 
 def on_focus_gained(self, note, field):
+    print "TAGS:", note.tags
+    tags = note.tags
     if const.MARKDOWN_PREFS.get("disable_buttons"):
         print "DISABLING BUTTONS"
         # disable all buttons except for the Markdown toggle
@@ -1201,13 +1203,23 @@ def on_focus_gained(self, note, field):
     if not const.MARKDOWN_PREFS.get("safe_block"):
         print "ALLOWED ONFOCUS"
         Utility.start_safe_block(const.MARKDOWN_PREFS)
-        self.saveNow()
+        try:
+            time.sleep(0.01)
+            self.saveNow()
+        except AttributeError as e:
+            print e
         html_field = note.fields[field]
         markdowner = Markdowner(self, self.parentWindow, note,
                                 html_field, field, "")
         markdowner.on_focus_gained()
         self.web.setFocus()
         self.web.eval("focusField(%d);" % self.currentField)
+        note.tags = tags
+        try:
+            time.sleep(0.01)
+            self.updateTags()
+        except AttributeError as e:
+            print e
         Utility.end_safe_block(const.MARKDOWN_PREFS)
 
 def init_hook(self, mw, widget, parentWindow, addMode=False):

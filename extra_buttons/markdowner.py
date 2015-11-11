@@ -221,7 +221,6 @@ class Markdowner(object):
     def remove_warn_msg(editor_instance, field):
         editor_instance.web.eval("""
             if (document.getElementById('mdwarn%s') !== null) {
-                console.log('style: ' + style_tag.innerHTML);
                 var field = document.getElementById('f%s');
                 field.classList.remove('mdstyle');
                 field.removeAttribute('title');

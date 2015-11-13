@@ -120,7 +120,8 @@ class Markdowner(object):
 
             compare_md = Utility.convert_markdown_to_html(self.md)
             compare_md = Utility.convert_html_to_markdown(compare_md)
-            if (Utility.is_same_markdown(clean_md_escaped, compare_md) or
+            compare_md_escaped = Utility.escape_html_chars(compare_md)
+            if (Utility.is_same_markdown(clean_md_escaped, compare_md_escaped) or
                    const.preferences.prefs.get(const.MARKDOWN_ALWAYS_REVERT)):
                 self.revert_to_stored_markdown()
             else:

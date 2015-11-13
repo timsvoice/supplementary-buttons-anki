@@ -1192,7 +1192,7 @@ def toggleMarkdown(self):
     Utility.end_safe_block(const.MARKDOWN_PREFS)
 
 def on_focus_gained(self, note, field):
-    print "TAGS:", note.tags
+    # print "TAGS:", note.tags
     tags = note.tags
     if const.MARKDOWN_PREFS.get("disable_buttons"):
         print "DISABLING BUTTONS"
@@ -1204,15 +1204,6 @@ def on_focus_gained(self, note, field):
     if const.MARKDOWN_PREFS.get("safe_block"):
         print "PREVENTED ONFOCUS"
         return
-    # start_time = const.MARKDOWN_PREFS.get("start_time")
-    # if (start_time != 0.0 and
-    #         ((time.time() - start_time) < const.ONFOCUS_TIMEOUT)):
-    #     if const.MARKDOWN_PREFS.get("isconverted"):
-    #         Markdowner.warn_about_changes(self,
-    #                                       self.currentField,
-    #                                       const.MARKDOWN_BG_COLOR)
-    #     else:
-    #         Markdowner.remove_warn_msg(self, self.currentField)
     if not const.MARKDOWN_PREFS.get("safe_block"):
         print "ALLOWED ONFOCUS"
         Utility.start_safe_block(const.MARKDOWN_PREFS)

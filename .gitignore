@@ -9,7 +9,6 @@
 
 # other files #
 ###############
-zip_files_into_package
 extra_buttons/docs/doc_start.html
 extra_buttons/keybindings_linux_windows.json
 

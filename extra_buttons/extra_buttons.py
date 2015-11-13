@@ -50,15 +50,28 @@ def _init_md_db(self):
     """
     Initialize the markdown database.
     """
-    mw.col.db.executescript("""
-            create table if not exists markdown (
-                id              text primary key,
-                isconverted     text not null,
-                md              text not null,
-                html            text not null,
-                mod             integer not null
-            );""")
-    print "INITIALIAZE DATABASE"
+    print "INITIALIAZING DATABASE"
+    sql_create_table = """
+        create table if not exists markdown (
+            id              text primary key,
+            isconverted     text not null,
+            md              text not null,
+            html            text not null,
+            mod             integer not null
+        );
+    """
+    mw.col.db.executescript(sql_create_table)
+    try:
+        mw.col.db.executescript("""
+            select id, isconverted, md, html, mod
+            from markdown;
+        """)
+    except:
+        print "DROPPING TABLE"
+        mw.col.db.executescript("""
+            drop table if exists markdown;
+            {}
+            """.format(sql_create_table))
 
 # Buttons
 ##################################################

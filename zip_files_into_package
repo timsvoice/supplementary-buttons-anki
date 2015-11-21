@@ -16,4 +16,4 @@ zip ~/Desktop/supplementary_buttons_anki_$(date +%s).zip \
     extra_buttons/markdown/* \
     extra_buttons/markdowner.py \
     extra_buttons/pygments/* \
-    extra_buttons/python_modules/* \
+    extra_buttons/python_modules/*

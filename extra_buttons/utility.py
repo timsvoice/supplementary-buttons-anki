@@ -23,6 +23,7 @@ import os
 import re
 import base64
 import time
+import HTMLParser
 
 from PyQt4 import QtGui, QtCore
 import BeautifulSoup
@@ -137,10 +138,14 @@ class Utility(object):
                                                safe_block=False,
                                                start_time=0.0,
                                                isconverted=None)
-    const.ONFOCUS_TIMEOUT               = 0.25
 
     # max number of bytes read from preference file
     const.MAX_BYTES_PREFS               = 32768
+
+    # check if image present in Markdown
+    const.IS_LINK_OR_IMG_REGEX = re.compile(r"!?\[[^\]]*\]\(.*?(?<!\\)\)")
+    # to unescape image data
+    const.HTML_PARSER                   = HTMLParser.HTMLParser()
 
     # Storage of Markdown syntax
     ##################################################
@@ -211,29 +216,50 @@ class Utility(object):
     @staticmethod
     def convert_html_to_markdown(html, keep_empty_lines=False):
         """
-        Take html and return to Markdown. Empty lines are removed from
-        the result.
+        Take a HTML string and return a Markdown string. Empty lines are
+        removed from the result, unless `keep_empty_lines` is set to `True`.
         """
+        def replace_link_img_matches(regex, new, s):
+            result = re.finditer(const.IS_LINK_OR_IMG_REGEX, s)
+            if result:
+                for match in result:
+                    str_to_be_replaced = match.group(0)
+                    start = s.find(str_to_be_replaced)
+                    end   = start + len(str_to_be_replaced)
+                    print "MATCH", str_to_be_replaced
+                    replacement = re.sub(regex, new, str_to_be_replaced)
+                    # put string back in original string
+                    str_start = s[:start]
+                    str_end = s[end:]
+                    s = str_start + replacement + str_end
+                    print "NEW {!r} AFTER REPLACEMENT".format(s)
+            return s
+
         if not html:
             print "HTML IN CONVERT HTML TO MARKDOWN:", repr(html)
             return u''
         h = html2text.HTML2Text()
         h.body_width = 0
         md_text = h.handle(html)
-        # print "Dirty markdown:\n", repr(md_text)
+        clean_md = ""
         if keep_empty_lines:
             clean_md = md_text
         else:
             # remove white lines
-            clean_md = ""
             for line in md_text.split("\n"):
                 if line:
                     clean_md += (line + u"\n")
-        # print "Markdown: ", repr(clean_md)
-        # undo the html2text escaping of dots which interferes with
-        # the creation of ordered lists
-        regex = re.compile(r"(\d+)\\(\.\s)")
-        clean_md = re.sub(regex, r"\g<1>\g<2>", clean_md)
+
+        # undo the html2text escaping of dots (which interferes
+        # with the creation of ordered lists) and parentheses
+        dot_regex = re.compile(r"(\d+)\\(\.\s)")
+        clean_md = re.sub(dot_regex, r"\g<1>\g<2>", clean_md)
+        left_paren_regex = re.compile(r"\\\(")
+        clean_md = replace_link_img_matches(left_paren_regex, "&#40;", clean_md)
+        right_paren_regex = re.compile(r"\\\)")
+        clean_md = replace_link_img_matches(right_paren_regex, "&#41;", clean_md)
+        whitespace_regex = re.compile(r"\s+")
+        clean_md = replace_link_img_matches(whitespace_regex, "&#32;", clean_md)
         print "CLEAN_MD FROM CONVERT_HTML_TO_MARKDOWN:", repr(clean_md)
         assert isinstance(clean_md, unicode)
         return clean_md
@@ -595,6 +621,10 @@ class Utility(object):
                 return ""
         # print "returning:", Utility.create_pretty_sequence(parts)
         return Utility.create_pretty_sequence(parts)
+
+    @staticmethod
+    def unescape_html(html):
+        return const.HTML_PARSER.unescape(html)
 
     @staticmethod
     def filter_duplicates(sequence):

@@ -66,7 +66,8 @@ def _init_md_db(self):
             select id, isconverted, md, html, mod
             from markdown;
         """)
-    except:
+    except OperationalError as e:
+        print e
         print "DROPPING TABLE"
         mw.col.db.executescript("""
             drop table if exists markdown;

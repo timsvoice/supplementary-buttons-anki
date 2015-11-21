@@ -98,26 +98,12 @@ class Markdowner(object):
                     self.isconverted, self.md, self._html, self._lastmodified)
 
     def apply_markdown(self):
-        # convert self.md to html; convert html to markdown; compare
         clean_md = Utility.convert_html_to_markdown(self.html)
         clean_md_escaped = Utility.escape_html_chars(clean_md)
         if not clean_md:
             return
         # check for changed Markdown between the database and the current text
         if (self.has_data and self.isconverted == "True"):
-            # if self.selected_html:
-            #     # only convert the selected text
-            #     selected_clean_md = Utility.convert_html_to_markdown(
-            #             self.selected_html)
-            #     selected_new_html = Utility.convert_markdown_to_html(
-            #             selected_clean_md)
-            #     self.editor_instance.web.eval(
-            #             "document.execCommand('insertHTML', false, %s);"
-            #             % json.dumps(new_html))
-            #     new_html = self.note.fields[self.current_field]
-            #     self.store_new_markdown_version_in_db("True", new_html)
-            #     return
-
             compare_md = Utility.convert_markdown_to_html(self.md)
             compare_md = Utility.convert_html_to_markdown(compare_md)
             compare_md_escaped = Utility.escape_html_chars(compare_md)
@@ -128,6 +114,9 @@ class Markdowner(object):
                 self.handle_conflict()
         else:
             new_html = Utility.convert_markdown_to_html(clean_md)
+            # needed for proper display of images
+            if "<img" in new_html:
+                new_html = Utility.unescape_html(new_html)
             html_with_data = Utility.make_data_ready_to_insert(
                     self.current_note_id_and_field, "True",
                     clean_md_escaped, new_html)
@@ -199,22 +188,28 @@ class Markdowner(object):
                        "you toggle the Markdown button again."
         editor_instance.web.eval("""
             if (document.getElementById('mdwarn%s') === null) {
-                var style_tag = document.getElementsByTagName('style')[0];
-                if (style_tag.innerHTML.indexOf('mdstyle') === -1) {
-                    style_tag.innerHTML +=
-                            '.mdstyle { background-color: %s !important; }\\n';
+                var style_tag_list = document.getElementsByTagName('style');
+                if (style_tag_list.length === 0) {
+                    // there is no <style> element in the document
+                } else {
+                    var style_tag = style_tag_list[0];
+
+                    if (style_tag.innerHTML.indexOf('mdstyle') === -1) {
+                        style_tag.innerHTML +=
+                                '.mdstyle { background-color: %s !important; }\\n';
+                    }
+
+                    var field = document.getElementById('f%s');
+                    field.setAttribute('title', '%s');
+                    field.classList.add('mdstyle');
+
+                    var warn_div = document.createElement('div');
+                    warn_div.id = 'mdwarn%s';
+                    warn_div.setAttribute('style', 'margin: 10px 0px;');
+                    var text = document.createTextNode('%s');
+                    warn_div.appendChild(text);
+                    field.parentNode.insertBefore(warn_div, field.nextSibling);
                 }
-
-                var field = document.getElementById('f%s');
-                field.setAttribute('title', '%s');
-                field.classList.add('mdstyle');
-
-                var warn_div = document.createElement('div');
-                warn_div.id = 'mdwarn%s';
-                warn_div.setAttribute('style', 'margin: 10px 0px;');
-                var text = document.createTextNode('%s');
-                warn_div.appendChild(text);
-                field.parentNode.insertBefore(warn_div, field.nextSibling);
             }
         """ % (field, color, field, warning_text, field, warning_text))
 
@@ -251,6 +246,9 @@ class Markdowner(object):
         """
         clean_md = Utility.convert_html_to_markdown(
                 self.html, keep_empty_lines=True)
+        if re.search(const.IS_LINK_OR_IMG_REGEX, clean_md):
+            print "MATCHES LINK OR IMAGE!!!"
+            clean_md = Utility.escape_html_chars(clean_md)
         new_html = Utility.convert_clean_md_to_html(
                 clean_md, put_breaks=True)
         print "INSERTING THIS:\n", new_html

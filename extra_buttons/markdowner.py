@@ -122,6 +122,7 @@ class Markdowner(object):
                     clean_md_escaped, new_html)
             self.insert_markup_in_field(
                     html_with_data, self.editor_instance.currentField)
+            # TODO: align elements according to user preference
             self.left_align_elements()
             # store the Markdown so we can reuse it when the button gets toggled
             self.store_new_markdown_version_in_db(

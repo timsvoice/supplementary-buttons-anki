@@ -152,31 +152,39 @@ class Preferences(object):
         else:
             # keybindings loaded from file should have exactly as many
             # key-value pairs as in the default keybindings
-            Utility.normalize_user_prefs(self._default_keybindings,
-                    self.keybindings)
+            self.keybindings = Utility.normalize_user_prefs(
+                    self._default_keybindings, self.keybindings)
             self.keybindings = Utility.check_user_keybindings(
                     self._default_keybindings, self.keybindings, const.PLATFORM)
 
     def get_keybinding(self, name_of_key):
-        """Return the keybinding indicated by name_of_key, and capitalize
-        the name of each key before the delimiter +."""
+        """
+        Return the keybinding indicated by `name_of_key`, and capitalize
+        the name of each key before the delimiter `+`.
+        """
         keybinding = self.keybindings.get(name_of_key, "")
         return string.capwords(keybinding, "+")
 
     def addons_folder(self):
-        """Return the addon folder used by Anki."""
+        """
+        Return the addon folder used by Anki.
+        """
         return self.main_window.pm.addonFolder()
 
     def save_prefs(self):
-        """Save the preferences to disk, encoded."""
+        """
+        Save the preferences to disk, encoded.
+        """
         encoded_prefs = base64.b64encode(json.dumps(self.prefs))
         with open(self.prefs_path, "w") as f:
             f.write(encoded_prefs)
 
     def create_keybindings_file(self):
-        """Create a default keybindings file with comments. This function is
+        """
+        Create a default keybindings file with comments. This function is
         called when Supplementary Buttons for Anki cannot find an existing
-        keybindings file. Override any changes made to an existing file."""
+        keybindings file. Override any changes made to an existing file.
+        """
 
         contents = """\
 // This file contains the keybindings that are used for Supplementary Buttons

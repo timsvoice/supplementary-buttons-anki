@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import unittest
 import re
 import time
@@ -25,6 +26,17 @@ class UtilityTester(unittest.TestCase):
                           Utility.replace_link_img_matches,
                           self.whitespace_regex, "&#32;", image)
 
+    def test_replace_link_img_matches_accepts_russian_input(self):
+        # arrange
+        image       = u"![](изображение \(1\).jpg)"
+        expected    = u"![](изображение&#32;\(1\).jpg)"
+        # act
+        result      = Utility.replace_link_img_matches(self.whitespace_regex,
+                                                       "&#32;",
+                                                       image)
+        # assert
+        self.assertEqual(expected, result)
+
     def test_replace_link_img_matches_replaces_single_whitespace(self):
         # arrange
         image               = u"![](image \(1\).jpg)"
@@ -33,6 +45,7 @@ class UtilityTester(unittest.TestCase):
         result = Utility.replace_link_img_matches(self.whitespace_regex, "&#32;", image)
         # assert
         self.assertEqual(expected, result)
+
     def test_replace_link_img_matches_replaces_link_with_whitespace(self):
         # arrange
         image               = u"[](image \(1\).jpg)"
@@ -174,6 +187,22 @@ class UtilityTester(unittest.TestCase):
         self.assertEqual(len(expected), len(result))
 
     # escape_html_chars
+    def test_escape_html_chars_throws_assertion_error_when_input_is_not_unicode(self):
+        # arrange
+        s        = "this&that"
+        # act
+        # assert
+        self.assertRaises(AssertionError, Utility.escape_html_chars, s)
+
+    def test_escape_html_chars_returns_correctly_escaped_string_when_input_is_russian(self):
+        # arrange
+        s           = u"об этом & о том"
+        expected    = u"об этом &amp; о том"
+        # act
+        result      = Utility.escape_html_chars(s)
+        # assert
+        self.assertEqual(expected, result)
+
     def test_escape_html_chars_returns_string_with_ampersand_escaped(self):
         # arrange
         s        = u"this&that"
@@ -510,21 +539,21 @@ class UtilityTester(unittest.TestCase):
 
     def test_check_user_keybindings_return_new_upon_valid_user_keybinding(self):
         # arrange
-        invalid_keybinding  = dict(a=u"ctrl-shift-a")
+        valid_keybinding    = dict(a=u"ctrl-shift-a")
         default_keybindings = dict(a=u"ctrl-alt-del")
         expected            = dict(a=u"ctrl+shift+a")
         # act
-        result = Utility.check_user_keybindings(default_keybindings, invalid_keybinding)
+        result = Utility.check_user_keybindings(default_keybindings, valid_keybinding)
         # assert
         self.assertEqual(expected, result)
 
     def test_check_user_keybindings_return_empty_dict_when_user_keybindings_is_empty(self):
         # arrange
-        invalid_keybinding  = dict()
+        valid_keybinding    = dict()
         default_keybindings = dict(a=u"ctrl-alt-del")
         expected            = dict()
         # act
-        result = Utility.check_user_keybindings(default_keybindings, invalid_keybinding)
+        result = Utility.check_user_keybindings(default_keybindings, valid_keybinding)
         # assert
         self.assertEqual(expected, result)
 
@@ -547,6 +576,25 @@ class UtilityTester(unittest.TestCase):
         # assert
         self.assertEqual(True, hashmap.get("safe_block"))
         self.assertTrue(hashmap.get("start_time"))
+
+    # end_safe_block
+    def test_end_safe_block_return_none_when_hashmap_is_empty(self):
+        # arrange
+        hashmap     = dict()
+        expected    = None
+        # act
+        result = Utility.end_safe_block(hashmap)
+        # assert
+        self.assertEqual(expected, result)
+
+    def test_end_safe_block_sets_hashmap_key_to_false_when_correct_dict_is_passed(self):
+        # arrange
+        hashmap     = dict(start_time="", safe_block="")
+        expected    = dict(start_time="", safe_block=False)
+        # act
+        Utility.end_safe_block(hashmap)
+        # assert
+        self.assertEqual(expected.get("safe_block"), hashmap.get("safe_block"))
 
     # convert_clean_md_to_html
     def test_convert_clean_md_to_html_throws_assertion_error_when_input_is_not_unicode(self):
@@ -657,6 +705,14 @@ class UtilityTester(unittest.TestCase):
         # assert
         self.assertEqual(expected, result)
 
+    def test_convert_clean_md_to_html_returns_correct_leading_whitespace_when_input_is_russian(self):
+        # arrange
+        s        = u"    пизза"
+        expected = u"<div>&nbsp; &nbsp; пизза</div>"
+        # act
+        result = Utility.convert_clean_md_to_html(s, put_breaks=True)
+        # assert
+        self.assertEqual(expected, result)
 
     # convert_markdown_to_html
     def test_convert_markdown_to_html_throws_assertion_error_when_input_is_not_unicode(self):
@@ -699,22 +755,162 @@ class UtilityTester(unittest.TestCase):
         d           = dict(a="one")
         encoded     = base64.b64encode(json.dumps(d))
         s           = u"<div></div><!----SBAdata:{}---->".format(encoded)
-        expected    = d
+        expected    = encoded
         # act
         result = Utility.get_md_data_from_string(s)
         # assert
         self.assertEqual(expected, result)
 
-    def test_get_md_data_from_string_throws_type_error_when_base64_data_is_corrupt(self):
+    def test_get_md_data_from_string_returns_random_string_in_data_part(self):
         # arrange
         s           = u"<div></div><!----SBAdata:randomtext---->"
+        expected    = u"randomtext"
         # act
+        result = Utility.get_md_data_from_string(s)
         # assert
-        self.assertRaises(TypeError, Utility.get_md_data_from_string, s)
+        self.assertEqual(expected, result)
 
-    def test_get_md_data_from_string_throws_type_error_when_base64_data_is_corrupt(self):
+    def test_get_md_data_from_string_returns_empty_string_when_data_part_is_empty(self):
         # arrange
-        s           = u"<div></div><!----SBAdata:randomtext---->"
+        s           = u"<div></div><!----SBAdata:---->"
+        expected    = u""
+        # act
+        result = Utility.get_md_data_from_string(s)
+        # assert
+        self.assertEqual(expected, result)
+
+    # decompress_and_json_load
+    def test_decompress_and_json_load_throws_assertion_error_when_input_is_not_unicode(self):
+        # arrange
+        s           = ""
         # act
         # assert
-        self.assertRaises(TypeError, Utility.get_md_data_from_string, s)
+        self.assertRaises(AssertionError, Utility.decompress_and_json_load, s)
+
+    def test_decompress_and_json_load_throws_type_error_when_padding_of_base64_data_is_invalid(self):
+        # arrange
+        data        = u"randomtext" # lenght of string should be multiples of 4
+                                    # so `randomtext==` would not throw an error
+                                    # because it is padded correctly
+        expected    = "corrupted"
+        # act
+        result = Utility.decompress_and_json_load(data)
+        # assert
+        self.assertEqual(expected, result)
+
+    def test_decompress_and_json_load_returns_corrupted_when_base64_data_is_invalid_json(self):
+        # arrange
+        data        = u"randomtext=="
+        expected    = "corrupted"
+        # act
+        result = Utility.decompress_and_json_load(data)
+        # assert
+        self.assertEqual(expected, result)
+
+    def test_decompress_and_json_load_returns_corrupted_when_base64_data_contains_non_ascii_chars(self):
+        # arrange
+        data        = u"ëandomtext=="
+        expected    = "corrupted"
+        # act
+        result = Utility.decompress_and_json_load(data)
+        # assert
+        self.assertEqual(expected, result)
+
+
+    def test_decompress_and_json_load_returns_valid_json_when_base64_data_is_valid(self):
+        # arrange
+        d           = dict(a=u"one")
+        data        = unicode(base64.b64encode(json.dumps(d)))
+        expected    = d
+        # act
+        result = Utility.decompress_and_json_load(data)
+        # assert
+        self.assertEqual(expected, result)
+
+    # json_dump_and_compress
+    def test_json_dump_and_compress_throws_assertion_error_when_input_is_not_unicode(self):
+        # arrange
+        data        = ""
+        # act
+        # assert
+        self.assertRaises(AssertionError, Utility.json_dump_and_compress, data)
+
+    def test_json_dump_and_compress_returns_base64_string_when_input_is_russian(self):
+        # arrange
+        data        = u"привет"
+        expected    = unicode(base64.b64encode(json.dumps(data)))
+        # act
+        result      = Utility.json_dump_and_compress(data)
+        # assert
+        self.assertEqual(expected, result)
+
+    # is_same_markdown
+    def test_is_same_markdown_throws_assertion_error_when_input_is_not_unicode(self):
+        # arrange
+        s1      = ""
+        s2      = ""
+        # act
+        # assert
+        self.assertRaises(AssertionError, Utility.is_same_markdown, s1, s2)
+
+    def test_is_same_markdown_returns_true_when_markdown_with_russian_is_same(self):
+        # arrange
+        s1          = u"ещё **один** тест"
+        expected    = True
+        # act
+        result      = Utility.is_same_markdown(s1, s1)
+        # assert
+        self.assertEqual(expected, result)
+
+    # remove_white_space
+    def test_remove_white_space_returns_empty_unicode_string_when_input_is_empty_string(self):
+        # arrange
+        s           = u""
+        expected    = u""
+        # act
+        result      = Utility.remove_white_space(s)
+        # assert
+        self.assertEqual(expected, result)
+
+    def test_remove_white_space_throws_assertion_error_when_input_is_not_unicode(self):
+        # arrange
+        s           = ""
+        # act
+        # assert
+        self.assertRaises(AssertionError, Utility.remove_white_space, s)
+
+    def test_remove_white_space_returns_unicode_string_when_input_is_russian(self):
+        # arrange
+        s           = u"ой ты Пушкин, ой ты сукин сын"
+        expected    = u"ойтыПушкин,ойтысукинсын"
+        # act
+        result      = Utility.remove_white_space(s)
+        # assert
+        self.assertEqual(expected, result)
+
+    # put_md_data_in_json_format
+    def test_put_md_data_in_json_format_throws_assertion_error_when_md_or_html_is_not_unicode(self):
+        md1         = ""
+        html1       = u""
+        self.assertRaises(AssertionError,
+                          Utility.put_md_data_in_json_format,
+                          1,
+                          True,
+                          md1,
+                          html1)
+        md2         = u""
+        html2       = ""
+        self.assertRaises(AssertionError,
+                          Utility.put_md_data_in_json_format,
+                          1,
+                          True,
+                          md1,
+                          html1)
+
+    def test_put_md_data_in_json_format_returns_dict_when_md_and_html_contain_russian(self):
+        md          = u"один"
+        html        = u"два"
+        expected    = dict(id=1, isconverted=True, md=md, html=html, lastmodified="")
+        result      = Utility.put_md_data_in_json_format(1, True, md, html)
+        self.assertEqual(expected.get("md"), result.get("md"))
+        self.assertEqual(expected.get("html"), result.get("html"))

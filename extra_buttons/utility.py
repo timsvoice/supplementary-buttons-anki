@@ -221,6 +221,7 @@ class Utility(object):
         if not html:
             print "HTML IN CONVERT HTML TO MARKDOWN:", repr(html)
             return u""
+        assert isinstance(html, unicode), "Input `html` is not Unicode"
         h = html2text.HTML2Text()
         h.body_width = 0
         md_text = h.handle(html)
@@ -353,6 +354,8 @@ class Utility(object):
         """
         Return True when html_one is the same as html_two, False otherwise.
         """
+        assert isinstance(html_one, unicode), "Input `html_one` is not Unicode"
+        assert isinstance(html_two, unicode), "Input `html_two` is not Unicode"
         return html_one == html_two
 
     @staticmethod
@@ -360,6 +363,8 @@ class Utility(object):
         """
         Return True when md_one is the same as md_two, False otherwise.
         """
+        assert isinstance(md_one, unicode), "Input `md_one` is not Unicode"
+        assert isinstance(md_two, unicode), "Input `md_two` is not Unicode"
         compare_one = Utility.remove_white_space(md_one)
         compare_two = Utility.remove_white_space(md_two)
         print "\nmd_one before:\n", repr(compare_one)
@@ -371,23 +376,28 @@ class Utility(object):
         """
         Return True when text_one is the same as text_two, False otherwise.
         """
+        assert isinstance(text_one, unicode), "Input `text_one` is not Unicode"
+        assert isinstance(text_two, unicode), "Input `text_two` is not Unicode"
         return text_one == text_two
 
     @staticmethod
     def remove_white_space(s):
-        return "".join(char for char in s if not char.isspace())
+        assert isinstance(s, unicode), "Input `s` is not Unicode"
+        return u"".join(char for char in s if not char.isspace())
 
     @staticmethod
     def put_md_data_in_json_format(unique_id, isconverted, md, html):
         """
         Return a dictionary with information that is needed for the database.
         """
+        assert isinstance(md, unicode), "Input `md` is not Unicode"
+        assert isinstance(html, unicode), "Input `html` is not Unicode"
         return  {
-                "id": unique_id,
-                "isconverted": isconverted,
-                "md": md,
-                "html": html,
-                "lastmodified": intTime()
+                    "id": unique_id,
+                    "isconverted": isconverted,
+                    "md": md,
+                    "html": html,
+                    "lastmodified": intTime()
                 }
 
     @staticmethod
@@ -402,16 +412,26 @@ class Utility(object):
 
     @staticmethod
     def json_dump_and_compress(data):
-        ret = base64.b64encode(json.dumps(data))
+        assert isinstance(data, unicode), "Input `data` is not Unicode"
+        ret = unicode(base64.b64encode(json.dumps(data)))
+        assert isinstance(ret, unicode), "Output `ret` is not Unicode"
         return ret
 
     @staticmethod
     def decompress_and_json_load(data):
-        b64data = base64.b64decode(data)
+        assert isinstance(data, unicode), "Input `data` is not Unicode"
+        try:
+            b64data = base64.b64decode(data)
+        except (TypeError, UnicodeEncodeError) as e:
+            # `data` is not a valid base64-encoded string
+            print e # TODO: should be logged
+            return "corrupted"
+
         try:
             ret = json.loads(b64data)
             return ret
-        except:
+        except ValueError as e:
+            print e # TODO: should be logged
             return "corrupted"
 
     @staticmethod
@@ -459,7 +479,7 @@ class Utility(object):
         if start == -1 or end == -1:
             return None
         compr_str = html[start:end]
-        return Utility.decompress_and_json_load(compr_str)
+        return compr_str
 
     @staticmethod
     def counter(start=0, step=1):
@@ -490,6 +510,8 @@ class Utility(object):
         if not s:
             return u""
 
+        assert isinstance(s, unicode), "Input `s` is not Unicode"
+
         html_escape_table = {
             "&": "&amp;",
             '"': "&quot;",
@@ -498,7 +520,7 @@ class Utility(object):
             "<": "&lt;",
         }
 
-        result = "".join(html_escape_table.get(c, c) for c in s)
+        result = u"".join(html_escape_table.get(c, c) for c in s)
         assert isinstance(result, unicode)
         return result
 

@@ -156,7 +156,8 @@ class Markdowner(object):
         instance variables get set. Return True when data was found in the
         field, False otherwise.
         """
-        md_dict = Utility.get_md_data_from_string(self.html)
+        compr_dict = Utility.get_md_data_from_string(self.html)
+        md_dict = Utility.decompress_and_json_load(compr_dict)
         if md_dict and md_dict == "corrupted":
             print "MD_DICT CORRUPTED!!!"
             # TODO: fallback when JSON is corrupted

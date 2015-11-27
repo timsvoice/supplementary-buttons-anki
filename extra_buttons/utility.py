@@ -114,6 +114,7 @@ class Utility(object):
     const.FIXED_OL_TYPE                 = "fixed_ol_type"
     const.MARKDOWN_SYNTAX_STYLE         = "markdown_syntax_style"
     const.MARKDOWN_LINE_NUMS            = "markdown_line_nums"
+    const.MARKDOWN_CODE_DIRECTION       = "markdown_code_direction"
     const.MARKDOWN_ALWAYS_REVERT        = "markdown_always_revert"
 
     # constants for key sequence
@@ -153,7 +154,7 @@ class Utility(object):
 
     @staticmethod
     def _prepare_db(preferences):
-        db_path = os.path.join(preferences.addons_folder(),
+        db_path = os.path.join(preferences.get_addons_folder(),
                                const.FOLDER_NAME,
                                const.MARKDOWN_DB_NAME + ".db")
         # path should be unicode
@@ -240,11 +241,11 @@ class Utility(object):
         clean_md = re.sub(dot_regex, ur"\g<1>\g<2>", clean_md)
 
         left_paren_regex = re.compile(ur"\\\(")
-        clean_md = replace_link_img_matches(left_paren_regex, u"&#40;", clean_md)
+        clean_md = Utility.replace_link_img_matches(left_paren_regex, u"&#40;", clean_md)
         right_paren_regex = re.compile(ur"\\\)")
-        clean_md = replace_link_img_matches(right_paren_regex, u"&#41;", clean_md)
+        clean_md = Utility.replace_link_img_matches(right_paren_regex, u"&#41;", clean_md)
         whitespace_regex = re.compile(ur"\s+")
-        clean_md = replace_link_img_matches(whitespace_regex, u"&#32;", clean_md)
+        clean_md = Utility.replace_link_img_matches(whitespace_regex, u"&#32;", clean_md)
 
         print "CLEAN_MD FROM CONVERT_HTML_TO_MARKDOWN:", repr(clean_md)
         assert isinstance(clean_md, unicode)
@@ -412,13 +413,14 @@ class Utility(object):
 
     @staticmethod
     def json_dump_and_compress(data):
-        assert isinstance(data, unicode), "Input `data` is not Unicode"
         ret = unicode(base64.b64encode(json.dumps(data)))
         assert isinstance(ret, unicode), "Output `ret` is not Unicode"
         return ret
 
     @staticmethod
     def decompress_and_json_load(data):
+        if not data:
+            return u""
         assert isinstance(data, unicode), "Input `data` is not Unicode"
         try:
             b64data = base64.b64decode(data)
@@ -470,14 +472,16 @@ class Utility(object):
         available. Return a dictionary that contains this data, otherwise
         return None.
         """
+        if not html:
+            return u""
         assert isinstance(html, unicode), "Input `html` is not Unicode"
         if not const.START_HTML_MARKER in html:
-            return None
+            return u""
         start = html.find(const.START_HTML_MARKER) + \
                 len(const.START_HTML_MARKER)
         end = html.find(const.END_HTML_MARKER, start)
         if start == -1 or end == -1:
-            return None
+            return u""
         compr_str = html[start:end]
         return compr_str
 
@@ -496,7 +500,7 @@ class Utility(object):
         """
         Define the path for the icon the corresponding button should have.
         """
-        icon_path = os.path.join(const.preferences.addons_folder(),
+        icon_path = os.path.join(const.preferences.get_addons_folder(),
             const.FOLDER_NAME, "icons", "{}.png".format(name))
         button.setIcon(QtGui.QIcon(icon_path))
 

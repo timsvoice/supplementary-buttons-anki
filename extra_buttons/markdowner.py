@@ -18,21 +18,18 @@
 # with Supplementary Buttons for Anki. If not, see http://www.gnu.org/licenses/.
 
 import re
-import sqlite3
 
 from anki.utils import json, intTime
 from aqt import mw
 from PyQt4 import QtGui
-from anki.hooks import addHook
 
 from utility import Utility
 import const
 
-
 class Markdowner(object):
     """
-    Convert HTML to Markdown and the other way around. Store the data in a
-    database. Revert to previous Markdown or overwrite the data when conflicts
+    Convert HTML to Markdown and the other way around. Store the data in the
+    field. Revert to previous Markdown or overwrite the data when conflicts
     arise.
     """
     # signal that we don't want the onEdit focus behavior
@@ -40,10 +37,12 @@ class Markdowner(object):
 
     def __init__(self, other, parent_window, note, html,
                  current_field, selected_html):
+        assert isinstance(html, unicode), "Input `html` is not Unicode"
+        assert isinstance(selected_html, unicode), \
+                "Input `selected_html` is not Unicode"
         self.editor_instance                = other
         self.parent_window                  = parent_window
         self.col                            = mw.col
-        self.db                             = mw.col.db
         self.note                           = note
         self.html                           = html
         self.current_field                  = current_field
@@ -56,7 +55,8 @@ class Markdowner(object):
         self._html                          = None
         self._lastmodified                  = None
         self.has_data                       = self.get_data_from_field()
-        self.check_for_data_existence()
+        if not self.has_data:
+            self.remove_warn_msg(self.editor_instance, self.current_field)
         const.MARKDOWN_PREFS["isconverted"] = self.isconverted
 
     def on_focus_gained(self):
@@ -68,41 +68,12 @@ class Markdowner(object):
         else:
             const.MARKDOWN_PREFS["disable_buttons"] = False
 
-    def current_field_exists_in_db(self):
-        """
-        Check if the current field exists in the database. Return True if
-        it does, False otherwise.
-        """
-        sql = "select 1 from markdown where id=?"
-        if self.db.first(sql, self.current_note_id_and_field):
-            return True
-        return False
-
-    def check_for_data_existence(self):
-        """
-        Check if the data from the field also exists in the database. If it
-        exists, but differs, update the database to reflect the changes.
-        """
-        if self.has_data and self.current_field_exists_in_db():
-        # check timestamps and store if newer version
-            timestamp_field = self._lastmodified
-            timestamp_db = self.db.first("select mod from markdown where id=?",
-                                         self.current_note_id_and_field)[0]
-            print "timestamp db:", repr(timestamp_db)
-            print "timestamp field:", repr(timestamp_field)
-            print "field >= db:", timestamp_field >= timestamp_db
-            assert timestamp_field >= timestamp_db, \
-                    "field timestamp is older than db timestamp!"
-            if timestamp_field > timestamp_db:
-                self.store_new_markdown_version_in_db(
-                    self.isconverted, self.md, self._html, self._lastmodified)
-
     def apply_markdown(self):
         clean_md = Utility.convert_html_to_markdown(self.html)
         clean_md_escaped = Utility.escape_html_chars(clean_md)
         if not clean_md:
             return
-        # check for changed Markdown between the database and the current text
+        # check for changed Markdown between the stored data and the current text
         if (self.has_data and self.isconverted == "True"):
             compare_md = Utility.convert_markdown_to_html(self.md)
             compare_md = Utility.convert_html_to_markdown(compare_md)
@@ -113,6 +84,9 @@ class Markdowner(object):
             else:
                 self.handle_conflict()
         else:
+            # make abbreviations behave correctly
+            clean_md = self.remove_whitespace_before_abbreviation_definition(
+                    clean_md)
             new_html = Utility.convert_markdown_to_html(clean_md)
             # needed for proper display of images
             if "<img" in new_html:
@@ -123,31 +97,11 @@ class Markdowner(object):
             self.insert_markup_in_field(
                     html_with_data, self.editor_instance.currentField)
             # TODO: align elements according to user preference
-            self.left_align_elements()
-            # store the Markdown so we can reuse it when the button gets toggled
-            self.store_new_markdown_version_in_db(
-                    "True", clean_md_escaped, new_html)
+            self.align_elements()
             const.MARKDOWN_PREFS["disable_buttons"] = True
             self.warn_about_changes(self.editor_instance,
                                     self.current_field,
                                     const.MARKDOWN_BG_COLOR)
-
-    def get_data_from_db(self):
-        """
-        Fill a variable with information from the database, if any.
-        Return True when data is retrieved, False if the result set is empty.
-        """
-        sql = "select * from markdown where id=?"
-        resultset = self.db.first(sql, self.current_note_id_and_field)
-        print "DATA WE GOT BACK FROM DB:", resultset
-        if resultset:
-            (self._id,
-             self.isconverted,
-             self.md,
-             self._html,
-             self._lastmodified) = resultset
-            return True
-        return False
 
     def get_data_from_field(self):
         """
@@ -236,78 +190,45 @@ class Markdowner(object):
         if ret == 0:
             self.revert_to_stored_markdown()
         elif ret == 1:
-            # overwrite database
+            # overwrite data
             self.overwrite_stored_data()
         else:
             print "User canceled on warning dialog."
 
     def overwrite_stored_data(self):
         """
-        Create new Markdown from the current HTML. Remove the data about the
-        current field from the database.
+        Create new Markdown from the current HTML.
         """
         clean_md = Utility.convert_html_to_markdown(
                 self.html, keep_empty_lines=True)
         if re.search(const.IS_LINK_OR_IMG_REGEX, clean_md):
-            print "MATCHES LINK OR IMAGE!!!"
             clean_md = Utility.escape_html_chars(clean_md)
-        new_html = Utility.convert_clean_md_to_html(
-                clean_md, put_breaks=True)
+        new_html = Utility.convert_clean_md_to_html(clean_md,
+                                                    put_breaks=True)
         print "INSERTING THIS:\n", new_html
-        self.insert_markup_in_field(new_html, self.editor_instance.currentField)
-        sql = """
-            delete from markdown
-            where id=?
-        """
-        self.db.execute(sql, self.current_note_id_and_field)
-        self.db.commit()
+        self.insert_markup_in_field(new_html, self.current_field)
         const.MARKDOWN_PREFS["disable_buttons"] = False
         const.MARKDOWN_PREFS["isconverted"] = False
         self.remove_warn_msg(self.editor_instance, self.current_field)
 
     def revert_to_stored_markdown(self):
-        print "REVERTING TO OLD MARKDOWN"
-        new_html = Utility.convert_clean_md_to_html(self.md)
-        # new_html = Utility.make_data_ready_to_insert(
-        #         self.current_note_id_and_field, "False", self.md, new_html)
-        print "Inserting this:", repr(new_html)
-        self.insert_markup_in_field(new_html, self.editor_instance.currentField)
-        # store the fact that the Markdown is currently not converted to HTML
-        sql = """
-            update markdown
-            set isconverted=?, mod=?
-            where id=?
         """
-        self.db.execute(sql,
-                        "False",
-                        self._lastmodified,
-                        self.current_note_id_and_field)
-        self.db.commit()
+        Revert to the previous version of Markdown that was stored in the field.
+        """
+        print "\n**REVERTING TO OLD MARKDOWN**\n"
+        new_html = Utility.convert_clean_md_to_html(self.md)
+        print "Inserting this:", repr(new_html)
+        self.insert_markup_in_field(new_html, self.current_field)
         const.MARKDOWN_PREFS["disable_buttons"] = False
         const.MARKDOWN_PREFS["isconverted"] = False
         self.remove_warn_msg(self.editor_instance, self.current_field)
-
-    def store_new_markdown_version_in_db(self, isconverted, new_md, new_html,
-                                         lastmodified=None):
-        """
-        Update current database with new data, or insert a new row into the
-        database when there is no prior data.
-        """
-        replace_stmt = """
-            insert or replace into markdown (id, isconverted, md, html, mod)
-            values (?, ?, ?, ?, ?)
-        """
-        self.db.execute(replace_stmt, self.current_note_id_and_field,
-                        isconverted, new_md, new_html,
-                        intTime() if lastmodified is None else lastmodified)
-        self.db.commit()
 
     def show_overwrite_warning(self):
         """
         Show a warning modal dialog box, informing the user that the changes
         have taken place in the formatted text that are not in the Markdown.
-        Returns a 0 for replacing the new changes with the database version of
-        the Markdown, 1 for overwriting the database, and QMessageBox.Cancel for
+        Return a 0 for replacing the new changes with the stored version of
+        the Markdown, 1 for overwriting the data, and QMessageBox.Cancel for
         no action.
         """
         mess = QtGui.QMessageBox(self.parent_window)
@@ -329,18 +250,25 @@ class Markdowner(object):
         mess.setDefaultButton(replaceButton)
         return mess.exec_()
 
-    def left_align_elements(self):
+    def align_elements(self):
         """
-        Left align footnotes, code blocks, etc. that would otherwise get
+        Left align footnotes, lists, etc. that would otherwise get
         centered or be at the mercy of the general alignment CSS of the card.
+        Code blocks can be given a specific `code_direction`.
         """
         # code blocks
         self.editor_instance.web.eval("""
+            // align text inside the code block
             var elems = document.getElementsByClassName('codehilite');
             for (var i = 0; i < elems.length; i++) {
                 elems[i].setAttribute('align', 'left');
             }
-        """)
+            // align the code block itself
+            var tables = document.getElementsByClassName('codehilitetable');
+            for (var j = 0; j < tables.length; j++) {
+                tables[j].setAttribute('align', '%s');
+            }
+        """ % const.preferences.prefs.get(const.MARKDOWN_CODE_DIRECTION))
 
         # footnotes
         self.editor_instance.web.eval("""
@@ -361,3 +289,11 @@ class Markdowner(object):
                 elems[i].setAttribute('align', 'left');
             }
         """)
+
+    def remove_whitespace_before_abbreviation_definition(self, clean_md):
+        """
+        Remove the two leading spaces that are put by html2text when it
+        translates an HTML abbreviation to Markdown.
+        """
+        regex = re.compile(r"(\s|\&nbsp;)+(\*\[.*?\]:)")
+        return re.sub(regex, r"\2", clean_md)

@@ -31,13 +31,13 @@ class Preferences(object):
 
     def __init__(self, main_window):
         self.main_window = main_window
-        self.prefs_path = os.path.join(self.addons_folder(),
+        self.prefs_path = os.path.join(self.get_addons_folder(),
                     const.FOLDER_NAME, ".extra_buttons_prefs")
         if isMac:
-            self.keybindings_path = os.path.join(self.addons_folder(),
+            self.keybindings_path = os.path.join(self.get_addons_folder(),
                     const.FOLDER_NAME, "keybindings_macosx.json")
         else:
-            self.keybindings_path = os.path.join(self.addons_folder(),
+            self.keybindings_path = os.path.join(self.get_addons_folder(),
                     const.FOLDER_NAME, "keybindings_linux_windows.json")
 
         # the default preferences that are used when no custom preferences
@@ -47,6 +47,7 @@ class Preferences(object):
                 const.LAST_BG_COLOR:            "#00f",
                 const.FIXED_OL_TYPE:            "",
                 const.MARKDOWN_SYNTAX_STYLE:    "tango",
+                const.MARKDOWN_CODE_DIRECTION:  "left",
                 const.MARKDOWN_LINE_NUMS:       False,
                 const.MARKDOWN_ALWAYS_REVERT:   False,
                 const.CODE:                     True,
@@ -145,7 +146,7 @@ class Preferences(object):
         except (ValueError, IOError) as e:
             # file is missing or is not valid JSON: revert to default bindings
             # and create a keybindings file if it doesn't exist
-            print e
+            print e # TODO: log error
             self.keybindings = self._default_keybindings
             if not os.path.exists(self.keybindings_path):
                 self.create_keybindings_file()
@@ -165,7 +166,7 @@ class Preferences(object):
         keybinding = self.keybindings.get(name_of_key, "")
         return string.capwords(keybinding, "+")
 
-    def addons_folder(self):
+    def get_addons_folder(self):
         """
         Return the addon folder used by Anki.
         """

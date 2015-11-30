@@ -18,12 +18,12 @@
 # with Supplementary Buttons for Anki. If not, see http://www.gnu.org/licenses/.
 
 from PyQt4 import QtGui, QtCore
+import const
 
 class OrderedList(QtGui.QDialog):
     def __init__(self, other, parent_window, preferences, fixed=False):
         super(OrderedList, self).__init__(parent_window)
         self.editor_instance = other
-        const.preferences = preferences
 
         if not fixed:
             self.setupGUI()

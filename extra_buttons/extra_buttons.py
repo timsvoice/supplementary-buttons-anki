@@ -427,13 +427,9 @@ def remove_garbage(self):
     html = self.note.fields[self.currentField]
     soup = BeautifulSoup.BeautifulSoup(html)
 
-    print "Old soup:", repr(soup)
-
     for tag in const.HEADING_TAGS + const.HTML_TAGS:
         for match in soup.findAll(tag):
             match.replaceWithChildren()
-
-    print "New soup:", repr(soup)
 
     self.note.fields[self.currentField] = unicode(soup)
     self.loadNote()
@@ -470,7 +466,6 @@ def toggleMarkdown(self):
     Utility.start_safe_block(const.MARKDOWN_PREFS)
     self.saveNow()
     selected = self.web.selectedHtml()
-    print "Selected text:", repr(selected)
     current_field = self.currentField
     html_field = self.note.fields[self.currentField]
     # if not isinstance(html_field, unicode):
@@ -490,26 +485,22 @@ def toggleMarkdown(self):
     Utility.end_safe_block(const.MARKDOWN_PREFS)
 
 def on_focus_gained(self, note, field):
-    # print "TAGS:", note.tags
     tags = note.tags
     if const.MARKDOWN_PREFS.get("disable_buttons"):
-        print "DISABLING BUTTONS"
         # disable all buttons except for the Markdown toggle
         self.disableButtons()
         markdown_button = self._buttons.get(const.MARKDOWN)
         if markdown_button:
             markdown_button.setEnabled(True)
     if const.MARKDOWN_PREFS.get("safe_block"):
-        print "PREVENTED ONFOCUS"
         return
     if not const.MARKDOWN_PREFS.get("safe_block"):
-        print "ALLOWED ONFOCUS"
         Utility.start_safe_block(const.MARKDOWN_PREFS)
         try:
             time.sleep(0.01)
             self.saveNow()
         except AttributeError as e:
-            print e
+            print e # TODO: log error
         html_field = note.fields[field]
         # if not isinstance(html_field, unicode):
         #     html_field = unicode(html_field)
@@ -525,7 +516,7 @@ def on_focus_gained(self, note, field):
             time.sleep(0.01)
             self.updateTags()
         except AttributeError as e:
-            print e
+            print e # TODO: log error
         Utility.end_safe_block(const.MARKDOWN_PREFS)
 
 def init_hook(self, mw, widget, parentWindow, addMode=False):

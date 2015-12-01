@@ -70,11 +70,12 @@ class Utility(object):
             "cygwin": "Windows",
             "darwin": "Mac OS X"
     }
-    const.PLATFORM      = sys.platform
+    const.PLATFORM              = sys.platform
 
     # size of the dialog windows
-    const.DIALOG_SIZE_X = 350
-    const.DIALOG_SIZE_Y = 200
+    const.DIALOG_SIZE_X         = 350
+    const.DIALOG_SIZE_Y         = 200
+    const.MIN_COMBOBOX_WIDTH    = 140
 
     const.HTML_TAGS     = ("b", "i", "u", "span", "font", "sup", "sub",
                            "dl", "dt", "dd", "code", "s", "pre", "kbd",
@@ -147,69 +148,6 @@ class Utility(object):
     # to unescape image data
     const.HTML_PARSER                   = HTMLParser.HTMLParser()
 
-    # Storage of Markdown syntax
-    ##################################################
-
-    const.MARKDOWN_DB_NAME  = "extra_buttons"
-
-    @staticmethod
-    def _prepare_db(preferences):
-        db_path = os.path.join(preferences.get_addons_folder(),
-                               const.FOLDER_NAME,
-                               const.MARKDOWN_DB_NAME + ".db")
-        # path should be unicode
-        if isinstance(db_path, str):
-            db_path = unicode(db_path, sys.getfilesystemencoding())
-        print "DATABASE PATH:", repr(db_path)
-
-        const.MD_DB_PATH = db_path
-
-        create_db = not os.path.exists(const.MD_DB_PATH)
-        con = lite.connect(db_path)
-        with con:
-            cur = con.cursor()
-            if create_db:
-                Utility._init_db(cur)
-        con.close()
-        print con
-
-    @staticmethod
-    def _init_db(cur):
-        print "INITIALIZING DATABASE MARKDOWN"
-        # TODO: add last_modified column
-        cur.executescript("""
-            create table if not exists markdown (
-                id text primary key,
-                isconverted text not null,
-                md text not null,
-                html text not null,
-                lastmodified integer not null
-            );
-        """)
-
-    @staticmethod
-    def execute_query(sql, *args):
-        # path should exist
-        try:
-            const.MD_DB_PATH
-        except AttributeError:
-            Utility._prepare_db()
-        print "SQL:", sql
-        print "Args:", args
-
-        # certain SQL statements do not return a result set
-        return_resultset = True
-        if any(sql.startswith(word) for word in ("insert", "update", "delete")):
-            return_resultset = False
-
-        con = lite.connect(const.MD_DB_PATH)
-        with con:
-            cur = con.cursor()
-            cur.execute(sql, args)
-            if return_resultset:
-                resultset = cur.fetchall()
-                return resultset
-
     # Methods
     ##################################################
 
@@ -220,7 +158,6 @@ class Utility(object):
         removed from the result, unless `keep_empty_lines` is set to `True`.
         """
         if not html:
-            print "HTML IN CONVERT HTML TO MARKDOWN:", repr(html)
             return u""
         assert isinstance(html, unicode), "Input `html` is not Unicode"
         h = html2text.HTML2Text()
@@ -247,14 +184,14 @@ class Utility(object):
         whitespace_regex = re.compile(ur"\s+")
         clean_md = Utility.replace_link_img_matches(whitespace_regex, u"&#32;", clean_md)
 
-        print "CLEAN_MD FROM CONVERT_HTML_TO_MARKDOWN:", repr(clean_md)
         assert isinstance(clean_md, unicode)
         return clean_md
 
     @staticmethod
     def replace_link_img_matches(regex, new, s):
         """
-
+        Escape characters in Markdown links and images that may break in
+        regular HTML.
         >>> replace_link_img_matches(re.compile(ur"\s+"), u"&#32;", u"[](i .jpg)")
         u'[](i&#32;.jpg)
         """
@@ -265,13 +202,11 @@ class Utility(object):
                 str_to_be_replaced = match.group(0)
                 start = s.find(str_to_be_replaced)
                 end   = start + len(str_to_be_replaced)
-                print "MATCH", str_to_be_replaced
                 replacement = re.sub(regex, new, str_to_be_replaced)
                 # put string back in original string
                 str_start = s[:start]
                 str_end = s[end:]
                 s = str_start + replacement + str_end
-                print "NEW {!r} AFTER REPLACEMENT".format(s)
         assert isinstance(s, unicode), "Result `s` is not Unicode"
         return s
 
@@ -330,7 +265,6 @@ class Utility(object):
     @staticmethod
     def convert_markdown_to_html(clean_md):
         assert isinstance(clean_md, unicode), "Input `clean_md` is not Unicode"
-        print "APPLYING MARKDOWN"
         new_html = markdown.markdown(clean_md, output_format="xhtml1",
             extensions=[
                 SmartEmphasisExtension(),
@@ -368,8 +302,6 @@ class Utility(object):
         assert isinstance(md_two, unicode), "Input `md_two` is not Unicode"
         compare_one = Utility.remove_white_space(md_one)
         compare_two = Utility.remove_white_space(md_two)
-        print "\nmd_one before:\n", repr(compare_one)
-        print "md_two before:\n", repr(compare_two), "\n"
         return compare_one == compare_two
 
     @staticmethod
@@ -387,17 +319,15 @@ class Utility(object):
         return u"".join(char for char in s if not char.isspace())
 
     @staticmethod
-    def put_md_data_in_json_format(unique_id, isconverted, md, html):
+    def put_md_data_in_json_format(unique_id, isconverted, md):
         """
         Return a dictionary with information that is needed for the database.
         """
         assert isinstance(md, unicode), "Input `md` is not Unicode"
-        assert isinstance(html, unicode), "Input `html` is not Unicode"
         return  {
                     "id": unique_id,
                     "isconverted": isconverted,
                     "md": md,
-                    "html": html,
                     "lastmodified": intTime()
                 }
 
@@ -458,7 +388,7 @@ class Utility(object):
     @staticmethod
     def make_data_ready_to_insert(unique_id, isconverted, md, html):
         md_dict = Utility.put_md_data_in_json_format(
-                unique_id, isconverted, md, html)
+                unique_id, isconverted, md)
         md_dict_compr = Utility.json_dump_and_compress(md_dict)
         wrapped_md_dict_compr = Utility.wrap_string(const.START_HTML_MARKER,
                                                     md_dict_compr,
@@ -657,7 +587,6 @@ class Utility(object):
             parts += list(sequence[-1:])
         else:
             parts = Utility.split_string(sequence, u"+-")
-        # print parts
         parts = Utility.filter_duplicates(parts)
         # sequence can only contain one function key and cannot be used
         # in combination with a character key
@@ -680,9 +609,7 @@ class Utility(object):
         for word in parts:
             # unknown modifiers or non-modifiers are not allowed
             if not word in modkeys + const.KEYS_SEQUENCE + const.FUNCTION_KEYS:
-                # print "RETURNING THE EMPTY STRING"
                 return ""
-        # print "returning:", Utility.create_pretty_sequence(parts)
         return Utility.create_pretty_sequence(parts)
 
     @staticmethod
@@ -746,9 +673,7 @@ class Utility(object):
         """
         if not all(key in hashmap for key in (u"start_time", u"safe_block")):
             return None
-        print "START SAFE BLOCK ONFOCUS"
         hashmap[u"safe_block"] = True
-        print "SET TIMEOUT FOR SAFE BLOCK"
         hashmap[u"start_time"] = time.time()
 
     @staticmethod
@@ -758,5 +683,13 @@ class Utility(object):
         """
         if not all(key in hashmap for key in (u"start_time", u"safe_block")):
             return None
-        print "END SAFE BLOCK ONFOCUS"
         hashmap[u"safe_block"] = False
+
+    @staticmethod
+    def remove_whitespace_before_abbreviation_definition(clean_md):
+        """
+        Remove the two leading spaces that are put by html2text when it
+        translates an HTML abbreviation to Markdown.
+        """
+        regex = re.compile(r"( |\&nbsp;)+(\*\[.*?\]:)")
+        return re.sub(regex, r"\2", clean_md)

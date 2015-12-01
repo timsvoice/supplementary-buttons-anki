@@ -18,12 +18,12 @@
 # with Supplementary Buttons for Anki. If not, see http://www.gnu.org/licenses/.
 
 from PyQt4 import QtGui, QtCore
+import const
 
 class OrderedList(QtGui.QDialog):
     def __init__(self, other, parent_window, preferences, fixed=False):
         super(OrderedList, self).__init__(parent_window)
         self.editor_instance = other
-        const.preferences = preferences
 
         if not fixed:
             self.setupGUI()
@@ -121,8 +121,6 @@ class OrderedList(QtGui.QDialog):
         """Create a new ordered list based on the input of the user.
         type_of_list is a string ("1", "A", "a", "I", "i") and
         start_num is an integer."""
-        print type_of_list
-        print start_num
         self.editor_instance.web.eval("""
             document.execCommand('insertOrderedList');
             var olElem = window.getSelection().focusNode.parentNode;

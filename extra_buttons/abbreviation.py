@@ -18,6 +18,8 @@
 # with Supplementary Buttons for Anki. If not, see http://www.gnu.org/licenses/.
 
 import json
+import string
+import random
 
 from PyQt4 import QtGui, QtCore
 from utility import Utility
@@ -80,7 +82,10 @@ class Abbreviation(object):
 
         dialog.setLayout(vbox)
 
-        title_edit.setFocus()
+        if self.selected_text:
+            title_edit.setFocus()
+        else:
+            text_edit.setFocus()
 
         dialog.exec_()
 
@@ -96,8 +101,25 @@ class Abbreviation(object):
         title = Utility.escape_html_chars(title)
         # unicode
         assert isinstance(text, unicode)
+        assert isinstance(title, unicode)
         # create new tag
-        result = u"<abbr title='{0}'>{1}</abbr>".format(title, text)
-        # insert the new tag into the card
-        self.editor_instance.web.eval("document.execCommand('insertHTML', false, %s);"
-            % json.dumps(result))
+        div_id = "".join(random.choice(string.ascii_letters) for _ in xrange(20))
+        self.editor_instance.web.eval("""\
+                var abbr = document.createElement('abbr');
+                var text = document.createTextNode('%s');
+                abbr.appendChild(text);
+                abbr.setAttribute('title', '%s');
+                abbr.id = '%s';
+                var marker = '@#!';
+                var toBeInserted = marker + abbr.outerHTML + marker;
+                document.execCommand('insertHTML', false, toBeInserted);
+                console.log(document.getElementById('f%s').outerHTML);
+                var elem = document.getElementById('%s');
+                var leftString = elem.previousSibling.nodeValue;
+                var rightString = elem.nextSibling.nodeValue;
+                elem.previousSibling.nodeValue =
+                        leftString.substring(0, (leftString.length - marker.length));
+                elem.nextSibling.nodeValue =
+                        rightString.substring(marker.length);
+                elem.removeAttribute('id');
+        """ % (text, title, div_id, self.editor_instance.currentField, div_id))

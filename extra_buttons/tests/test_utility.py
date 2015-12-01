@@ -726,25 +726,34 @@ class UtilityTester(unittest.TestCase):
     # get_md_data_from_string
     def test_get_md_data_from_string_throws_assertion_error_when_input_is_not_unicode(self):
         # arrange
-        s           = ""
+        s           = "text"
         # act
         # assert
         self.assertRaises(AssertionError, Utility.get_md_data_from_string, s)
 
 
-    def test_get_md_data_from_string_returns_none_when_input_does_not_contain_any_marker(self):
+    def test_get_md_data_from_string_returns_empty_unicode_string_when_input_is_empty_string(self):
+        # arrange
+        s           = ""
+        expected    = u""
+        # act
+        result      = Utility.get_md_data_from_string(s)
+        # assert
+        self.assertEqual(expected, result)
+
+    def test_get_md_data_from_string_returns_empty_string_when_input_does_not_contain_any_marker(self):
         # arrange
         s           = u"<div></div>"
-        expected    = None
+        expected    = u""
         # act
         result = Utility.get_md_data_from_string(s)
         # assert
         self.assertEqual(expected, result)
 
-    def test_get_md_data_from_string_returns_none_when_input_does_not_contain_end_marker(self):
+    def test_get_md_data_from_string_returns_empty_string_when_input_does_not_contain_end_marker(self):
         # arrange
         s           = u"<div></div><!----SBAdata{data:data}"
-        expected    = None
+        expected    = u""
         # act
         result = Utility.get_md_data_from_string(s)
         # assert
@@ -782,10 +791,19 @@ class UtilityTester(unittest.TestCase):
     # decompress_and_json_load
     def test_decompress_and_json_load_throws_assertion_error_when_input_is_not_unicode(self):
         # arrange
-        s           = ""
+        s           = "text"
         # act
         # assert
         self.assertRaises(AssertionError, Utility.decompress_and_json_load, s)
+
+    def test_decompress_and_json_load_returns_empty_unicode_string_when_input_is_empty_string(self):
+        # arrange
+        s           = ""
+        expected    = u""
+        # act
+        result      = Utility.decompress_and_json_load(s)
+        # assert
+        self.assertEqual(expected, result)
 
     def test_decompress_and_json_load_throws_type_error_when_padding_of_base64_data_is_invalid(self):
         # arrange
@@ -828,12 +846,14 @@ class UtilityTester(unittest.TestCase):
         self.assertEqual(expected, result)
 
     # json_dump_and_compress
-    def test_json_dump_and_compress_throws_assertion_error_when_input_is_not_unicode(self):
+    def test_json_dump_and_compress_returns_base64_string_when_input_is_dict(self):
         # arrange
-        data        = ""
+        data        = dict(a="one")
+        expected    = unicode(base64.b64encode(json.dumps(data)))
         # act
+        result      = Utility.json_dump_and_compress(data)
         # assert
-        self.assertRaises(AssertionError, Utility.json_dump_and_compress, data)
+        self.assertEqual(expected, result)
 
     def test_json_dump_and_compress_returns_base64_string_when_input_is_russian(self):
         # arrange
@@ -889,28 +909,48 @@ class UtilityTester(unittest.TestCase):
         self.assertEqual(expected, result)
 
     # put_md_data_in_json_format
-    def test_put_md_data_in_json_format_throws_assertion_error_when_md_or_html_is_not_unicode(self):
+    def test_put_md_data_in_json_format_throws_assertion_error_when_md_is_not_unicode(self):
         md1         = ""
-        html1       = u""
         self.assertRaises(AssertionError,
                           Utility.put_md_data_in_json_format,
                           1,
                           True,
-                          md1,
-                          html1)
-        md2         = u""
-        html2       = ""
-        self.assertRaises(AssertionError,
-                          Utility.put_md_data_in_json_format,
-                          1,
-                          True,
-                          md1,
-                          html1)
+                          md1)
 
-    def test_put_md_data_in_json_format_returns_dict_when_md_and_html_contain_russian(self):
+    def test_put_md_data_in_json_format_returns_dict_when_md_contain_russian(self):
         md          = u"один"
-        html        = u"два"
-        expected    = dict(id=1, isconverted=True, md=md, html=html, lastmodified="")
-        result      = Utility.put_md_data_in_json_format(1, True, md, html)
+        expected    = dict(id=1, isconverted=True, md=md, lastmodified="")
+        result      = Utility.put_md_data_in_json_format(1, True, md)
         self.assertEqual(expected.get("md"), result.get("md"))
-        self.assertEqual(expected.get("html"), result.get("html"))
+        self.assertNotIn("html", expected)
+
+    # remove_whitespace_before_abbreviation_definition
+    def test_remove_whitespace_before_abbreviation_definition_does_not_make_changes_when_no_leading_whitespace(self):
+        s           = """The HTML specification
+is maintained by the W3C.
+
+*[HTML]: Hyper Text Markup Language
+*[W3C]:  World Wide Web Consortium"""
+        expected    = s
+        result      = Utility.remove_whitespace_before_abbreviation_definition(s)
+        self.assertEqual(expected, result)
+
+    def test_remove_whitespace_before_abbreviation_definition_removes_leading_whitespace_after_newline(self):
+        s           = u"adsfsdfsd\n  \n  *[adsfsdfsd]: PSV!!!\n"
+        expected    = u'adsfsdfsd\n  \n*[adsfsdfsd]: PSV!!!\n'
+        result      = Utility.remove_whitespace_before_abbreviation_definition(s)
+        self.assertEqual(expected, result)
+
+    def test_remove_whitespace_before_abbreviation_definition_removes_leading_whitespace_with_multiple_abbreviations(self):
+        s           = u"adsfsdfsd and PSV\n  \n  *[adsfsdfsd]: PSV!!!" + \
+                      u"\n  *[PSV]: Philips Sport Vereniging\n"
+        expected    = u"adsfsdfsd and PSV\n  \n*[adsfsdfsd]: PSV!!!" + \
+                      u"\n*[PSV]: Philips Sport Vereniging\n"
+        result      = Utility.remove_whitespace_before_abbreviation_definition(s)
+        self.assertEqual(expected, result)
+
+    def test_remove_whitespace_before_abbreviation_definition_does_not_remove_leading_whitespace_when_pattern_does_not_match(self):
+        s           = u"adsfsdfsd and PSV\n  \n  [adsfsdfsd]: PSV!!!"
+        expected    = u"adsfsdfsd and PSV\n  \n  [adsfsdfsd]: PSV!!!"
+        result      = Utility.remove_whitespace_before_abbreviation_definition(s)
+        self.assertEqual(expected, result)

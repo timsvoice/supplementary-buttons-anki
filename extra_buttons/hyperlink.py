@@ -93,7 +93,7 @@ class Hyperlink(object):
         """Inserts a HTML anchor <a> into the text field, using url as hyperlink
         and text as text to-be-displayed."""
         # check for valid URL
-        pattern = re.compile("(?i)https?://")
+        pattern = re.compile(r"(?i)https?://")
         match = re.match(pattern, url)
         if not match:
             url = "http://" + url

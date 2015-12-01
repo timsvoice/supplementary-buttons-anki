@@ -52,7 +52,6 @@ class Markdowner(object):
         self._id                            = None
         self.isconverted                    = None
         self.md                             = None
-        self._html                          = None
         self._lastmodified                  = None
         self.has_data                       = self.get_data_from_field()
         if not self.has_data:
@@ -70,6 +69,10 @@ class Markdowner(object):
 
     def apply_markdown(self):
         clean_md = Utility.convert_html_to_markdown(self.html)
+        print "CLEAN_MD BEFORE:\n", repr(clean_md)
+        clean_md = Utility.remove_whitespace_before_abbreviation_definition(
+                clean_md)
+        print "CLEAN_MD AFTER REMOVE WS:\n", repr(clean_md)
         clean_md_escaped = Utility.escape_html_chars(clean_md)
         if not clean_md:
             return
@@ -85,8 +88,6 @@ class Markdowner(object):
                 self.handle_conflict()
         else:
             # make abbreviations behave correctly
-            clean_md = self.remove_whitespace_before_abbreviation_definition(
-                    clean_md)
             new_html = Utility.convert_markdown_to_html(clean_md)
             # needed for proper display of images
             if "<img" in new_html:
@@ -96,7 +97,6 @@ class Markdowner(object):
                     clean_md_escaped, new_html)
             self.insert_markup_in_field(
                     html_with_data, self.editor_instance.currentField)
-            # TODO: align elements according to user preference
             self.align_elements()
             const.MARKDOWN_PREFS["disable_buttons"] = True
             self.warn_about_changes(self.editor_instance,
@@ -113,17 +113,14 @@ class Markdowner(object):
         compr_dict = Utility.get_md_data_from_string(self.html)
         md_dict = Utility.decompress_and_json_load(compr_dict)
         if md_dict and md_dict == "corrupted":
-            print "MD_DICT CORRUPTED!!!"
             # TODO: fallback when JSON is corrupted
+            # TODO: log this
             pass
         elif md_dict:
             self._id            = md_dict.get("id")
             self.md             = md_dict.get("md")
-            self._html          = md_dict.get("html")
             self.isconverted    = md_dict.get("isconverted")
             self._lastmodified  = md_dict.get("lastmodified")
-            print "DATA FROM FIELD:\n{!r}\n{!r}\n{!r}\n{!r}".format(
-                    self.md, self._html, self.isconverted, self._lastmodified)
             return True
         return False
 
@@ -201,11 +198,14 @@ class Markdowner(object):
         """
         clean_md = Utility.convert_html_to_markdown(
                 self.html, keep_empty_lines=True)
+        print "CLEAN_MD:", repr(clean_md)
+        clean_md = Utility.remove_whitespace_before_abbreviation_definition(
+                clean_md)
         if re.search(const.IS_LINK_OR_IMG_REGEX, clean_md):
             clean_md = Utility.escape_html_chars(clean_md)
         new_html = Utility.convert_clean_md_to_html(clean_md,
                                                     put_breaks=True)
-        print "INSERTING THIS:\n", new_html
+        print "INSERTING THIS:", new_html
         self.insert_markup_in_field(new_html, self.current_field)
         const.MARKDOWN_PREFS["disable_buttons"] = False
         const.MARKDOWN_PREFS["isconverted"] = False
@@ -215,9 +215,8 @@ class Markdowner(object):
         """
         Revert to the previous version of Markdown that was stored in the field.
         """
-        print "\n**REVERTING TO OLD MARKDOWN**\n"
-        new_html = Utility.convert_clean_md_to_html(self.md)
-        print "Inserting this:", repr(new_html)
+        new_html = Utility.convert_clean_md_to_html(self.md, put_breaks=True)
+        print "INSERTING THAT:", repr(new_html)
         self.insert_markup_in_field(new_html, self.current_field)
         const.MARKDOWN_PREFS["disable_buttons"] = False
         const.MARKDOWN_PREFS["isconverted"] = False
@@ -289,11 +288,3 @@ class Markdowner(object):
                 elems[i].setAttribute('align', 'left');
             }
         """)
-
-    def remove_whitespace_before_abbreviation_definition(self, clean_md):
-        """
-        Remove the two leading spaces that are put by html2text when it
-        translates an HTML abbreviation to Markdown.
-        """
-        regex = re.compile(r"(\s|\&nbsp;)+(\*\[.*?\]:)")
-        return re.sub(regex, r"\2", clean_md)

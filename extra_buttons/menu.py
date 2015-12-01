@@ -140,7 +140,8 @@ class ExtraButtons_Options(QtGui.QMenu):
                                                 const.FIXED_OL_TYPE,
                                                 const.MARKDOWN_SYNTAX_STYLE,
                                                 const.MARKDOWN_LINE_NUMS,
-                                                const.MARKDOWN_ALWAYS_REVERT
+                                                const.MARKDOWN_ALWAYS_REVERT,
+                                                const.MARKDOWN_CODE_DIRECTION
                                             )]
         num_items = len(l) / 2.0
         num_items = num_items + 0.5 if (num_items % 1.0 > 0.0) else num_items
@@ -214,10 +215,9 @@ red.\
 
         md_style_label = QtGui.QLabel("Markdown syntax highlighting style", self)
         md_style_combo = QtGui.QComboBox(self)
+        md_style_combo.setMinimumWidth(const.MIN_COMBOBOX_WIDTH, 0);
         md_style_files = os.listdir(os.path.join(
             const.preferences.get_addons_folder(), const.FOLDER_NAME, "pygments", "styles"))
-        print "Files in style folder:\n",
-        print md_style_files
 
         # pretty print styles
         for filename in sorted(md_style_files):
@@ -237,6 +237,7 @@ red.\
 
         md_style_hbox = QtGui.QHBoxLayout()
         md_style_hbox.addWidget(md_style_label)
+        md_style_hbox.addStretch(1)
         md_style_hbox.addWidget(md_style_combo)
 
         # line numbers Markdown code highlighting
@@ -251,15 +252,16 @@ red.\
         # align code block
         code_align_label = QtGui.QLabel(u"Alignment for Markdown code blocks")
         code_align_combo = QtGui.QComboBox(self)
+        code_align_combo.setMinimumWidth(const.MIN_COMBOBOX_WIDTH, 0);
         alignments = ("left", "center", "right")
         for alignment in alignments:
             code_align_combo.addItem(alignment)
         current_alignment = const.preferences.prefs.get(
                 const.MARKDOWN_CODE_DIRECTION)
-        print "CURRENT ALIGNMENT:", current_alignment
         code_align_combo.setCurrentIndex(alignments.index(current_alignment))
         code_align_hbox = QtGui.QHBoxLayout()
         code_align_hbox.addWidget(code_align_label)
+        code_align_hbox.addStretch(1)
         code_align_hbox.addWidget(code_align_combo)
 
         # always revert automatically back to old Markdown

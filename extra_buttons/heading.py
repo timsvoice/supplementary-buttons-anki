@@ -37,10 +37,8 @@ class Heading(object):
             # if no text is selected, show a dialog
             self.create_custom_heading()
             return
-        print "HTML before:\t", repr(selection)
         soup = BeautifulSoup.BeautifulSoup(selection)
         size = Utility.check_size_heading(soup.text)
-        print "size:\t", repr(size)
         if size == -1:
             self.create_custom_heading(soup.text)
             return
@@ -58,8 +56,6 @@ class Heading(object):
         tag = BeautifulSoup.Tag(result_soup, "h{0!s}".format(size))
         result_soup.insert(0, tag)
         tag.insert(0, relevant_text)
-
-        print "Resultant soup:", repr(result_soup)
 
         self.editor_instance.web.eval("document.execCommand('insertHTML', false, %s);"
             % json.dumps(unicode(result_soup)))
@@ -142,10 +138,8 @@ class Heading(object):
 
         if dialog.exec_() == QtGui.QDialog.Accepted:
             text = unicode(text_line_edit.text())
-            # print "Text:", repr(text)
             size_heading = radio_button_group.id(radio_button_group.checkedButton())
             heading_tag = "h" + str(size_heading)
-            # print "Checked button:", repr(size_heading)
             if text == "":
                 return
             else:
@@ -157,7 +151,6 @@ class Heading(object):
                     self.cleanup_headings()
                 else:
                     result = u"{0}{1}{2}".format(start_tag, text, end_tag)
-                    # print "RESULT:", result
                     self.editor_instance.web.eval("document.execCommand('insertHTML', false, %s);"
                         % json.dumps(unicode(result)))
 
@@ -168,17 +161,12 @@ class Heading(object):
         self.editor_instance.web.eval("focusField(%d);" % self.editor_instance.currentField)
 
         html = self.editor_instance.note.fields[self.editor_instance.currentField]
-        # print "HTML:", html
         soup = BeautifulSoup.BeautifulSoup(html)
 
         for tag in const.HEADING_TAGS:
-            print tag
             for match in soup.findAll(tag):
-                print "match.parent.name:", match.parent.name
                 if match.parent.name in const.HEADING_TAGS:
                     match.parent.replaceWithChildren()
-
-        # print "Result HTML:", soup
 
         self.editor_instance.note.fields[self.editor_instance.currentField] = unicode(soup)
         self.editor_instance.loadNote()

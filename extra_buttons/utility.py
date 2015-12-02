@@ -688,8 +688,16 @@ class Utility(object):
     @staticmethod
     def remove_whitespace_before_abbreviation_definition(clean_md):
         """
-        Remove the two leading spaces that are put by html2text when it
+        Remove the two leading spaces that are put by `html2text` when it
         translates an HTML abbreviation to Markdown.
         """
         regex = re.compile(r"( |\&nbsp;)+(\*\[.*?\]:)")
         return re.sub(regex, r"\2", clean_md)
+
+    @staticmethod
+    def remove_leading_whitespace_from_dd_element(md):
+        """
+        Change the input `md` to make sure it will transform to the correct HTML.
+        """
+        regex = re.compile(r"(\n) {4}(: \w+)")
+        return re.sub(regex, r"\1\2", md)

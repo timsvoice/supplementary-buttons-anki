@@ -68,11 +68,19 @@ class Markdowner(object):
             const.MARKDOWN_PREFS["disable_buttons"] = False
 
     def apply_markdown(self):
+        has_def_list = False
+        if "<dl>" in self.html:
+            has_def_list = True
+            self.create_correct_md_for_def_list()
+            self.html = self.note.fields[self.current_field]
+        print "THIS IS HTML:", repr(self.html)
         clean_md = Utility.convert_html_to_markdown(self.html)
         print "CLEAN_MD BEFORE:\n", repr(clean_md)
+        if has_def_list:
+            clean_md = Utility.remove_leading_whitespace_from_dd_element(clean_md)
+        print "CLEAN_MD AFTER:\n", repr(clean_md)
         clean_md = Utility.remove_whitespace_before_abbreviation_definition(
                 clean_md)
-        print "CLEAN_MD AFTER REMOVE WS:\n", repr(clean_md)
         clean_md_escaped = Utility.escape_html_chars(clean_md)
         if not clean_md:
             return
@@ -288,3 +296,32 @@ class Markdowner(object):
                 elems[i].setAttribute('align', 'left');
             }
         """)
+
+    def create_correct_md_for_def_list(self):
+        """
+        Change the input `md` to make sure it will transform to the correct HTML.
+        """
+        self.editor_instance.web.eval("""\
+            var dds = document.getElementsByTagName('dd');
+            for (var i = 0; i < dds.length; i++) {
+                var theDD = dds[i];
+                firstChild = theDD.firstChild;
+                if (firstChild === null) {
+                    var text = document.createTextNode(': ');
+                    theDD.appendChild(text);
+                } else {
+                    theDD.firstChild.nodeValue = ': ' + theDD.firstChild.nodeValue;
+                }
+                if (theDD.nextSibling !== null &&
+                        theDD.nextSibling.tagName === 'DT') {
+                    var br = document.createElement('br');
+                    theDD.parentNode.insertBefore(br, theDD.nextSibling);
+                }
+            }
+            // var html = document.getElementById('f%s').innerHTML;
+            // document.execCommand('selectAll', false, null);
+            // document.execCommand('insertHTML', false, html);
+        """ % self.current_field)
+        self.editor_instance.web.setFocus()
+        self.editor_instance.web.eval("focusField(%d);" % self.current_field)
+        self.editor_instance.saveNow()

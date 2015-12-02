@@ -954,3 +954,34 @@ is maintained by the W3C.
         expected    = u"adsfsdfsd and PSV\n  \n  [adsfsdfsd]: PSV!!!"
         result      = Utility.remove_whitespace_before_abbreviation_definition(s)
         self.assertEqual(expected, result)
+
+    # remove_leading_whitespace_from_dd_element
+    def test_remove_leading_whitespace_from_dd_element_removes_whitespace_when_input_is_valid(self):
+        s           = u"**a**\n    : first letter\n  \n**b**\n    : second letter\n  \n"
+        expected    = u"**a**\n: first letter\n  \n**b**\n: second letter\n  \n"
+        result      = Utility.remove_leading_whitespace_from_dd_element(s)
+        self.assertEqual(expected, result)
+
+    def test_remove_leading_whitespace_from_dd_element_does_not_remove_whitespace_when_input_contains_three_spaces(self):
+        s           = u"**a**\n   : first letter\n  \n**b**\n   : second letter\n  \n"
+        expected    = u"**a**\n   : first letter\n  \n**b**\n   : second letter\n  \n"
+        result      = Utility.remove_leading_whitespace_from_dd_element(s)
+        self.assertEqual(expected, result)
+
+    def test_remove_leading_whitespace_from_dd_element_does_not_remove_whitespace_when_input_does_not_contain_colons(self):
+        s           = u"**a**\n     first letter\n  \n**b**\n     second letter\n  \n"
+        expected    = u"**a**\n     first letter\n  \n**b**\n     second letter\n  \n"
+        result      = Utility.remove_leading_whitespace_from_dd_element(s)
+        self.assertEqual(expected, result)
+
+    def test_remove_leading_whitespace_from_dd_element_does_not_remove_whitespace_when_input_does_not_contain_space_after_colon(self):
+        s           = u"**a**\n    :first letter\n  \n**b**\n    :second letter\n  \n"
+        expected    = u"**a**\n    :first letter\n  \n**b**\n    :second letter\n  \n"
+        result      = Utility.remove_leading_whitespace_from_dd_element(s)
+        self.assertEqual(expected, result)
+
+    def test_remove_leading_whitespace_from_dd_element_removes_whitespace_from_correct_input_but_does_not_from_incorrect_input_in_same_string(self):
+        s           = u"**a**\n    : first letter\n  \n**b**\n    :second letter\n  \n"
+        expected    = u"**a**\n: first letter\n  \n**b**\n    :second letter\n  \n"
+        result      = Utility.remove_leading_whitespace_from_dd_element(s)
+        self.assertEqual(expected, result)

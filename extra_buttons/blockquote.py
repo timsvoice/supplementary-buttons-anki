@@ -22,8 +22,10 @@ from PyQt4 import QtGui, QtCore
 class Blockquote(object):
 
     def __init__(self, other, selected_html):
-        self.editor_instance          = other
-        self.selected_html  = selected_html
+        self.editor_instance    = other
+        self.selected_html      = selected_html
+        if not self.selected_html:
+            return
         self.insert_blockquote()
 
     def insert_blockquote(self):

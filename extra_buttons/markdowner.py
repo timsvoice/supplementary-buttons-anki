@@ -45,6 +45,7 @@ class Markdowner(object):
         self.col                            = mw.col
         self.note                           = note
         self.html                           = html
+        self.cancel_html                    = ""
         self.current_field                  = current_field
         self.selected_html                  = selected_html
         self.current_note_id_and_field      = str(self.note.id) + \
@@ -68,28 +69,37 @@ class Markdowner(object):
             const.MARKDOWN_PREFS["disable_buttons"] = False
 
     def apply_markdown(self):
+        self.cancel_html = self.html
         has_def_list = False
         if "<dl>" in self.html:
             has_def_list = True
             self.create_correct_md_for_def_list()
             self.html = self.note.fields[self.current_field]
-        print "THIS IS HTML:", repr(self.html)
         clean_md = Utility.convert_html_to_markdown(self.html)
-        print "CLEAN_MD BEFORE:\n", repr(clean_md)
         if has_def_list:
             clean_md = Utility.remove_leading_whitespace_from_dd_element(clean_md)
-        print "CLEAN_MD AFTER:\n", repr(clean_md)
         clean_md = Utility.remove_whitespace_before_abbreviation_definition(
                 clean_md)
         clean_md_escaped = Utility.escape_html_chars(clean_md)
+        print "\nCLEAN_MD_ESCAPED:", clean_md_escaped
         if not clean_md:
             return
         # check for changed Markdown between the stored data and the current text
         if (self.has_data and self.isconverted == "True"):
             compare_md = Utility.convert_markdown_to_html(self.md)
+            print "compare_md:", compare_md
             compare_md = Utility.convert_html_to_markdown(compare_md)
-            compare_md_escaped = Utility.escape_html_chars(compare_md)
-            if (Utility.is_same_markdown(clean_md_escaped, compare_md_escaped) or
+            print "compare_md:", compare_md
+            if has_def_list:
+                clean_md = Utility.remove_leading_whitespace_from_dd_element(clean_md)
+            clean_md = Utility.remove_whitespace_before_abbreviation_definition(
+                    clean_md)
+            if not any(x in compare_md for x in("&amp;", "&quot;", "&apos;",
+                                                "&gt;", "&lt;")):
+                compare_md_escaped = Utility.escape_html_chars(compare_md)
+                print "compare_md_escaped:", compare_md_escaped
+                compare_md = compare_md_escaped
+            if (Utility.is_same_markdown(clean_md_escaped, compare_md) or
                    const.preferences.prefs.get(const.MARKDOWN_ALWAYS_REVERT)):
                 self.revert_to_stored_markdown()
             else:
@@ -103,6 +113,7 @@ class Markdowner(object):
             html_with_data = Utility.make_data_ready_to_insert(
                     self.current_note_id_and_field, "True",
                     clean_md_escaped, new_html)
+            print "\nReady to insert:", html_with_data
             self.insert_markup_in_field(
                     html_with_data, self.editor_instance.currentField)
             self.align_elements()
@@ -199,6 +210,7 @@ class Markdowner(object):
             self.overwrite_stored_data()
         else:
             print "User canceled on warning dialog."
+            self.insert_markup_in_field(self.cancel_html, self.current_field)
 
     def overwrite_stored_data(self):
         """
@@ -206,14 +218,12 @@ class Markdowner(object):
         """
         clean_md = Utility.convert_html_to_markdown(
                 self.html, keep_empty_lines=True)
-        print "CLEAN_MD:", repr(clean_md)
         clean_md = Utility.remove_whitespace_before_abbreviation_definition(
                 clean_md)
         if re.search(const.IS_LINK_OR_IMG_REGEX, clean_md):
             clean_md = Utility.escape_html_chars(clean_md)
         new_html = Utility.convert_clean_md_to_html(clean_md,
                                                     put_breaks=True)
-        print "INSERTING THIS:", new_html
         self.insert_markup_in_field(new_html, self.current_field)
         const.MARKDOWN_PREFS["disable_buttons"] = False
         const.MARKDOWN_PREFS["isconverted"] = False
@@ -224,7 +234,6 @@ class Markdowner(object):
         Revert to the previous version of Markdown that was stored in the field.
         """
         new_html = Utility.convert_clean_md_to_html(self.md, put_breaks=True)
-        print "INSERTING THAT:", repr(new_html)
         self.insert_markup_in_field(new_html, self.current_field)
         const.MARKDOWN_PREFS["disable_buttons"] = False
         const.MARKDOWN_PREFS["isconverted"] = False
@@ -318,10 +327,7 @@ class Markdowner(object):
                     theDD.parentNode.insertBefore(br, theDD.nextSibling);
                 }
             }
-            // var html = document.getElementById('f%s').innerHTML;
-            // document.execCommand('selectAll', false, null);
-            // document.execCommand('insertHTML', false, html);
-        """ % self.current_field)
+        """)
         self.editor_instance.web.setFocus()
         self.editor_instance.web.eval("focusField(%d);" % self.current_field)
         self.editor_instance.saveNow()

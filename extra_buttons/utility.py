@@ -152,17 +152,19 @@ class Utility(object):
     ##################################################
 
     @staticmethod
-    def convert_html_to_markdown(html, keep_empty_lines=False):
+    def convert_html_to_markdown(org_html, keep_empty_lines=False):
         """
-        Take a HTML string and return a Markdown string. Empty lines are
+        Take a org_html string and return a Markdown string. Empty lines are
         removed from the result, unless `keep_empty_lines` is set to `True`.
         """
-        if not html:
+        print "\nHTML:", repr(org_html)
+        if not org_html:
             return u""
-        assert isinstance(html, unicode), "Input `html` is not Unicode"
+        assert isinstance(org_html, unicode), "Input `org_html` is not Unicode"
         h = html2text.HTML2Text()
         h.body_width = 0
-        md_text = h.handle(html)
+        md_text = h.handle(org_html)
+        print "\nmd_text:", repr(md_text)
         clean_md = u""
         if keep_empty_lines:
             clean_md = md_text
@@ -171,6 +173,7 @@ class Utility(object):
             for line in md_text.split(u"\n"):
                 if line:
                     clean_md += (line + u"\n")
+        print "\nclean_md:", repr(clean_md)
 
         # undo the html2text escaping of dots (which interferes
         # with the creation of ordered lists) and parentheses
@@ -185,6 +188,7 @@ class Utility(object):
         clean_md = Utility.replace_link_img_matches(whitespace_regex, u"&#32;", clean_md)
 
         assert isinstance(clean_md, unicode)
+        print "\nclean_md:", repr(clean_md)
         return clean_md
 
     @staticmethod
@@ -302,6 +306,8 @@ class Utility(object):
         assert isinstance(md_two, unicode), "Input `md_two` is not Unicode"
         compare_one = Utility.remove_white_space(md_one)
         compare_two = Utility.remove_white_space(md_two)
+        print "one:", compare_one
+        print "one:", compare_two
         return compare_one == compare_two
 
     @staticmethod
@@ -686,18 +692,24 @@ class Utility(object):
         hashmap[u"safe_block"] = False
 
     @staticmethod
-    def remove_whitespace_before_abbreviation_definition(clean_md):
+    def remove_whitespace_before_abbreviation_definition(md):
         """
         Remove the two leading spaces that are put by `html2text` when it
         translates an HTML abbreviation to Markdown.
         """
+        if not md:
+            return md
+        assert isinstance(md, unicode), "Input `md` is not Unicode"
         regex = re.compile(r"( |\&nbsp;)+(\*\[.*?\]:)")
-        return re.sub(regex, r"\2", clean_md)
+        return re.sub(regex, r"\2", md)
 
     @staticmethod
     def remove_leading_whitespace_from_dd_element(md):
         """
         Change the input `md` to make sure it will transform to the correct HTML.
         """
+        if not md:
+            return md
+        assert isinstance(md, unicode), "Input `md` is not Unicode"
         regex = re.compile(r"(\n) {4}(: \w+)")
         return re.sub(regex, r"\1\2", md)

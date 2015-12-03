@@ -215,7 +215,7 @@ red.\
 
         md_style_label = QtGui.QLabel("Markdown syntax highlighting style", self)
         md_style_combo = QtGui.QComboBox(self)
-        md_style_combo.setMinimumWidth(const.MIN_COMBOBOX_WIDTH, 0);
+        md_style_combo.setMinimumWidth(const.MIN_COMBOBOX_WIDTH);
         md_style_files = os.listdir(os.path.join(
             const.preferences.get_addons_folder(), const.FOLDER_NAME, "pygments", "styles"))
 
@@ -252,7 +252,7 @@ red.\
         # align code block
         code_align_label = QtGui.QLabel(u"Alignment for Markdown code blocks")
         code_align_combo = QtGui.QComboBox(self)
-        code_align_combo.setMinimumWidth(const.MIN_COMBOBOX_WIDTH, 0);
+        code_align_combo.setMinimumWidth(const.MIN_COMBOBOX_WIDTH);
         alignments = ("left", "center", "right")
         for alignment in alignments:
             code_align_combo.addItem(alignment)

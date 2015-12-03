@@ -98,4 +98,3 @@ class DefList(QtGui.QDialog):
         self.dt_part.clear()
         self.dd_part.clear()
         self.dt_part.setFocus()
-

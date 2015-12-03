@@ -926,7 +926,7 @@ class UtilityTester(unittest.TestCase):
 
     # remove_whitespace_before_abbreviation_definition
     def test_remove_whitespace_before_abbreviation_definition_does_not_make_changes_when_no_leading_whitespace(self):
-        s           = """The HTML specification
+        s           = u"""The HTML specification
 is maintained by the W3C.
 
 *[HTML]: Hyper Text Markup Language
@@ -934,6 +934,15 @@ is maintained by the W3C.
         expected    = s
         result      = Utility.remove_whitespace_before_abbreviation_definition(s)
         self.assertEqual(expected, result)
+
+    def test_remove_whitespace_before_abbreviation_definition_throws_assertion_error_when_input_is_not_unicode(self):
+        s           = "text"
+        self.assertRaises(AssertionError, Utility.remove_whitespace_before_abbreviation_definition, s)
+
+    def test_remove_whitespace_before_abbreviation_definition_returns_same_if_input_is_empty_string(self):
+        s           = u""
+        expected    = u""
+        self.assertEqual(s, expected)
 
     def test_remove_whitespace_before_abbreviation_definition_removes_leading_whitespace_after_newline(self):
         s           = u"adsfsdfsd\n  \n  *[adsfsdfsd]: PSV!!!\n"

@@ -90,10 +90,11 @@ class Markdowner(object):
             print "compare_md:", compare_md
             compare_md = Utility.convert_html_to_markdown(compare_md)
             print "compare_md:", compare_md
+            print "\nhas_def_list", has_def_list
             if has_def_list:
-                clean_md = Utility.remove_leading_whitespace_from_dd_element(clean_md)
-            clean_md = Utility.remove_whitespace_before_abbreviation_definition(
-                    clean_md)
+                compare_md = Utility.remove_leading_whitespace_from_dd_element(compare_md)
+            compare_md = Utility.remove_whitespace_before_abbreviation_definition(
+                    compare_md)
             if not any(x in compare_md for x in("&amp;", "&quot;", "&apos;",
                                                 "&gt;", "&lt;")):
                 compare_md_escaped = Utility.escape_html_chars(compare_md)
@@ -220,11 +221,14 @@ class Markdowner(object):
                 self.html, keep_empty_lines=True)
         clean_md = Utility.remove_whitespace_before_abbreviation_definition(
                 clean_md)
+        if "<dl" in self.html:
+            clean_md = Utility.remove_leading_whitespace_from_dd_element(clean_md)
         if re.search(const.IS_LINK_OR_IMG_REGEX, clean_md):
             clean_md = Utility.escape_html_chars(clean_md)
         new_html = Utility.convert_clean_md_to_html(clean_md,
                                                     put_breaks=True)
         self.insert_markup_in_field(new_html, self.current_field)
+        self.create_correct_md_for_def_list()
         const.MARKDOWN_PREFS["disable_buttons"] = False
         const.MARKDOWN_PREFS["isconverted"] = False
         self.remove_warn_msg(self.editor_instance, self.current_field)
@@ -258,7 +262,7 @@ class Markdowner(object):
                 "your current version of this field (overwriting the old "
                 "version), replace your current version with the stored "
                 "version, or cancel.\n\nWARNING: Overwriting may result "
-                "in the loss of of some of your original Markdown syntax.")
+                "in the loss of some of your original Markdown syntax.")
         replaceButton = QtGui.QPushButton("&Replace", mess)
         mess.addButton(replaceButton, QtGui.QMessageBox.ApplyRole)
         mess.addButton("&Overwrite", QtGui.QMessageBox.ApplyRole)

@@ -306,8 +306,8 @@ class Utility(object):
         assert isinstance(md_two, unicode), "Input `md_two` is not Unicode"
         compare_one = Utility.remove_white_space(md_one)
         compare_two = Utility.remove_white_space(md_two)
-        print "one:", compare_one
-        print "one:", compare_two
+        print "one:", repr(compare_one)
+        print "two", repr(compare_two)
         return compare_one == compare_two
 
     @staticmethod

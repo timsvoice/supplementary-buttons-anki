@@ -994,3 +994,30 @@ is maintained by the W3C.
         expected    = u"**a**\n: first letter\n  \n**b**\n    :second letter\n  \n"
         result      = Utility.remove_leading_whitespace_from_dd_element(s)
         self.assertEqual(expected, result)
+
+    def test_remove_leading_whitespace_from_dd_element_inserts_newline_between_two_dd_elements(self):
+        s           = u"**a**\n    : first letter\n**b**\n    :second letter\n  \n"
+        expected    = u"**a**\n: first letter\n\n**b**\n    :second letter\n  \n"
+        result      = Utility.remove_leading_whitespace_from_dd_element(s, True)
+        self.assertEqual(expected, result)
+
+    # put_colons_in_html_def_list
+    def test_put_colons_in_html_def_list_throws_assertion_error_when_input_is_not_unicode(self):
+        s           = "text"
+        self.assertRaises(AssertionError, Utility.put_colons_in_html_def_list, s)
+
+    def test_put_colons_in_html_def_list_returns_empty_string_when_input_is_empty_string(self):
+        s           = u""
+        expected    = s
+        result      = Utility.put_colons_in_html_def_list(s)
+        self.assertEqual(expected, result)
+
+    def test_put_colons_in_html_def_list_returns_string_with_colons_when_input_is_correct(self):
+        s           = u'\n<dl>\n<dt align="left"><strong>a</strong></dt>\n' + \
+                       '<dd align="left">one</dd>\n<dt align="left"><strong>' + \
+                       'b</strong></dt>\n<dd align="left">two</dd>\n</dl>'
+        expected    = u'\n<dl>\n<dt align="left"><strong>a</strong></dt>\n' + \
+                       '<dd align="left">: one</dd>\n<dt align="left"><strong>' + \
+                       'b</strong></dt>\n<dd align="left">: two</dd>\n</dl>'
+        result      = Utility.put_colons_in_html_def_list(s)
+        self.assertEqual(expected, result)

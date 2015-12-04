@@ -704,12 +704,31 @@ class Utility(object):
         return re.sub(regex, r"\2", md)
 
     @staticmethod
-    def remove_leading_whitespace_from_dd_element(md):
+    def remove_leading_whitespace_from_dd_element(md, add_newline=False):
         """
         Change the input `md` to make sure it will transform to the correct HTML.
         """
         if not md:
             return md
         assert isinstance(md, unicode), "Input `md` is not Unicode"
-        regex = re.compile(r"(\n) {4}(: \w+)")
-        return re.sub(regex, r"\1\2", md)
+        markdown = md
+        regex = re.compile(r"(\n) {4}(: .*?\n)")
+        result = re.findall(regex, markdown)
+        replacement = r"\1\2\n" if add_newline else r"\1\2"
+        markdown = re.sub(regex, replacement, markdown, count=(len(result)-1))
+        markdown = re.sub(regex, r"\1\2", markdown)
+        return markdown
+
+    @staticmethod
+    def put_colons_in_html_def_list(html):
+        """
+        Insert colons as the first child of a `<dd>` tag.
+        """
+        assert isinstance(html, unicode), "Input `html` is not Unicode"
+        if not html:
+            return html
+        soup = BeautifulSoup.BeautifulSoup(html)
+        dds = soup.findAll(name="dd")
+        for dd in dds:
+            dd.insert(0, u": ")
+        return unicode(soup)

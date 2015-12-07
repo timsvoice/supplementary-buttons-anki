@@ -1,8 +1,9 @@
 #!/bin/bash
+set -o errexit
 
 # convert markdown from README.md to temp.html
-[ -f README.md ] && markdown_py2 -x toc -x extra README.md > temp.html || exit
-[ -f doc_start.html ] && rm -fv doc_start.html
+[ -f README.md ] && markdown_py2 -x toc -x extra README.md > temp.html || exit 6
+[ -f doc_start.html ] && rm -fv doc_start.html || exit 7
 
 vim -E -V doc_template.html <<- END
     /^$
@@ -11,5 +12,8 @@ vim -E -V doc_template.html <<- END
     :quit
 END
 
-[ -f temp.html ] && rm -fv temp.html
-[ -f doc_start.html ] && cp -v doc_start.html ../../README.html
+[ -f temp.html ] && rm -fv temp.html || exit 8
+[ -f doc_start.html ] && cp -v doc_start.html ../../README.html || exit 9
+
+# create docs for AnkiWeb
+[ -f htmlforankiweb.py ] && ./htmlforankiweb.py || exit 10

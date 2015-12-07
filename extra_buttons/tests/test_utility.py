@@ -1021,3 +1021,29 @@ is maintained by the W3C.
                        'b</strong></dt>\n<dd align="left">: two</dd>\n</dl>'
         result      = Utility.put_colons_in_html_def_list(s)
         self.assertEqual(expected, result)
+
+    def test_put_colons_in_html_def_list_returns_string_with_colons_when_input_nodevalue_is_empty(self):
+        s           = u'\n<dl>\n<dt align="left"><strong>a</strong></dt>\n' + \
+                       '<dd align="left"></dd>\n<dt align="left"><strong>' + \
+                       'b</strong></dt>\n<dd align="left"></dd>\n</dl>'
+        expected    = u'\n<dl>\n<dt align="left"><strong>a</strong></dt>\n' + \
+                       '<dd align="left">: </dd>\n<dt align="left"><strong>' + \
+                       'b</strong></dt>\n<dd align="left">: </dd>\n</dl>'
+        result      = Utility.put_colons_in_html_def_list(s)
+        self.assertEqual(expected, result)
+
+    def test_put_colons_in_html_def_list_should_return_unaltered_string_when_input_does_not_contain_dt(self):
+        s           = u'\n<dl>\n' + \
+                       '<dd align="left"></dd>\n<dd align="left">text</dd>\n</dl>'
+        expected    = u'\n<dl>\n' + \
+                       '<dd align="left"></dd>\n<dd align="left">text</dd>\n</dl>'
+        result      = Utility.put_colons_in_html_def_list(s)
+        self.assertEqual(expected, result)
+
+    def test_put_colons_in_html_def_list_should_return_colon_after_dt_but_nothing_when_not_dt(self):
+        s           = u'\n<dl>\n' + \
+                       '<dt></dt><dd align="left"></dd>\n<dd align="left">text</dd>\n</dl>'
+        expected    = u'\n<dl>\n' + \
+                       '<dt></dt><dd align="left">: </dd>\n<dd align="left">text</dd>\n</dl>'
+        result      = Utility.put_colons_in_html_def_list(s)
+        self.assertEqual(expected, result)

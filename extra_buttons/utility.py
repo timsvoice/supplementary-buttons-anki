@@ -730,5 +730,11 @@ class Utility(object):
         soup = BeautifulSoup.BeautifulSoup(html)
         dds = soup.findAll(name="dd")
         for dd in dds:
+            # catch rare cases when `<dd>` is defined, but `<dt>` not
+            prevSib = dd.previousSibling
+            while unicode(prevSib) == u"\n":
+                prevSib = prevSib.previousSibling
+            if (prevSib is None or prevSib.name != u"dt"):
+                continue
             dd.insert(0, u": ")
         return unicode(soup)

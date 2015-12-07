@@ -1,4 +1,4 @@
-#!/usr/share/env python2
+#!/usr/bin/python2
 # -*- coding: utf-8 -*-
 
 import BeautifulSoup
@@ -6,7 +6,7 @@ import re
 import os
 import sys
 import string
-from . import __version__
+from _version import __version__
 
 class HTMLForAnkiWeb(object):
     def __init__(self):

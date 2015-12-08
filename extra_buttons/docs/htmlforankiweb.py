@@ -6,17 +6,18 @@ import re
 import os
 import sys
 import string
+import inspect
 from _version import __version__
 
 class HTMLForAnkiWeb(object):
     def __init__(self):
         self.template_dict = dict()
         self.put_constants_in_dict()
-        self.path = os.path.join(os.path.expanduser("~"), "Copy", "Programming",
-                            "git_projects", "supplementary_buttons_anki",
-                            "extra_buttons", "docs", "doc_start.html")
-        if (os.path.exists(self.path)):
-            with open(self.path) as f:
+        self.curdir = os.path.dirname(os.path.abspath(
+            inspect.getfile(inspect.currentframe())))
+        self.doc_start_path = os.path.join(self.curdir, "doc_start.html")
+        if (os.path.exists(self.doc_start_path)):
+            with open(self.doc_start_path) as f:
                 html = f.read()
                 self.soup = BeautifulSoup.BeautifulSoup(html)
                 self.body = self.soup.find(name="body")
@@ -139,8 +140,12 @@ it again by using the number at the bottom of this page.
 <b>New in version ${version}:</b>
 <ul>$new_features</ul>
 
-This add-on adds the following supplementary formatting buttons to Anki:
 $markdown
+
+FORMATTING BUTTONS
+
+Besides Markdown, this add-on adds the following supplementary formatting
+buttons to Anki:
 <ul>
 $code_button
 Depending on your CSS definition, this may look like:
@@ -213,8 +218,10 @@ if __name__ == "__main__":
     webanki.get_headings()
     webanki.replace_tags()
     html = webanki.create_template()
-    path = os.path.join(os.path.expanduser("~"), "Copy", "Programming",
-                        "git_projects", "supplementary_buttons_anki",
-                        "extra_buttons", "docs", "ankiweb.html")
+    path = os.path.join(os.path.dirname(os.path.abspath(
+        inspect.getfile(inspect.currentframe()))), "ankiweb.html")
+    print "Path is: {!r}".format(path)
     with open(path, "w") as f:
         f.write(html)
+        print "Written {!r}".format(path)
+    print "Succesfully written file. Exiting..."

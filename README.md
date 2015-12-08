@@ -1,14 +1,11 @@
-Supplementary Buttons for Anki
-{: style='font-size: 36px; font-weight: bold' }
+# Supplementary Buttons for Anki
 
-[TOC]
 
-## Formatting buttons {: .heading}
+## Formatting buttons 
 
 This add-on adds the following supplementary formatting buttons to Anki:
 
 * a **code** button that will wrap selected text in a `<code>` (default: <kbd>Ctrl</kbd> + <kbd>,</kbd>). You can specify the CSS class you want to use in combination with `<code>`. For example, we have a CSS class named `c` defined in the *Styling* section of *Cards*:
-{: .formatting-button #code-button}
 
 
         .c {
@@ -23,14 +20,12 @@ This add-on adds the following supplementary formatting buttons to Anki:
     elements will be automatically transformed to `<code class="c">`.
 
 * an **unordered list** button (default <kbd>Ctrl</kbd> + <kbd>[</kbd>):
-{: .formatting-button #unordered-list-button}
 
     * One
     * Two
     * Three
 
 * an **ordered list** button (default <kbd>Ctrl</kbd> + <kbd>]</kbd>):
-{: .formatting-button #ordered-list-button}
 
     1. One
     2. Two
@@ -38,7 +33,6 @@ This add-on adds the following supplementary formatting buttons to Anki:
 
 * an **indent** button (default <kbd>Ctrl</kbd> + <kbd>Shift</kbd> +
     <kbd>]</kbd>) to indent text or lists:
-{: .formatting-button #indent-button}
 
     1. One
         * Two
@@ -46,11 +40,9 @@ This add-on adds the following supplementary formatting buttons to Anki:
 
 * an **outdent** button (default <kbd>Ctrl</kbd> + <kbd>Shift</kbd> +
     <kbd>[</kbd>) to outdent text or lists
-{: .formatting-button #outdent-button}
 
 * a **strikethrough** button (default <kbd>Alt</kbd> + <kbd>Shift</kbd> +
     <kbd>5</kbd>):
-{: .formatting-button #strikethrough-button}
 
     <del>strikethrough text example</del>
 
@@ -59,15 +51,12 @@ This add-on adds the following supplementary formatting buttons to Anki:
     the code button works. You can specify the CSS class you want to use in
     combination with `&lt;pre&gt;` by going to *Tools &gt;
     Supplementary buttons add-on (options) &gt; Alter &lt;code&gt; CSS...*
-{: .formatting-button #pre-button}
 
 * a **horizontal rule** button (default <kbd>Ctrl</kbd> + <kbd>H</kbd>) that
     inserts a horizontal rule after the current position of the cursor
-{: .formatting-button #horizontal-rule-button}
 
 * a **definition list** button (default <kbd>Ctrl</kbd> + <kbd>Shift</kbd> +
     <kbd>D</kbd>):
-{: .formatting-button #definition-list-button}
 
     <dl><dt>definition term</dt><dd>definition description</dd>
 
@@ -75,7 +64,6 @@ This add-on adds the following supplementary formatting buttons to Anki:
     and descriptions.
 
 * a **table** button (default <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>3</kbd>):
-{: .formatting-button #table-button}
 
     <table>
         <thead>
@@ -111,7 +99,6 @@ This add-on adds the following supplementary formatting buttons to Anki:
 
 * a **keyboard key** button (default <kbd>Ctrl</kbd> + <kbd>Shift</kbd> +
     <kbd>K</kbd>):
-{: .formatting-button #keyboard-button}
 
     This will create a keyboard key, for example <kbd>Esc</kbd>. By itself,
     the text that is wrapped in `<kbd>` will not look any different from the
@@ -135,7 +122,6 @@ This add-on adds the following supplementary formatting buttons to Anki:
         }
 
 * a **hyperlink** button (default <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>H</kbd>):
-{: .formatting-button #hyperlink-button}
 
     Upon pressing the button, you will be presented with a dialog window where
     you can enter both a link and text. To unlink a hyperlink, use the unlink
@@ -144,13 +130,11 @@ This add-on adds the following supplementary formatting buttons to Anki:
 * a **text highlight** button (default <kbd>Ctrl</kbd> + <kbd>Shift</kbd> +
     <kbd>N</kbd> to select color, <kbd>Ctrl</kbd> + <kbd>Shift</kbd> +
     <kbd>B</kbd> to apply it):
-{: .formatting-button #highlight-button}
 
     Highlight your text with colors.
 
 * a **blockquote** button (default <kbd>Ctrl</kbd> + <kbd>Shift</kbd> +
     <kbd>Y</kbd>):
-{: .formatting-button #blockquote-button}
 
     Cite your source distinctively from the rest of the text. You can add an
     author by putting brackets around the text:
@@ -161,14 +145,12 @@ This add-on adds the following supplementary formatting buttons to Anki:
     > _John F. Kennedy_
 
 * **alignment** buttons:
-{: .formatting-button #alignment-button}
 
     Align your text left, right, center or justified. Shortcuts are
     <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Alt</kbd> + <kbd>L</kbd>,
     <kbd>R</kbd>, <kbd>B</kbd> and <kbd>J</kbd>, respectively.
 
 * a **heading** button (shortcut <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>1</kbd>):
-{: .formatting-button #heading-button}
 
     You can either create a heading by prepending text with hashes: `#` for
     a `<h1>` heading, `######` for a `<h6>` heading. If you do not prepend any
@@ -178,7 +160,7 @@ This add-on adds the following supplementary formatting buttons to Anki:
 <!-- end formatting buttons -->
 
 
-## Markdown {: .heading}
+## Markdown 
 
 You can use Markdown to style your notes. Markdown is a text-to-HTML
 conversion tool, that lets you quicky style your notes. If you don't know
@@ -208,7 +190,7 @@ This addons supports some Markdown syntax not found in
 [John Gruber's original
 Markdown](https://daringfireball.net/projects/markdown/):
 
-#### Code blocks {: .heading}
+#### Code blocks 
 Code blocks can be created by indenting four spaces with a white line before
 and after the code block. The syntax can be specified either by:
 
@@ -226,7 +208,7 @@ More (technical) details on code blocks (e.g. highlighting of lines) can be
 found on the
 [Python Markdown project](https://pythonhosted.org/Markdown/extensions/code_hilite.html).
 
-#### Definition lists {: .heading}
+#### Definition lists 
 
 A definition list can be created as follows:
 
@@ -239,7 +221,7 @@ A definition list can be created as follows:
 
 Make sure there is a white line between the different definitions.
 
-#### Footnotes {: .heading}
+#### Footnotes 
 
 
     Footnotes[^1] have a label[^@#$%] and the footnote's content.
@@ -263,7 +245,7 @@ More (technical) details on footnotes (e.g. multiple blocks of content) can be
 found on the
 [Python Markdown project](https://pythonhosted.org/Markdown/extensions/footnotes.html).
 
-#### Abbreviations {: .heading}
+#### Abbreviations 
 
 The Markdown syntax:
 
@@ -278,12 +260,12 @@ will be rendered as:
     <p>The <abbr title="Hyper Text Markup Language">HTML</abbr> specification
     is maintained by the <abbr title="World Wide Web Consortium">W3C</abbr>.</p>
 
-#### Tables {: .heading}
+#### Tables 
 
 Tables have the same syntax as described above for the table button. Tables
 can be styled with CSS in your stylesheet.
 
-#### Attributes {: .heading}
+#### Attributes 
 
 An example attribute list might look like this:
 
@@ -318,7 +300,7 @@ More (technical) details on attributes (e.g. block-level and inline
 attributes) can be found on the [Python Markdown
 project](https://pythonhosted.org/Markdown/extensions/attr_list.html).
 
-## Custom user-defined keybindings {: .heading}
+## Custom user-defined keybindings 
 You can change the default keybindings by editing the `keybinding.json` file in
 your `Anki/addons/extra_buttons` folder.  Please keep in mind that there is no
 check for duplicate keybindings. This means that when a keybinding is already
@@ -362,13 +344,11 @@ If you want to revert your changes to the default keybindings provided by
 Supplementary Buttons for Anki, please remove the keybindings JSON file in your
 addon folder.
 
-## Disabling unused buttons {: .heading}
+## Disabling unused buttons 
 The buttons can be enabled or disabled individually in *Tools > Supplementary
 buttons add-on (options)*, so feel free to disable the buttons you don't use.
-{: #disabling-unused-buttons-content}
 
-## Installation {: .heading}
+## Installation 
 The preferred way to install is using the
 [Anki add-on site](https://ankiweb.net/shared/info/162313389) way by copying the
 addon code (162313389) into Anki (*Tools > Add-ons > Browse & Install...*).
-{: #installation-content}

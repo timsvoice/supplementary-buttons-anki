@@ -32,5 +32,5 @@ class _Const(object):
             self.__dict__[name] = value
 
 # importing modules can directly add constants and
-# don't have to worry about instantiatig _Const
+# don't have to worry about instantiating _Const
 sys.modules[__name__] = _Const()

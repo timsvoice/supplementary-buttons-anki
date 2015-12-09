@@ -20,8 +20,9 @@
 import os
 import string
 import copy
+import base64
 
-from anki.utils import json
+from anki.utils import json, isWin, isMac
 
 import const
 from utility import Utility
@@ -30,65 +31,71 @@ class Preferences(object):
 
     def __init__(self, main_window):
         self.main_window = main_window
-        self.prefs_path = os.path.join(self.addons_folder(),
-                "extra_buttons", ".extra_buttons_prefs")
-        if const.PLATFORM.startswith("darwin"):
-            self.keybindings_path = os.path.join(self.addons_folder(),
-                    "extra_buttons", "keybindings_macosx.json")
+        self.prefs_path = os.path.join(self.get_addons_folder(),
+                    const.FOLDER_NAME, ".extra_buttons_prefs")
+        if isMac:
+            self.keybindings_path = os.path.join(self.get_addons_folder(),
+                    const.FOLDER_NAME, "keybindings_macosx.json")
         else:
-            self.keybindings_path = os.path.join(self.addons_folder(),
-                    "extra_buttons", "keybindings_linux_windows.json")
+            self.keybindings_path = os.path.join(self.get_addons_folder(),
+                    const.FOLDER_NAME, "keybindings_linux_windows.json")
 
         # the default preferences that are used when no custom preferences
         # are found, or when the user preferences are corrupted
         self._default_conf = {
-                "class_name": const.CODE_AND_PRE_CLASS,
-                "last_bg_color": "#00f",
-                "fixed_ol_type": "",
-                "Show <code> button": True,
-                "Show unordered list button": True,
-                "Show ordered list button": True,
-                "Show strikethrough button": True,
-                "Show code block button": True,
-                "Show horizontal rule button": True,
-                "Show indent button": True,
-                "Show outdent button": True,
-                "Show definition list button": True,
-                "Show table button": True,
-                "Show keyboard button": True,
-                "Show create link buttons": True,
-                "Show background color button": True,
-                "Show blockquote button": True,
-                "Show justify buttons": True,
-                "Show heading button": True,
-                "Show abbreviation button": True
+                const.CODE_CLASS:               const.CODE_AND_PRE_CLASS,
+                const.LAST_BG_COLOR:            "#00f",
+                const.FIXED_OL_TYPE:            "",
+                const.MARKDOWN_SYNTAX_STYLE:    "tango",
+                const.MARKDOWN_CODE_DIRECTION:  "left",
+                const.MARKDOWN_LINE_NUMS:       False,
+                const.MARKDOWN_ALWAYS_REVERT:   False,
+                const.CODE:                     True,
+                const.UNORDERED_LIST:           True,
+                const.ORDERED_LIST:             True,
+                const.STRIKETHROUGH:            True,
+                const.PRE:                      True,
+                const.HORIZONTAL_RULE:          True,
+                const.INDENT:                   True,
+                const.OUTDENT:                  True,
+                const.DEFINITION_LIST:          True,
+                const.TABLE:                    True,
+                const.KEYBOARD:                 True,
+                const.HYPERLINK:                True,
+                const.BACKGROUND_COLOR:         True,
+                const.BLOCKQUOTE:               True,
+                const.TEXT_ALLIGN:              True,
+                const.HEADING:                  True,
+                const.ABBREVIATION:             True,
+                const.MARKDOWN:                 True
         }
 
         # the default keybindings that are used when no custom keybindings
         # are found, or when the user keybindings are corrupted
         self._default_keybindings_linux_windows = {
-                const.CODE: "ctrl+,",
-                const.UNORDERED_LIST: "ctrl+[",
-                const.ORDERED_LIST: "ctrl+]",
-                const.STRIKETHROUGH: "alt+shift+5",
-                const.PRE: "ctrl+.",
-                const.HORIZONTAL_RULE: "ctrl+shift+alt+_",
-                const.INDENT: "ctrl+shift+]",
-                const.OUTDENT: "ctrl+shift+[",
-                const.DEFINITION_LIST: "ctrl+shift+d",
-                const.TABLE: "ctrl+shift+3",
-                const.KEYBOARD: "ctrl+shift+k",
-                const.HYPERLINK: "ctrl+shift+h",
-                const.REMOVE_HYPERLINK: "ctrl+shift+alt+h",
-                const.BACKGROUND_COLOR: "ctrl+shift+b",
-                const.BACKGROUND_COLOR_CHANGE: "ctrl+shift+n",
-                const.BLOCKQUOTE: "ctrl+shift+y",
-                const.TEXT_ALLIGN_FLUSH_LEFT: "ctrl+shift+alt+l",
-                const.TEXT_ALLIGN_FLUSH_RIGHT: "ctrl+shift+alt+r",
-                const.TEXT_ALLIGN_JUSTIFIED: "ctrl+shift+alt+s",
-                const.TEXT_ALLIGN_CENTERED: "ctrl+shift+alt+b",
-                const.HEADING: "ctrl+alt+1",
-                const.ABBREVIATION: "shift+alt+a"
+                const.CODE:                         "ctrl+,",
+                const.UNORDERED_LIST:               "ctrl+[",
+                const.ORDERED_LIST:                 "ctrl+]",
+                const.STRIKETHROUGH:                "alt+shift+5",
+                const.PRE:                          "ctrl+.",
+                const.HORIZONTAL_RULE:              "ctrl+shift+alt+_",
+                const.INDENT:                       "ctrl+shift+]",
+                const.OUTDENT:                      "ctrl+shift+[",
+                const.DEFINITION_LIST:              "ctrl+shift+d",
+                const.TABLE:                        "ctrl+shift+3",
+                const.KEYBOARD:                     "ctrl+shift+k",
+                const.HYPERLINK:                    "ctrl+shift+h",
+                const.REMOVE_HYPERLINK:             "ctrl+shift+alt+h",
+                const.BACKGROUND_COLOR:             "ctrl+shift+b",
+                const.BACKGROUND_COLOR_CHANGE:      "ctrl+shift+n",
+                const.BLOCKQUOTE:                   "ctrl+shift+y",
+                const.TEXT_ALLIGN_FLUSH_LEFT:       "ctrl+shift+alt+l",
+                const.TEXT_ALLIGN_FLUSH_RIGHT:      "ctrl+shift+alt+r",
+                const.TEXT_ALLIGN_JUSTIFIED:        "ctrl+shift+alt+s",
+                const.TEXT_ALLIGN_CENTERED:         "ctrl+shift+alt+b",
+                const.HEADING:                      "ctrl+alt+1",
+                const.ABBREVIATION:                 "shift+alt+a",
+                const.MARKDOWN:                     "ctrl+shift+d"
         }
         # Mac OS Xbindings are the same as Linux/Windows bindings,
         # except for the following
@@ -98,7 +105,7 @@ class Preferences(object):
         self._default_keybindings_macosx[const.PRE] = "ctrl+shift+."
 
         self._default_keybindings = None
-        if const.PLATFORM.startswith("darwin"):
+        if isMac:
             self._default_keybindings = self._default_keybindings_macosx
         else:
             self._default_keybindings = self._default_keybindings_linux_windows
@@ -109,7 +116,9 @@ class Preferences(object):
         # load the preferences
         try:
             with open(self.prefs_path, "r") as f:
-                self.prefs = json.load(f)
+                encoded_prefs = f.read(const.MAX_BYTES_PREFS)
+                decoded_prefs = base64.b64decode(encoded_prefs)
+                self.prefs = json.loads(decoded_prefs)
         except:
             # file does not exist or is corrupted: fall back to default
             with open(self.prefs_path, "w") as f:
@@ -137,37 +146,46 @@ class Preferences(object):
         except (ValueError, IOError) as e:
             # file is missing or is not valid JSON: revert to default bindings
             # and create a keybindings file if it doesn't exist
-            print e
+            print e # TODO: log error
             self.keybindings = self._default_keybindings
             if not os.path.exists(self.keybindings_path):
                 self.create_keybindings_file()
         else:
             # keybindings loaded from file should have exactly as many
             # key-value pairs as in the default keybindings
-            Utility.normalize_user_prefs(self._default_keybindings,
-                    self.keybindings)
+            self.keybindings = Utility.normalize_user_prefs(
+                    self._default_keybindings, self.keybindings)
             self.keybindings = Utility.check_user_keybindings(
                     self._default_keybindings, self.keybindings, const.PLATFORM)
 
     def get_keybinding(self, name_of_key):
-        """Return the keybinding indicated by name_of_key, and capitalize
-        the name of each key before the delimiter +."""
+        """
+        Return the keybinding indicated by `name_of_key`, and capitalize
+        the name of each key before the delimiter `+`.
+        """
         keybinding = self.keybindings.get(name_of_key, "")
         return string.capwords(keybinding, "+")
 
-    def addons_folder(self):
-        """Return the addon folder used by Anki."""
+    def get_addons_folder(self):
+        """
+        Return the addon folder used by Anki.
+        """
         return self.main_window.pm.addonFolder()
 
     def save_prefs(self):
-        """Save the preferences to disk."""
+        """
+        Save the preferences to disk, encoded.
+        """
+        encoded_prefs = base64.b64encode(json.dumps(self.prefs))
         with open(self.prefs_path, "w") as f:
-            json.dump(self.prefs, f)
+            f.write(encoded_prefs)
 
     def create_keybindings_file(self):
-        """Creates a default keybindings file with comments. This function is
+        """
+        Create a default keybindings file with comments. This function is
         called when Supplementary Buttons for Anki cannot find an existing
-        keybindings file. Overrides any changes made to an existing file."""
+        keybindings file. Override any changes made to an existing file.
+        """
 
         contents = """\
 // This file contains the keybindings that are used for Supplementary Buttons
@@ -212,7 +230,7 @@ class Preferences(object):
 """
         for key, value in sorted(self.keybindings.iteritems()):
             contents += "\"{}\": \"{}\",\n".format(key, value)
-        contents += "\"_comment\": \"end of keybindings\"\n"
+        contents += "\"_version\": \"{}\"\n".format(const.VERSION)
         contents += "}"
 
         try:

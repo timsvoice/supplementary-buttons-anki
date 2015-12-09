@@ -19,6 +19,8 @@ zip -r --exclude=*.pyc* --exclude=*__pycache__* ~/Desktop/supplementary_buttons_
     extra_buttons/utility.py \
     extra_buttons/docs/doc_start.html \
     extra_buttons/docs/github-markdown.css \
+    extra_buttons/docs/__init__.py \
+    extra_buttons/docs/_version.py \
     extra_buttons/anki_modules/* \
     extra_buttons/icons/* \
     extra_buttons/html2text/* \

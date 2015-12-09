@@ -81,17 +81,13 @@ class Markdowner(object):
         clean_md = Utility.remove_whitespace_before_abbreviation_definition(
                 clean_md)
         clean_md_escaped = Utility.escape_html_chars(clean_md)
-        print "\nCLEAN_MD_ESCAPED:", clean_md_escaped
         if not clean_md:
             return
         # check for changed Markdown between the stored data and the current text
         if (self.has_data and self.isconverted == "True"):
             compare_md = Utility.convert_markdown_to_html(self.md)
-            print "compare_md:", compare_md
             compare_md = Utility.put_colons_in_html_def_list(compare_md)
             compare_md = Utility.convert_html_to_markdown(compare_md)
-            print "compare_md:", compare_md
-            print "\nhas_def_list", has_def_list
             if has_def_list:
                 compare_md = Utility.remove_leading_whitespace_from_dd_element(compare_md)
             compare_md = Utility.remove_whitespace_before_abbreviation_definition(
@@ -99,7 +95,6 @@ class Markdowner(object):
             if not any(x in compare_md for x in("&amp;", "&quot;", "&apos;",
                                                 "&gt;", "&lt;")):
                 compare_md_escaped = Utility.escape_html_chars(compare_md)
-                print "compare_md_escaped:", compare_md_escaped
                 compare_md = compare_md_escaped
             if (Utility.is_same_markdown(clean_md_escaped, compare_md) or
                    const.preferences.prefs.get(const.MARKDOWN_ALWAYS_REVERT)):
@@ -115,7 +110,6 @@ class Markdowner(object):
             html_with_data = Utility.make_data_ready_to_insert(
                     self.current_note_id_and_field, "True",
                     clean_md_escaped, new_html)
-            print "\nReady to insert:", html_with_data
             self.insert_markup_in_field(
                     html_with_data, self.editor_instance.currentField)
             self.align_elements()

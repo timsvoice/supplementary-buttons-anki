@@ -113,7 +113,7 @@ class Abbreviation(object):
                 var marker = '@#!';
                 var toBeInserted = marker + abbr.outerHTML + marker;
                 document.execCommand('insertHTML', false, toBeInserted);
-                console.log(document.getElementById('f%s').outerHTML);
+
                 var elem = document.getElementById('%s');
                 var leftString = elem.previousSibling.nodeValue;
                 var rightString = elem.nextSibling.nodeValue;

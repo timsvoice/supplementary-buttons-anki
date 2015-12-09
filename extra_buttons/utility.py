@@ -157,14 +157,12 @@ class Utility(object):
         Take a org_html string and return a Markdown string. Empty lines are
         removed from the result, unless `keep_empty_lines` is set to `True`.
         """
-        print "\nHTML:", repr(org_html)
         if not org_html:
             return u""
         assert isinstance(org_html, unicode), "Input `org_html` is not Unicode"
         h = html2text.HTML2Text()
         h.body_width = 0
         md_text = h.handle(org_html)
-        print "\nmd_text:", repr(md_text)
         clean_md = u""
         if keep_empty_lines:
             clean_md = md_text
@@ -173,7 +171,6 @@ class Utility(object):
             for line in md_text.split(u"\n"):
                 if line:
                     clean_md += (line + u"\n")
-        print "\nclean_md:", repr(clean_md)
 
         # undo the html2text escaping of dots (which interferes
         # with the creation of ordered lists) and parentheses
@@ -188,7 +185,6 @@ class Utility(object):
         clean_md = Utility.replace_link_img_matches(whitespace_regex, u"&#32;", clean_md)
 
         assert isinstance(clean_md, unicode)
-        print "\nclean_md:", repr(clean_md)
         return clean_md
 
     @staticmethod
@@ -306,8 +302,6 @@ class Utility(object):
         assert isinstance(md_two, unicode), "Input `md_two` is not Unicode"
         compare_one = Utility.remove_white_space(md_one)
         compare_two = Utility.remove_white_space(md_two)
-        print "one:", repr(compare_one)
-        print "two", repr(compare_two)
         return compare_one == compare_two
 
     @staticmethod

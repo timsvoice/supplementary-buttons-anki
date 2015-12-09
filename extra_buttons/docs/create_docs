@@ -1,0 +1,30 @@
+#!/bin/bash
+set -o errexit
+
+# convert markdown from README.md to temp.html
+[ -f README.md ] && markdown_py2 -x toc -x extra README.md > temp.html || exit 6
+[ -f doc_start.html ] && rm -fv doc_start.html || exit 7
+
+vim -E -V doc_template.html <<- END
+    /^$
+    :read temp.html
+    :write doc_start.html
+    :quit
+END
+
+[ -f temp.html ] && rm -fv temp.html || exit 8
+
+# docs for GitHub
+[ -f README.md ] && cp -v README.md GITHUB.md || exit 11
+[ -f GITHUB.md ] && sed -i.bak -r 's/\{: \.heading\}//g' GITHUB.md
+# make first line a <h1> heading
+[ -f GITHUB.md ] && sed -i.bak2 -r '1 s/(.*)/# \1/' GITHUB.md
+[ -f GITHUB.md ] && grep -v -E '\[TOC\]' < GITHUB.md > GITHUB_temp.md
+[ -f GITHUB_temp.md ] && mv -v GITHUB_temp.md GITHUB.md
+# delete lines with only markup information
+[ -f GITHUB.md ] && grep -v -P '(?<!\s{4})\{:[^\}]*?\}' < GITHUB.md > GITHUB_temp.md
+[ -f GITHUB_temp.md ] && mv -v GITHUB_temp.md GITHUB.md
+[ -f doc_start.html ] && cp -v GITHUB.md ../../README.md || exit 9
+
+# create docs for AnkiWeb
+[ -f htmlforankiweb.py ] && ./htmlforankiweb.py || exit 10

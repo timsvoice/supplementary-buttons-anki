@@ -17,8 +17,8 @@
 # You should have received a copy of the GNU General Public License along
 # with Supplementary Buttons for Anki. If not, see http://www.gnu.org/licenses/.
 
-from PyQt4 import QtGui, QtCore
-
+from PyQt4 import QtGui, QtCore, QtWebKit
+import os
 import const
 from utility import Utility
 
@@ -29,20 +29,26 @@ class ExtraButtons_Options(QtGui.QMenu):
     def __init__(self, main_window, preferences):
         super(ExtraButtons_Options, self).__init__()
         self.main_window = main_window
-        self.preferences = preferences
         self.listOfRadioButtons = list()
 
     def button_switch(self, state):
         """Puts a button either on or off. Reverses current state."""
         source = self.sender()
         name = source.text()
-        current_state = self.preferences.prefs[name]
+        # deprettify
+        name = name.lower().replace(" ", "_")
+        current_state = const.preferences.prefs.get(name)
+        if current_state is None:
+            raise Exception("{!r} not in preferences".format(name))
         if bool(state) != current_state:
-            self.preferences.prefs[name] = not current_state
+            const.preferences.prefs[name] = not current_state
 
-    def create_checkbox(self, name, main_window):
-        checkbox = QtGui.QCheckBox(name, self)
-        if self.preferences.prefs[name]:
+    def create_checkbox(self, name):
+        # TODO: better names, maybe stored in properties file
+        # prettify option name
+        pretty_name = name.replace("_", " ").capitalize()
+        checkbox = QtGui.QCheckBox(pretty_name, self)
+        if const.preferences.prefs.get(name):
             checkbox.setChecked(True)
         checkbox.stateChanged.connect(self.button_switch)
         return checkbox
@@ -63,12 +69,41 @@ class ExtraButtons_Options(QtGui.QMenu):
                 "&About {0}...".format(const.PROGRAM_NAME), self.main_window)
         about_action.triggered.connect(self.show_about_dialog)
 
-        # custom_css = QtGui.QAction("&Alter <code> and <pre> CSS...", main_window)
-        # custom_css.triggered.connect(self.preferences.set_css_class_name_code_pre)
+        doc_action = QtGui.QAction("&Documentation...", self.main_window)
+        doc_action.triggered.connect(self.show_doc_dialog)
 
         sub_menu.addAction(options_action)
-        # sub_menu.addAction(custom_css)
         sub_menu.addAction(about_action)
+        sub_menu.addAction(doc_action)
+
+    def show_doc_dialog(self):
+        dialog = QtGui.QDialog(self)
+        dialog.setWindowTitle("Supplementary Buttons for Anki Documentation")
+
+        filename = os.path.join(const.preferences.get_addons_folder(),
+                                "extra_buttons",
+                                "docs",
+                                "doc_start.html")
+
+        if not os.path.exists(filename):
+            print "FILENAME {!r} DOES NOT EXIST".format(filename)
+            return
+
+        help_buttons = QtGui.QDialogButtonBox(dialog)
+        help_buttons.setStandardButtons(QtGui.QDialogButtonBox.Ok)
+
+        help_buttons.accepted.connect(dialog.accept)
+
+        view = QtWebKit.QWebView(dialog)
+        view.load(QtCore.QUrl(filename))
+
+        help_vbox = QtGui.QVBoxLayout()
+        help_vbox.addWidget(view)
+        help_vbox.addWidget(help_buttons)
+
+        dialog.setLayout(help_vbox)
+
+        dialog.exec_()
 
     def show_about_dialog(self):
         about_dialog = QtGui.QMessageBox.about(self.main_window,
@@ -99,18 +134,21 @@ class ExtraButtons_Options(QtGui.QMenu):
         option_dialog.setWindowTitle("Options for Supplementary Buttons")
 
         grid = QtGui.QGridLayout()
-
-        # create a dict that has all the relevant buttons to be displayed
-        l = [k for k in self.preferences.prefs.keys() if k not in
-                ("class_name", "last_bg_color", "fixed_ol_type")]
-
-        # determine number of items in each column in the grid
+        l = [k for k in const.preferences.prefs.keys() if k not in (
+                                                const.CODE_CLASS,
+                                                const.LAST_BG_COLOR,
+                                                const.FIXED_OL_TYPE,
+                                                const.MARKDOWN_SYNTAX_STYLE,
+                                                const.MARKDOWN_LINE_NUMS,
+                                                const.MARKDOWN_ALWAYS_REVERT,
+                                                const.MARKDOWN_CODE_DIRECTION
+                                            )]
         num_items = len(l) / 2.0
         num_items = num_items + 0.5 if (num_items % 1.0 > 0.0) else num_items
 
         # go through the keys in the prefs and make QCheckBoxes for them
         for index, option in enumerate(sorted(l)):
-            checkbox = self.create_checkbox(option, self.main_window)
+            checkbox = self.create_checkbox(option)
             if index >= num_items:
                 col = 1
                 row = index - num_items
@@ -122,14 +160,22 @@ class ExtraButtons_Options(QtGui.QMenu):
 
         cssClassLabel = QtGui.QLabel(
                 "CSS class for &lt;code&gt; and &lt;pre&gt; code blocks", self)
+        cssClassLabel.setToolTip("""\
+This class will be automatically added when you use the code and pre buttons.
+You can add the CSS you want in your stylesheet and refer to this class. E.g.
+.myCodeClass { color: red; } will color the text of your code and pre elements
+red.\
+        """)
         cssClassText = QtGui.QLineEdit(
-                self.preferences.prefs.get("class_name"), self)
+                const.preferences.prefs.get(const.CODE_CLASS), self)
         cssClassHBox = QtGui.QHBoxLayout()
         cssClassHBox.addWidget(cssClassLabel)
         cssClassHBox.addWidget(cssClassText)
 
         checkBox = QtGui.QCheckBox("Fix ordered list type", self)
-        if self.preferences.prefs["fixed_ol_type"]:
+        checkBox.setToolTip("Do not show the choice dialog each time, "
+                "but always use the selected list type.")
+        if const.preferences.prefs.get(const.FIXED_OL_TYPE):
             checkBox.setChecked(True)
         else:
             checkBox.setChecked(False)
@@ -142,7 +188,7 @@ class ExtraButtons_Options(QtGui.QMenu):
             rb = self.create_radiobutton(type_ol)
             self.listOfRadioButtons.append(rb)
 
-        ol_type = self.preferences.prefs.get("fixed_ol_type")
+        ol_type = const.preferences.prefs.get(const.FIXED_OL_TYPE)
         if not ol_type:
             self.listOfRadioButtons[0].toggle()
         else:
@@ -165,8 +211,75 @@ class ExtraButtons_Options(QtGui.QMenu):
                 rb.setEnabled(False)
             hbox.addWidget(rb)
 
-        button_box = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok |
-                QtGui.QDialogButtonBox.Cancel)
+        # Markdown syntax highlighting
+
+        md_style_label = QtGui.QLabel("Markdown syntax highlighting style", self)
+        md_style_combo = QtGui.QComboBox(self)
+        md_style_combo.setMinimumWidth(const.MIN_COMBOBOX_WIDTH);
+        md_style_files = os.listdir(os.path.join(
+            const.preferences.get_addons_folder(), const.FOLDER_NAME, "pygments", "styles"))
+
+        # pretty print styles
+        for filename in sorted(md_style_files):
+            if filename.startswith("_") or filename.endswith(".pyc"):
+                continue
+            (style, _) = os.path.splitext(filename)
+            style = style.replace("_", " ").capitalize()
+            md_style_combo.addItem(style)
+
+        all_items_in_combo = \
+            [md_style_combo.itemText(i) for i in xrange(md_style_combo.count())]
+        current_style = const.preferences.prefs.get(const.MARKDOWN_SYNTAX_STYLE)
+        current_style = current_style.replace("_", " ").capitalize()
+        if current_style and current_style in all_items_in_combo:
+            index_current_style = all_items_in_combo.index(current_style)
+            md_style_combo.setCurrentIndex(index_current_style)
+
+        md_style_hbox = QtGui.QHBoxLayout()
+        md_style_hbox.addWidget(md_style_label)
+        md_style_hbox.addStretch(1)
+        md_style_hbox.addWidget(md_style_combo)
+
+        # line numbers Markdown code highlighting
+        linenums_cb = QtGui.QCheckBox(
+                "Toggle line numbers code blocks", self)
+        if const.preferences.prefs.get(const.MARKDOWN_LINE_NUMS):
+            linenums_cb.setChecked(True)
+
+        linenums_hbox = QtGui.QHBoxLayout()
+        linenums_hbox.addWidget(linenums_cb)
+
+        # align code block
+        code_align_label = QtGui.QLabel(u"Alignment for Markdown code blocks")
+        code_align_combo = QtGui.QComboBox(self)
+        code_align_combo.setMinimumWidth(const.MIN_COMBOBOX_WIDTH);
+        alignments = ("left", "center", "right")
+        for alignment in alignments:
+            code_align_combo.addItem(alignment)
+        current_alignment = const.preferences.prefs.get(
+                const.MARKDOWN_CODE_DIRECTION)
+        code_align_combo.setCurrentIndex(alignments.index(current_alignment))
+        code_align_hbox = QtGui.QHBoxLayout()
+        code_align_hbox.addWidget(code_align_label)
+        code_align_hbox.addStretch(1)
+        code_align_hbox.addWidget(code_align_combo)
+
+        # always revert automatically back to old Markdown
+        # and skip the warning dialog
+        automatic_revert_cb = QtGui.QCheckBox(
+                "Always revert back automatically to old Markdown", self)
+        automatic_revert_cb.setToolTip("""\
+Do not show the warning dialog each time a conflict occurs, but revert back to
+the old Markdown, discarding any changes made.\
+""")
+        if const.preferences.prefs.get(const.MARKDOWN_ALWAYS_REVERT):
+            automatic_revert_cb.setChecked(True)
+
+        automatic_revert_hbox = QtGui.QHBoxLayout()
+        automatic_revert_hbox.addWidget(automatic_revert_cb)
+
+        button_box = QtGui.QDialogButtonBox(
+                QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel)
         button_box.accepted.connect(option_dialog.accept)
         button_box.rejected.connect(option_dialog.reject)
 
@@ -176,22 +289,46 @@ class ExtraButtons_Options(QtGui.QMenu):
         vbox.addLayout(cssClassHBox)
         vbox.addWidget(Utility.create_horizontal_rule())
         vbox.addLayout(hbox)
+        vbox.addWidget(Utility.create_horizontal_rule())
+        vbox.addLayout(md_style_hbox)
+        vbox.addLayout(code_align_hbox)
+        vbox.addLayout(linenums_hbox)
+        vbox.addLayout(automatic_revert_hbox)
         vbox.addWidget(button_box)
 
         option_dialog.setLayout(vbox)
 
         if option_dialog.exec_() == QtGui.QDialog.Accepted:
+            # fixed ordered list type
             if checkBox.isChecked():
                 selectedRadioButton = buttonGroup.id(buttonGroup.checkedButton())
-                self.preferences.prefs["fixed_ol_type"] = (
-                        self.listOfRadioButtons[selectedRadioButton].text())
+                const.preferences.prefs[const.FIXED_OL_TYPE] = \
+                    self.listOfRadioButtons[selectedRadioButton].text()
             else:
-                self.preferences.prefs["fixed_ol_type"] = ""
+                const.preferences.prefs[const.FIXED_OL_TYPE] = ""
 
-            # change CSS class for <code> and <pre>
-            self.preferences.prefs["class_name"] = cssClassText.text()
+            # line numbers for Markdown code highlighting
+            if linenums_cb.isChecked():
+                const.preferences.prefs[const.MARKDOWN_LINE_NUMS] = True
+            else:
+                const.preferences.prefs[const.MARKDOWN_LINE_NUMS] = False
 
-            # save preferences to disk
-            self.preferences.save_prefs()
+            # always revert automatically back to old Markdown
+            if automatic_revert_cb.isChecked():
+                const.preferences.prefs[const.MARKDOWN_ALWAYS_REVERT] = True
+            else:
+                const.preferences.prefs[const.MARKDOWN_ALWAYS_REVERT] = False
 
+            # style for code highlighting
+            chosen_style = str(md_style_combo.currentText())
+            chosen_style = chosen_style.lower().replace(" ", "_")
+            const.preferences.prefs[const.MARKDOWN_SYNTAX_STYLE] = chosen_style
 
+            # alignment for Markdown code blocks
+            chosen_alignment = str(code_align_combo.currentText())
+            const.preferences.prefs[const.MARKDOWN_CODE_DIRECTION] = \
+                    chosen_alignment
+
+            const.preferences.prefs[const.CODE_CLASS] = cssClassText.text()
+
+            const.preferences.save_prefs()

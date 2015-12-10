@@ -21,6 +21,7 @@ import os
 import string
 import copy
 import base64
+import codecs
 
 from anki.utils import json, isWin, isMac
 
@@ -73,36 +74,36 @@ class Preferences(object):
         # the default keybindings that are used when no custom keybindings
         # are found, or when the user keybindings are corrupted
         self._default_keybindings_linux_windows = {
-                const.CODE:                         "ctrl+,",
-                const.UNORDERED_LIST:               "ctrl+[",
-                const.ORDERED_LIST:                 "ctrl+]",
-                const.STRIKETHROUGH:                "alt+shift+5",
-                const.PRE:                          "ctrl+.",
-                const.HORIZONTAL_RULE:              "ctrl+shift+alt+_",
-                const.INDENT:                       "ctrl+shift+]",
-                const.OUTDENT:                      "ctrl+shift+[",
-                const.DEFINITION_LIST:              "ctrl+shift+d",
-                const.TABLE:                        "ctrl+shift+3",
-                const.KEYBOARD:                     "ctrl+shift+k",
-                const.HYPERLINK:                    "ctrl+shift+h",
-                const.REMOVE_HYPERLINK:             "ctrl+shift+alt+h",
-                const.BACKGROUND_COLOR:             "ctrl+shift+b",
-                const.BACKGROUND_COLOR_CHANGE:      "ctrl+shift+n",
-                const.BLOCKQUOTE:                   "ctrl+shift+y",
-                const.TEXT_ALLIGN_FLUSH_LEFT:       "ctrl+shift+alt+l",
-                const.TEXT_ALLIGN_FLUSH_RIGHT:      "ctrl+shift+alt+r",
-                const.TEXT_ALLIGN_JUSTIFIED:        "ctrl+shift+alt+s",
-                const.TEXT_ALLIGN_CENTERED:         "ctrl+shift+alt+b",
-                const.HEADING:                      "ctrl+alt+1",
-                const.ABBREVIATION:                 "shift+alt+a",
-                const.MARKDOWN:                     "ctrl+shift+d"
+                const.CODE:                         u"ctrl+,",
+                const.UNORDERED_LIST:               u"ctrl+[",
+                const.ORDERED_LIST:                 u"ctrl+]",
+                const.STRIKETHROUGH:                u"alt+shift+5",
+                const.PRE:                          u"ctrl+.",
+                const.HORIZONTAL_RULE:              u"ctrl+shift+alt+_",
+                const.INDENT:                       u"ctrl+shift+]",
+                const.OUTDENT:                      u"ctrl+shift+[",
+                const.DEFINITION_LIST:              u"ctrl+shift+d",
+                const.TABLE:                        u"ctrl+shift+3",
+                const.KEYBOARD:                     u"ctrl+shift+k",
+                const.HYPERLINK:                    u"ctrl+shift+h",
+                const.REMOVE_HYPERLINK:             u"ctrl+shift+alt+h",
+                const.BACKGROUND_COLOR:             u"ctrl+shift+b",
+                const.BACKGROUND_COLOR_CHANGE:      u"ctrl+shift+n",
+                const.BLOCKQUOTE:                   u"ctrl+shift+y",
+                const.TEXT_ALLIGN_FLUSH_LEFT:       u"ctrl+shift+alt+l",
+                const.TEXT_ALLIGN_FLUSH_RIGHT:      u"ctrl+shift+alt+r",
+                const.TEXT_ALLIGN_JUSTIFIED:        u"ctrl+shift+alt+s",
+                const.TEXT_ALLIGN_CENTERED:         u"ctrl+shift+alt+b",
+                const.HEADING:                      u"ctrl+alt+1",
+                const.ABBREVIATION:                 u"shift+alt+a",
+                const.MARKDOWN:                     u"ctrl+shift+d"
         }
         # Mac OS Xbindings are the same as Linux/Windows bindings,
         # except for the following
         self._default_keybindings_macosx = \
                 copy.deepcopy(self._default_keybindings_linux_windows)
-        self._default_keybindings_macosx[const.CODE] = "ctrl+shift+,"
-        self._default_keybindings_macosx[const.PRE] = "ctrl+shift+."
+        self._default_keybindings_macosx[const.CODE] = u"ctrl+shift+,"
+        self._default_keybindings_macosx[const.PRE] = u"ctrl+shift+."
 
         self._default_keybindings = None
         if isMac:
@@ -115,13 +116,13 @@ class Preferences(object):
 
         # load the preferences
         try:
-            with open(self.prefs_path, "r") as f:
+            with codecs.open(self.prefs_path, encoding="utf8") as f:
                 encoded_prefs = f.read(const.MAX_BYTES_PREFS)
                 decoded_prefs = base64.b64decode(encoded_prefs)
                 self.prefs = json.loads(decoded_prefs)
         except:
             # file does not exist or is corrupted: fall back to default
-            with open(self.prefs_path, "w") as f:
+            with codec.open(self.prefs_path, "w", encoding="utf8") as f:
                 self.prefs = self._default_conf
                 json.dump(self.prefs, f)
         else:
@@ -130,15 +131,15 @@ class Preferences(object):
 
         # load the keybindings
         try:
-            with open(self.keybindings_path, "r") as f:
+            with codecs.open(self.keybindings_path, encoding="utf8") as f:
                 # validate JSON
-                result_json = ""
+                result_json = u""
                 for line in f:
                     line = line.strip()
-                    if line == "":
+                    if line == u"":
                         continue
                     # strip out comments from keybindings file
-                    if line.startswith("//"):
+                    if line.startswith(u"//"):
                         continue
                     else:
                         result_json += line
@@ -177,7 +178,7 @@ class Preferences(object):
         Save the preferences to disk, encoded.
         """
         encoded_prefs = base64.b64encode(json.dumps(self.prefs))
-        with open(self.prefs_path, "w") as f:
+        with codecs.open(self.prefs_path, "w", encoding="utf8") as f:
             f.write(encoded_prefs)
 
     def create_keybindings_file(self):
@@ -187,7 +188,7 @@ class Preferences(object):
         keybindings file. Override any changes made to an existing file.
         """
 
-        contents = """\
+        contents = u"""\
 // This file contains the keybindings that are used for Supplementary Buttons
 // for Anki. Here you can assign new shortcuts. Please keep in mind that there
 // is no check for duplicate keybindings. This means that when a keybinding is
@@ -229,12 +230,12 @@ class Preferences(object):
 {
 """
         for key, value in sorted(self.keybindings.iteritems()):
-            contents += "\"{}\": \"{}\",\n".format(key, value)
-        contents += "\"_version\": \"{}\"\n".format(const.VERSION)
-        contents += "}"
+            contents += u"\"{}\": \"{}\",\n".format(key, value)
+        contents += u"\"_version\": \"{}\"\n".format(const.VERSION)
+        contents += u"}"
 
         try:
-            with open(self.keybindings_path, "w") as f:
+            with codecs.open(self.keybindings_path, "w", encoding="utf8") as f:
                 f.write(contents)
         except IOError as e:
             raise e

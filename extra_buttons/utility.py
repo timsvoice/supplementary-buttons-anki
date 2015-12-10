@@ -25,10 +25,8 @@ import base64
 import time
 import HTMLParser
 
-from PyQt4 import QtGui, QtCore
+from PyQt4 import QtGui
 import BeautifulSoup
-import sqlite3 as lite
-from anki.db import DB
 from anki.utils import intTime, json, isWin, isMac
 
 from html2text import html2text
@@ -56,7 +54,7 @@ class Utility(object):
     ##################################################
 
     const.PROGRAM_NAME  = "Supplementary Buttons for Anki"
-    const.VERSION       = "0.8.0"
+    const.VERSION       = "0.8.1"
     const.YEAR_START    = 2014
     const.YEAR_LAST     = 2015
     const.ANKIWEB_URL   = "https://ankiweb.net/shared/info/162313389"
@@ -65,10 +63,10 @@ class Utility(object):
     const.FOLDER_NAME   = "extra_buttons"
 
     const.OPERATING_SYSTEMS = {
-            "linux2": "Linux",
-            "win32" : "Windows",
-            "cygwin": "Windows",
-            "darwin": "Mac OS X"
+        "linux2": "Linux",
+        "win32" : "Windows",
+        "cygwin": "Windows",
+        "darwin": "Mac OS X"
     }
     const.PLATFORM              = sys.platform
 
@@ -571,9 +569,10 @@ class Utility(object):
         one or more modifier keys. Return a prettified key sequence when the
         key sequence is valid, or else an empty string.
         >>> validate_key_sequence(u"Alt-ctrl-Q")
-        'ctrl+alt+q'
+        u'ctrl+alt+q'
         """
-        if not sequence: return u""
+        if not sequence:
+            return u""
         assert isinstance(sequence, unicode), "Input `sequence` not in Unicode"
         modkeys = const.KEY_MODIFIERS
         # Mac OS X has a special modifier, the Cmd key
@@ -605,11 +604,11 @@ class Utility(object):
                 function_key_found = True
         # sequence should contain at least one non-modifier key
         if all(word in modkeys for word in parts):
-            return ""
+            return u""
         for word in parts:
             # unknown modifiers or non-modifiers are not allowed
             if not word in modkeys + const.KEYS_SEQUENCE + const.FUNCTION_KEYS:
-                return ""
+                return u""
         return Utility.create_pretty_sequence(parts)
 
     @staticmethod
@@ -655,6 +654,8 @@ class Utility(object):
         """
         validated_keybindings = dict()
         for key, value in user_keybindings.iteritems():
+            assert isinstance(key, unicode), "Key `{!r}` is not Unicode".format(key)
+            assert isinstance(value, unicode), "Value `{!r}` is not Unicode".format(value)
             val_binding = Utility.validate_key_sequence(value, platform)
             if not val_binding:
                 validated_keybindings[key] = default_keybindings.get(key)

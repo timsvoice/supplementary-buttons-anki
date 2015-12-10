@@ -529,8 +529,8 @@ class UtilityTester(unittest.TestCase):
     # check_user_keybindings
     def test_check_user_keybindings_return_default_upon_invalid_user_keybinding(self):
         # arrange
-        invalid_keybinding  = dict(a=u"ctrl-iota-a")
-        default_keybindings = dict(a=u"ctrl-alt-del")
+        invalid_keybinding  = {u"a":u"ctrl-iota-a"}
+        default_keybindings = {u"a":u"ctrl-alt-del"}
         expected            = default_keybindings
         # act
         result = Utility.check_user_keybindings(default_keybindings, invalid_keybinding)
@@ -539,9 +539,9 @@ class UtilityTester(unittest.TestCase):
 
     def test_check_user_keybindings_return_new_upon_valid_user_keybinding(self):
         # arrange
-        valid_keybinding    = dict(a=u"ctrl-shift-a")
-        default_keybindings = dict(a=u"ctrl-alt-del")
-        expected            = dict(a=u"ctrl+shift+a")
+        valid_keybinding    = {u"a":u"ctrl-shift-a"}
+        default_keybindings = {u"a":u"ctrl-alt-del"}
+        expected            = {u"a":u"ctrl+shift+a"}
         # act
         result = Utility.check_user_keybindings(default_keybindings, valid_keybinding)
         # assert

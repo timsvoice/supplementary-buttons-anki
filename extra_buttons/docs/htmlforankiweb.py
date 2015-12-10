@@ -83,7 +83,8 @@ class HTMLForAnkiWeb(object):
                 "thead": self.delete_tag,
                 "tbody": self.delete_tag,
                 "tr": self.delete_tag,
-                "td": self.delete_tag
+                "td": self.delete_tag,
+                "p": self.replace_with_children
         }
         valid_tags = ("img", "a", "b", "i", "code", "ol", "ul", "li")
         for key, value in self.template_dict.iteritems():
@@ -125,17 +126,9 @@ class HTMLForAnkiWeb(object):
 
     def create_template(self):
         template = string.Template("""\
-<b>IMPORTANT</b>: This add-on gets updated quite frequently, so before posting
-an error or giving it one star, please <b>update</b> the add-on. If, after
-updating, you still encounter a bug, <b>kindly post a bug report on <a
-            href="https://github.com/Neftas/supplementary-buttons-anki/issues"
-            rel="nofollow">GitHub</a></b>. I can't reply to your comments
-here, so if you want the issue fixed, you should really consider posting to
-GitHub.
+<b>IMPORTANT</b>: This add-on gets updated quite frequently, so before posting an error or giving it one star, please <b>update</b> the add-on. If, after updating, you still encounter a bug, <b>kindly post a bug report on <a href="https://github.com/Neftas/supplementary-buttons-anki/issues" rel="nofollow">GitHub</a></b>. I can't reply to your comments here, so if you want the issue fixed, you should really consider posting to GitHub.
 
-<b>UPDATING</b> is easy. First, remove the add-on from Anki (<i>Tools &gt;
-    Add-ons &gt; Supplementary buttons Anki &gt; Delete...</i>), then install
-it again by using the number at the bottom of this page.
+<b>UPDATING</b> is easy. First, remove the add-on from Anki (<i>Tools &gt; Add-ons &gt; Supplementary buttons Anki &gt; Delete...</i>), then install it again by using the number at the bottom of this page.
 
 <b>New in version ${version}:</b>
 <ul>$new_features</ul>
@@ -144,35 +137,57 @@ $markdown
 
 FORMATTING BUTTONS
 
-Besides Markdown, this add-on adds the following supplementary formatting
-buttons to Anki:
+Besides Markdown, this add-on adds the following supplementary formatting buttons to Anki:
+
 <ul>
+
 $code_button
+
 Depending on your CSS definition, this may look like:
 
 <img src="https://i.imgur.com/68WgA0x.png">
+
 $unordered_list_button
+
 $ordered_list_button
+
 $indent_button
+
 $outdent_button
+
 $strikethrough_button
+
 $pre_button
+
 $horizontal_rule_button
+
 $definition_list_button
+
 $table_button
+
 <img src="https://i.imgur.com/Ms3Yzpr.gif">
+
 $keyboard_button
+
 Depending on your CSS, this may look like:
 
 <img src="http://i.imgur.com/K835QyO.png"></li>
+
 $hyperlink_button
+
 $highlight_button
+
 $blockquote_button
+
 $alignment_button
+
 $heading_button
+
 </ul>
 $custom_user_defined_keybindings
+
 $disabling_unused_buttons
+
 <b>SOURCE CODE</b>
 The source code is available on <a href="https://github.com/Neftas/supplementary-buttons-anki" rel="nofollow">GitHub</a>. If you have any issues, please report them there!
 

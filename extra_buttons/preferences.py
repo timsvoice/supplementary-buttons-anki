@@ -122,7 +122,7 @@ class Preferences(object):
                 self.prefs = json.loads(decoded_prefs)
         except:
             # file does not exist or is corrupted: fall back to default
-            with codec.open(self.prefs_path, "w", encoding="utf8") as f:
+            with codecs.open(self.prefs_path, "w", encoding="utf8") as f:
                 self.prefs = self._default_conf
                 json.dump(self.prefs, f)
         else:

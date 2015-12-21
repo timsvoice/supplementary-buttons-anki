@@ -16,7 +16,7 @@ class MarkdownerTester(unittest.TestCase):
         print "Setting up MarkdownerTester..."
         Markdowner.__init__ = self.markdowner_custom__init__
         self.data = dict(id=1, md="**text**",
-                isconverted=True, lastmodified=time.time())
+                         isconverted=True, lastmodified=time.time())
         b64encoded_data = base64.b64encode(json.dumps(self.data))
         self.html = u"<div></div><!----SBAdata:{}---->".format(b64encoded_data)
         self.current_field = 0

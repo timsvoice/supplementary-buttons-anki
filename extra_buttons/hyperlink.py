@@ -20,15 +20,16 @@
 import re
 import json
 
-from PyQt4 import QtGui, QtCore
+from PyQt4 import QtGui
 import const
 from utility import Utility
 
+
 class Hyperlink(object):
     def __init__(self, other, parent_window, selected_text):
-        self.editor_instance          = other
-        self.parent_window  = parent_window
-        self.selected_text  = selected_text
+        self.editor_instance    = other
+        self.parent_window      = parent_window
+        self.selected_text      = selected_text
         self.hyperlink_dialog()
 
     def hyperlink_dialog(self):
@@ -51,14 +52,14 @@ class Hyperlink(object):
         url_label = QtGui.QLabel("Link to:")
         url_edit = QtGui.QLineEdit()
         url_edit.setPlaceholderText("URL")
-        url_edit.textChanged.connect(lambda: self.enable_ok_button(ok_button_anchor,
-            url_edit.text(), urltext_edit.text()))
+        url_edit.textChanged.connect(lambda: self.enable_ok_button(
+            ok_button_anchor, url_edit.text(), urltext_edit.text()))
 
         urltext_label = QtGui.QLabel("Text to display:")
         urltext_edit = QtGui.QLineEdit()
         urltext_edit.setPlaceholderText("Text")
-        urltext_edit.textChanged.connect(lambda: self.enable_ok_button(ok_button_anchor,
-            url_edit.text(), urltext_edit.text()))
+        urltext_edit.textChanged.connect(lambda: self.enable_ok_button(
+            ok_button_anchor, url_edit.text(), urltext_edit.text()))
 
         # if user already selected text, put it in urltext_edit
         if self.selected_text:
@@ -89,18 +90,29 @@ class Hyperlink(object):
         else:
             button.setEnabled(False)
 
-    def insert_anchor(self, url, text):
-        """Inserts a HTML anchor <a> into the text field, using url as hyperlink
-        and text as text to-be-displayed."""
-        # check for valid URL
-        pattern = re.compile(r"(?i)https?://")
-        match = re.match(pattern, url)
-        if not match:
-            url = "http://" + url
+    def create_anchor(self, url, text):
+        """
+        Create a hyperlink string, where `url` is the hyperlink reference
+        and `text` the content of the tag.
+        """
+        assert isinstance(url, unicode), "Input `url` is not Unicode"
+        assert isinstance(text, unicode), "Input `text` is not Unicode"
+
+        # uncomment to check for and force `http` prefix
+        # pattern = re.compile(r"(?i)https?://")
+        # match = re.match(pattern, url)
+        # if not match:
+        #     url = u"http://" + url
 
         text = Utility.escape_html_chars(text)
 
-        replacement = u"<a href=\"{0}\">{1}</a>".format(url, text)
+        return u"<a href=\"{0}\">{1}</a>".format(url, text)
 
-        self.editor_instance.web.eval("document.execCommand('insertHTML', false, %s);"
-                      % json.dumps(replacement))
+    def insert_anchor(self, url, text):
+        """
+        Inserts a HTML anchor `<a>` into the text field.
+        """
+        replacement = self.create_anchor(url, text)
+        self.editor_instance.web.eval(
+                "document.execCommand('insertHTML', false, %s);"
+                % json.dumps(replacement))

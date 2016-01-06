@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2014-2015 Stefan van den Akker <srvandenakker.dev@gmail.com>
+# Copyright 2014-2016 Stefan van den Akker <srvandenakker.dev@gmail.com>
 #
 # This file is part of Supplementary Buttons for Anki.
 #
@@ -17,12 +17,12 @@
 # You should have received a copy of the GNU General Public License along
 # with Supplementary Buttons for Anki. If not, see http://www.gnu.org/licenses/.
 
-import json
 import string
 import random
 
-from PyQt4 import QtGui, QtCore
+from PyQt4 import QtGui
 from utility import Utility
+
 
 class Abbreviation(object):
     def __init__(self, other, parent_window, selected_text):
@@ -53,7 +53,8 @@ class Abbreviation(object):
         text_label = QtGui.QLabel("Text:")
         title_label = QtGui.QLabel("Title:")
 
-        # two text fields: one for the text, one for the content of the title attribute
+        # two text fields: one for the text,
+        # the other for the content of the title attribute
         text_edit = QtGui.QLineEdit()
         text_edit.setPlaceholderText("Text")
         text_edit.textChanged.connect(lambda: self.enable_ok_button(

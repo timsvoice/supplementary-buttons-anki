@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2014-2015 Stefan van den Akker <srvandenakker.dev@gmail.com>
+# Copyright 2014-2016 Stefan van den Akker <srvandenakker.dev@gmail.com>
 #
 # This file is part of Supplementary Buttons for Anki.
 #

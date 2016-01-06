@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2014-2015 Stefan van den Akker <srvandenakker.dev@gmail.com>
+# Copyright 2014-2016 Stefan van den Akker <srvandenakker.dev@gmail.com>
 #
 # This file is part of Supplementary Buttons for Anki.
 #
@@ -46,6 +46,7 @@ from markdown.extensions.admonition import AdmonitionExtension
 from markdown.extensions.codehilite import CodeHiliteExtension
 from markdown.extensions.sane_lists import SaneListExtension
 
+
 class Utility(object):
     """Utility class with all helper functions that are needed throughout
     the addon. All methods are static, and all fields are constants."""
@@ -54,9 +55,9 @@ class Utility(object):
     ##################################################
 
     const.PROGRAM_NAME  = "Supplementary Buttons for Anki"
-    const.VERSION       = "0.8.2"
+    const.VERSION       = "0.8.3"
     const.YEAR_START    = 2014
-    const.YEAR_LAST     = 2015
+    const.YEAR_LAST     = 2016
     const.ANKIWEB_URL   = "https://ankiweb.net/shared/info/162313389"
     const.GITHUB_URL    = "https://github.com/Neftas/supplementary-buttons-anki"
     const.EMAIL         = "srvandenakker.dev@gmail.com"
@@ -176,11 +177,14 @@ class Utility(object):
         clean_md = re.sub(dot_regex, ur"\g<1>\g<2>", clean_md)
 
         left_paren_regex = re.compile(ur"\\\(")
-        clean_md = Utility.replace_link_img_matches(left_paren_regex, u"&#40;", clean_md)
+        clean_md = Utility.replace_link_img_matches(
+                left_paren_regex, u"&#40;", clean_md)
         right_paren_regex = re.compile(ur"\\\)")
-        clean_md = Utility.replace_link_img_matches(right_paren_regex, u"&#41;", clean_md)
+        clean_md = Utility.replace_link_img_matches(
+                right_paren_regex, u"&#41;", clean_md)
         whitespace_regex = re.compile(ur"\s+")
-        clean_md = Utility.replace_link_img_matches(whitespace_regex, u"&#32;", clean_md)
+        clean_md = Utility.replace_link_img_matches(
+                whitespace_regex, u"&#32;", clean_md)
 
         assert isinstance(clean_md, unicode)
         return clean_md
@@ -190,7 +194,9 @@ class Utility(object):
         """
         Escape characters in Markdown links and images that may break in
         regular HTML.
-        >>> replace_link_img_matches(re.compile(ur"\s+"), u"&#32;", u"[](i .jpg)")
+        >>> replace_link_img_matches(re.compile(ur"\s+"),
+                                     u"&#32;",
+                                     u"[](i .jpg)")
         u'[](i&#32;.jpg)
         """
         assert isinstance(s, unicode), "Input `s` is not Unicode"
@@ -354,14 +360,14 @@ class Utility(object):
             b64data = base64.b64decode(data)
         except (TypeError, UnicodeEncodeError) as e:
             # `data` is not a valid base64-encoded string
-            print e # TODO: should be logged
+            print e  # TODO: should be logged
             return "corrupted"
 
         try:
             ret = json.loads(b64data)
             return ret
         except ValueError as e:
-            print e # TODO: should be logged
+            print e  # TODO: should be logged
             return "corrupted"
 
     @staticmethod
@@ -396,14 +402,14 @@ class Utility(object):
     @staticmethod
     def get_md_data_from_string(html):
         """
-        Read a string `html` and extract compressed Markdown data from it, if it is
-        available. Return a dictionary that contains this data, otherwise
-        return None.
+        Read a string `html` and extract compressed Markdown data from it, if
+        it is available. Return a dictionary that contains this data, otherwise
+        return the empty string.
         """
         if not html:
             return u""
         assert isinstance(html, unicode), "Input `html` is not Unicode"
-        if not const.START_HTML_MARKER in html:
+        if const.START_HTML_MARKER not in html:
             return u""
         start = html.find(const.START_HTML_MARKER) + \
                 len(const.START_HTML_MARKER)
@@ -469,7 +475,7 @@ class Utility(object):
         assert isinstance(s, unicode), "Input is not Unicode"
         alignments = {u":-": u"left", u":-:": u"center", u"-:": u"right"}
         default = u"left"
-        if not s in alignments:
+        if s not in alignments:
             return default
         return alignments[s]
 
@@ -497,7 +503,8 @@ class Utility(object):
         non-breakable space.
         """
         assert isinstance(s, unicode), "Input is not Unicode"
-        if not s: return s
+        if not s:
+            return s
         while True:
             if any(s.startswith(c) for c in string.whitespace):
                 s = s.lstrip()
@@ -546,8 +553,8 @@ class Utility(object):
         """
         Change all separators defined in a string `splitlist` to the first
         separator in `splitlist` and then split the text on that one separator.
-        Return a list with the original string if `splitlist` is the empty string
-        or `None`. Return a list of strings, with no empty strings in it.
+        Return a list with the original string if `splitlist` is the empty
+        string or `None`. Return a list of strings, with no empty strings in it.
         >>> splitlist = u"@#$"
         >>> s = u"one@two#three$"
         >>> split_string(s, splitlist)
@@ -607,7 +614,7 @@ class Utility(object):
             return u""
         for word in parts:
             # unknown modifiers or non-modifiers are not allowed
-            if not word in modkeys + const.KEYS_SEQUENCE + const.FUNCTION_KEYS:
+            if word not in modkeys + const.KEYS_SEQUENCE + const.FUNCTION_KEYS:
                 return u""
         return Utility.create_pretty_sequence(parts)
 
@@ -617,33 +624,35 @@ class Utility(object):
         Return a list of elements without duplicates. The order of the
         original collection may be changed in the returned list.
         """
-        if not sequence: return list()
+        if not sequence:
+            return list()
         return list(set(sequence))
 
     @staticmethod
     def create_pretty_sequence(sequence):
         """
         Return an ordered string created from a key sequence that contains
-        modifier and non-modifier keys. The returned order is ctrl, meta, shift,
-        alt, non-modifier.
+        modifier and non-modifier keys. The returned order is ctrl, meta,
+        shift, alt, non-modifier.
         """
-        if not sequence: return ""
+        if not sequence:
+            return u""
         seq = sequence[:]
         pretty_sequence = list()
-        if "ctrl" in sequence:
-            seq.remove("ctrl")
-            pretty_sequence.append("ctrl")
-        if "meta" in sequence:
-            seq.remove("meta")
-            pretty_sequence.append("meta")
-        if "shift" in sequence:
-            seq.remove("shift")
-            pretty_sequence.append("shift")
-        if "alt" in sequence:
-            seq.remove("alt")
-            pretty_sequence.append("alt")
+        if u"ctrl" in sequence:
+            seq.remove(u"ctrl")
+            pretty_sequence.append(u"ctrl")
+        if u"meta" in sequence:
+            seq.remove(u"meta")
+            pretty_sequence.append(u"meta")
+        if u"shift" in sequence:
+            seq.remove(u"shift")
+            pretty_sequence.append(u"shift")
+        if u"alt" in sequence:
+            seq.remove(u"alt")
+            pretty_sequence.append(u"alt")
         pretty_sequence += seq
-        return "+".join(x for x in pretty_sequence if x)
+        return u"+".join(x for x in pretty_sequence if x)
 
     @staticmethod
     def check_user_keybindings(default_keybindings, user_keybindings, platform=u""):

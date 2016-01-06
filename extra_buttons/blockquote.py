@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2014-2015 Stefan van den Akker <srvandenakker.dev@gmail.com>
+# Copyright 2014-2016 Stefan van den Akker <srvandenakker.dev@gmail.com>
 #
 # This file is part of Supplementary Buttons for Anki.
 #
@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU General Public License along
 # with Supplementary Buttons for Anki. If not, see http://www.gnu.org/licenses/.
 
-from PyQt4 import QtGui, QtCore
 
 class Blockquote(object):
 

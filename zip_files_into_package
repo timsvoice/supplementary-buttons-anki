@@ -1,5 +1,14 @@
 #!/bin/bash
+
 set -o errexit
+set -o nounset
+
+set -xv
+
+# remove asserts from files
+while read -r file; do
+    sed -i.bak -r 's/assert isinstance/# assert isinstance/' "$file"
+done < <(grep -l -F "assert isinstance" extra_buttons/*.py --no-messages)
 
 zip -r --exclude=*.pyc* --exclude=*__pycache__* ~/Desktop/supplementary_buttons_anki_$(date +%s).zip \
     "Supplementary Buttons Anki.py" \
@@ -27,3 +36,8 @@ zip -r --exclude=*.pyc* --exclude=*__pycache__* ~/Desktop/supplementary_buttons_
     extra_buttons/markdown/* \
     extra_buttons/pygments/* \
     extra_buttons/python_modules/*
+
+# reinsert asserts
+for file in extra_buttons/*.bak; do
+    mv -v "$file" "${file%.*}"
+done

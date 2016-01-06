@@ -38,8 +38,7 @@ class Markdowner(object):
     def __init__(self, other, parent_window, note, html,
                  current_field, selected_html):
         assert isinstance(html, unicode), "Input `html` is not Unicode"
-        assert isinstance(selected_html, unicode), \
-                "Input `selected_html` is not Unicode"
+        assert isinstance(selected_html, unicode), "Input `selected_html` is not Unicode"
         self.editor_instance                = other
         self.parent_window                  = parent_window
         self.col                            = mw.col

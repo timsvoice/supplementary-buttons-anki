@@ -5,8 +5,9 @@ import base64
 import json
 
 import sys
-sys.path.append("/usr/share/anki/")
-from ..utility import Utility
+if "/usr/share/anki/" not in sys.path:
+    sys.path.append("/usr/share/anki/")
+from extra_buttons.utility import Utility
 
 
 class UtilityTester(unittest.TestCase):

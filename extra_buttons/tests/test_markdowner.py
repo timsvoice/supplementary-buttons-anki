@@ -6,9 +6,10 @@ import json
 import time
 
 import sys
-sys.path.append("/usr/share/anki/")
-from aqt.editor import Editor
-from ..markdowner import Markdowner
+from extra_buttons.markdowner import Markdowner
+if "/usr/share/anki/" not in sys.path:
+    sys.path.append("/usr/share/anki/")
+
 
 class MarkdownerTester(unittest.TestCase):
 

@@ -3,9 +3,10 @@
 
 import unittest
 import sys
-sys.path.append("/usr/share/anki/")
+if "/usr/share/anki/" not in sys.path:
+    sys.path.append("/usr/share/anki/")
 from aqt.editor import Editor
-from ..hyperlink import Hyperlink
+from extra_buttons.hyperlink import Hyperlink
 
 
 class HyperlinkTester(unittest.TestCase):

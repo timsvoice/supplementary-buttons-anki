@@ -14,13 +14,14 @@ else:
     from ...utility import Utility
     from ... import const
 
+
 def onHtmlEdit(self):
     self.saveNow()
     d = QDialog(self.widget)
     form = aqt.forms.edithtml.Ui_Dialog()
     form.setupUi(d)
     d.connect(form.buttonBox, SIGNAL("helpRequested()"),
-             lambda: openHelp("editor"))
+              lambda: openHelp("editor"))
     orgHTML = self.note.fields[self.currentField]
     HTMLWithoutData = orgHTML
     start_md_data = orgHTML.find(const.START_HTML_MARKER)

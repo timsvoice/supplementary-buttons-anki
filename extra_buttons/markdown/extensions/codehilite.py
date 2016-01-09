@@ -24,18 +24,32 @@ try:
     import os
     import sys
     # hack to put the the addons's path on PYTHONPATH
+
+    # first delete pygments if it is already imported from another source
+    try:
+        del pygments
+    except NameError as e:
+        print e
+
     for package in sys.path:
+        if type(package) != unicode:
+            package = unicode(package, "utf8")
+
         try:
             if package.endswith(u"addons"):
                 sys.path.insert(0, os.path.join(package, u"extra_buttons"))
                 break
         except UnicodeDecodeError as e:
             print e  # TODO: log error
+            raise ImportError
+
     from pygments import highlight
     from pygments.lexers import get_lexer_by_name, guess_lexer
     from pygments.formatters import get_formatter_by_name
+
     pygments = True
-except ImportError:
+except ImportError as e:
+    print e  # TODO: log error
     pygments = False
 
 

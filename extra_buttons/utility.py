@@ -55,7 +55,7 @@ class Utility(object):
     ##################################################
 
     const.PROGRAM_NAME  = "Supplementary Buttons for Anki"
-    const.VERSION       = "0.8.3.3"
+    const.VERSION       = "0.8.3.4"
     const.YEAR_START    = 2014
     const.YEAR_LAST     = 2016
     const.ANKIWEB_URL   = "https://ankiweb.net/shared/info/162313389"
@@ -69,16 +69,16 @@ class Utility(object):
         "cygwin": "Windows",
         "darwin": "Mac OS X"
     }
-    const.PLATFORM              = sys.platform
+    const.PLATFORM = sys.platform
 
     # size of the dialog windows
     const.DIALOG_SIZE_X         = 350
     const.DIALOG_SIZE_Y         = 200
     const.MIN_COMBOBOX_WIDTH    = 140
 
-    const.HTML_TAGS     = ("b", "i", "u", "span", "font", "sup", "sub",
-                           "dl", "dt", "dd", "code", "s", "pre", "kbd",
-                           "a", "strike", "blockquote", "abbr")
+    const.HTML_TAGS = ("b", "i", "u", "span", "font", "sup", "sub",
+                       "dl", "dt", "dd", "code", "s", "pre", "kbd",
+                       "a", "strike", "blockquote", "abbr")
 
     const.HEADING_TAGS  = ("h1", "h2", "h3", "h4", "h5", "h6")
 

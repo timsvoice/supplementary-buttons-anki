@@ -19,12 +19,13 @@
 
 import re
 
-from anki.utils import json, intTime
+from anki.utils import json
 from aqt import mw
 from PyQt4 import QtGui
 
 from utility import Utility
 import const
+
 
 class Markdowner(object):
     """

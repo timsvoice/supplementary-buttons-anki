@@ -5,10 +5,32 @@ set -o nounset
 
 set -xv
 
+check_return_value() {
+    if [ $1 -ne 0 ]; then
+        echo "Command did not run succesfully. Please check. Exiting..."
+        exit 1
+    fi
+}
+
+# run tests before creating zip
+nosetests2 -x --rednose
+check_return_value $?
+
 # remove asserts from files
 while read -r file; do
     sed -i.bak -r 's/assert isinstance/# assert isinstance/' "$file"
 done < <(grep -l -F "assert isinstance" extra_buttons/*.py --no-messages)
+
+# set ignore UserWarnings
+sed -i.bak -r '
+s/^# *warnings/warnings/
+s/^# *import +warnings/import warnings/
+' extra_buttons/extra_buttons.py
+
+grep -P "^import\s+warnings$" extra_buttons/extra_buttons.py
+check_return_value $?
+grep -P "^warnings\.simplefilter" extra_buttons/extra_buttons.py
+check_return_value $?
 
 zip -r --exclude=*.pyc* --exclude=*__pycache__* ~/Desktop/supplementary_buttons_anki_$(date +%s).zip \
     "Supplementary Buttons Anki.py" \
@@ -37,7 +59,7 @@ zip -r --exclude=*.pyc* --exclude=*__pycache__* ~/Desktop/supplementary_buttons_
     extra_buttons/pygments/* \
     extra_buttons/python_modules/*
 
-# reinsert asserts
+# reinsert asserts and warnings comments
 for file in extra_buttons/*.bak; do
     mv -v "$file" "${file%.*}"
 done

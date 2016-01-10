@@ -18,17 +18,14 @@
 # with Supplementary Buttons for Anki. If not, see http://www.gnu.org/licenses/.
 
 
-import re
-import sys
-import os
 import time
+# import warnings
+# warnings.simplefilter("ignore", UserWarning)
 
-from anki.utils import json, stripHTMLMedia, fieldChecksum, intTime
+from anki.utils import json
 from aqt import editor, mw
-from anki.hooks import wrap
+from anki.hooks import wrap, addHook
 from anki.utils import isWin, isMac
-import anki, aqt
-from anki.hooks import addHook
 from PyQt4 import QtGui, QtCore
 import BeautifulSoup
 
@@ -36,7 +33,6 @@ import const
 from utility import Utility
 from preferences import Preferences
 from menu import ExtraButtons_Options
-from html2text import html2text
 from markdowner import Markdowner
 from anki_modules.aqt import editor as myeditor
 from abbreviation import Abbreviation
@@ -51,8 +47,10 @@ from heading import Heading
 ##################################################
 editor.Editor.onHtmlEdit = myeditor.onHtmlEdit
 
+
 # Buttons
 ##################################################
+
 
 def setup_buttons(self):
 

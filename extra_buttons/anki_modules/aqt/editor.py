@@ -29,7 +29,6 @@ def onHtmlEdit(self):
     containsData = start_md_data != -1 and end_md_data != -1
     if containsData:
         mdData = orgHTML[start_md_data:(end_md_data+len(const.END_HTML_MARKER))]
-        print repr(mdData)
         HTMLWithoutData = orgHTML[:start_md_data]
     form.textEdit.setPlainText(HTMLWithoutData)
     form.textEdit.moveCursor(QTextCursor.End)

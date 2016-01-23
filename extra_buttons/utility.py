@@ -55,7 +55,7 @@ class Utility(object):
     ##################################################
 
     const.PROGRAM_NAME  = "Supplementary Buttons for Anki"
-    const.VERSION       = "0.8.3.4"
+    const.VERSION       = "0.8.3.5"
     const.YEAR_START    = 2014
     const.YEAR_LAST     = 2016
     const.ANKIWEB_URL   = "https://ankiweb.net/shared/info/162313389"
@@ -190,6 +190,52 @@ class Utility(object):
         return clean_md
 
     @staticmethod
+    def get_indices(haystack, needle, needle_end=u""):
+        """
+        Return a list of lists with the start and end positions of the
+        needle(s).
+        >>> get_indices(u"`", u"just `a` sentence")
+        [[5, 7]]
+        """
+        positions = list()
+        if not needle_end:
+            needle_end = needle
+        start = haystack.find(needle)
+        while start != -1:
+            end = haystack.find(needle_end, start + 1)
+            if end == -1:
+                positions.append([start, -1])
+                break
+            else:
+                positions.append([start, end])
+                start = haystack.find(needle, end)
+        return positions
+
+    @staticmethod
+    def filter_indices(positions1, positions3):
+        """
+        Mark overlaps with code blocks in inline code blocks. `positions1` is
+        a list of list with start and end points of inline code blocks
+        [[0, 2], [5, 7]]. `positions3` is a list of lists with start and end
+        point of code blocks.  Modifies `position1` in place. Return None.
+        """
+        for pos3 in positions3:
+            for pos1 in positions1:
+                # a ```code `block` what``` are
+                if pos3[0] > -1 and pos3[1] > -1:
+                    if (pos3[0] + 2) <= pos1[0] and pos3[1] >= pos1[1]:
+                        pos1[0] = pos1[1] = -1
+                        continue
+                # a `word ```
+                if pos3[0] > -1 and pos3[0] >= pos1[0] and pos3[0] <= pos1[1]:
+                    pos1[1] = -1
+                # ``` word`
+                if pos3[1] > -1 and pos3[1] <= pos1[1] and (pos3[1] + 2) >= pos1[0]:
+                    pos1[0] = -1
+
+        return None
+
+    @staticmethod
     def replace_link_img_matches(regex, new, s):
         """
         Escape characters in Markdown links and images that may break in
@@ -197,20 +243,39 @@ class Utility(object):
         >>> replace_link_img_matches(re.compile(ur"\s+"),
                                      u"&#32;",
                                      u"[](i .jpg)")
-        u'[](i&#32;.jpg)
+        u'[](i&#32;.jpg)'
         """
         assert isinstance(s, unicode), "Input `s` is not Unicode"
+
+        # don't escape anything when we're in a (inline) code block
+        positions1 = Utility.get_indices(s, "`")
+        positions3 = Utility.get_indices(s, "```")
+        Utility.filter_indices(positions1, positions3)
+        positions_combined = filter(lambda x: x[0] > -1 and x[1] > -1,
+                                    positions1 + positions3)
+
         result = re.finditer(const.IS_LINK_OR_IMG_REGEX, s)
         if result:
             for match in result:
-                str_to_be_replaced = match.group(0)
-                start = s.find(str_to_be_replaced)
-                end   = start + len(str_to_be_replaced)
-                replacement = re.sub(regex, new, str_to_be_replaced)
-                # put string back in original string
-                str_start = s[:start]
-                str_end = s[end:]
-                s = str_start + replacement + str_end
+                # see if match is inside a code block
+                skip = False
+                start_match, end_match = match.span()
+                for (start_code, end_code) in positions_combined:
+                    print "match.span():\t\t", match.span()
+                    print "start_code, end_code:\t", start_code, end_code
+                    if start_match >= start_code and end_match <= end_code:
+                        skip = True
+                        break
+
+                if not skip:
+                    str_to_be_replaced = match.group(0)
+                    start = s.find(str_to_be_replaced)
+                    end   = start + len(str_to_be_replaced)
+                    replacement = re.sub(regex, new, str_to_be_replaced)
+                    # put string back in original string
+                    str_start = s[:start]
+                    str_end = s[end:]
+                    s = str_start + replacement + str_end
         assert isinstance(s, unicode), "Result `s` is not Unicode"
         return s
 

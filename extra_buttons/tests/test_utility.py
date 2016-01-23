@@ -142,6 +142,138 @@ class UtilityTester(unittest.TestCase):
         self.assertEqual(expected, result)
         self.assertEqual(len(expected), len(result))
 
+    def test_replace_link_img_matches_does_not_replace_whitespace_in_backticks(self):
+        image       = u"begin `def x[R](f: => R)` end"
+        expected    = u"begin `def x[R](f: => R)` end"
+        result = Utility.replace_link_img_matches(self.whitespace_regex,
+                                                  "&#32;",
+                                                  image)
+        self.assertEqual(expected, result)
+        self.assertEqual(len(expected), len(result))
+
+    def test_replace_link_img_matches_does_not_replace_whitespace_in_code_blocks(self):
+        image       = u"""
+        hallo `welerd
+
+```
+hello world [](what about it) yes
+```
+
+and`
+"""
+        expected    = image
+        result = Utility.replace_link_img_matches(self.whitespace_regex,
+                                                  "&#32;",
+                                                  image)
+        self.assertEqual(expected, result)
+        self.assertEqual(len(expected), len(result))
+
+    def test_replace_link_img_matches_does_not_replace_whitespace_in_code_blocks_but_does_in_normal_link(self):
+        image       = u"""
+        hallo `welerd
+
+```
+hello world [](what about it) yes
+```
+
+but here ![cat](cat (1).jpg) is a cat
+and`
+"""
+        expected    = u"""
+        hallo `welerd
+
+```
+hello world [](what about it) yes
+```
+
+but here ![cat](cat&#32;(1).jpg) is a cat
+and`
+"""
+        result = Utility.replace_link_img_matches(self.whitespace_regex,
+                                                  "&#32;",
+                                                  image)
+        self.assertEqual(expected, result)
+        self.assertEqual(len(expected), len(result))
+
+    def test_replace_link_img_matches_does_not_replace_whitespace_in_code_blocks2(self):
+        image       = u"""
+blah
+
+```
+def x[R](f: => R)
+```
+"""
+        expected    = image
+        result = Utility.replace_link_img_matches(self.whitespace_regex,
+                                                  "&#32;",
+                                                  image)
+        self.assertEqual(expected, result)
+        self.assertEqual(len(expected), len(result))
+
+    # filter_indices
+    def test_filter_indices_does_not_change_anything_when_no_overlap(self):
+        positions1  = [[0, 20]]
+        positions2  = [[30, 60]]
+        expected    = [[0, 20]]
+        Utility.filter_indices(positions1, positions2)
+        self.assertEqual(expected, positions1)
+
+    def test_filter_indices_changes_end_value_when_overlaps(self):
+        positions1  = [[0, 20]]
+        positions2  = [[20, 60]]
+        expected    = [[0, -1]]
+        Utility.filter_indices(positions1, positions2)
+        self.assertEqual(expected, positions1)
+
+    def test_filter_indices_changes_start_value_when_overlaps(self):
+        positions1  = [[50, 70]]
+        positions2  = [[20, 60]]
+        expected    = [[-1, 70]]
+        Utility.filter_indices(positions1, positions2)
+        self.assertEqual(expected, positions1)
+
+    def test_filter_indices_do_not_change_anything_when_end_value_positions3_is_min_1(self):
+        positions1  = [[50, 70]]
+        positions2  = [[20, -1]]
+        expected    = [[50, 70]]
+        Utility.filter_indices(positions1, positions2)
+        self.assertEqual(expected, positions1)
+
+    def test_filter_indices_still_changes_end_value_when_end_value_positions3_is_min_1(self):
+        positions1  = [[0, 20]]
+        positions2  = [[20, -1]]
+        expected    = [[0, -1]]
+        Utility.filter_indices(positions1, positions2)
+        self.assertEqual(expected, positions1)
+
+    def test_filter_indices_changes_both_start_and_end_value_when_inline_block_is_inside_code_block1(self):
+        positions1  = [[40, 48]]
+        positions2  = [[20, 50]]
+        expected    = [[-1, -1]]
+        Utility.filter_indices(positions1, positions2)
+        self.assertEqual(expected, positions1)
+
+    def test_filter_indices_changes_both_start_and_end_value_when_inline_block_is_inside_code_block2(self):
+        positions1  = [[40, 50]]
+        positions2  = [[20, 50]]
+        expected    = [[-1, -1]]
+        Utility.filter_indices(positions1, positions2)
+        self.assertEqual(expected, positions1)
+
+    def test_filter_indices_changes_both_start_and_end_value_when_inline_block_is_inside_code_block3(self):
+        positions1  = [[22, 48]]
+        positions2  = [[20, 50]]
+        expected    = [[-1, -1]]
+        Utility.filter_indices(positions1, positions2)
+        self.assertEqual(expected, positions1)
+
+    def test_filter_indices_changes_both_start_and_end_value_of_multiple_inline_code_blocks_when_inline_blocks_are_inside_code_block3(self):
+        positions1  = [[22, 30], [32, 40]]
+        positions2  = [[20, 50]]
+        expected    = [[-1, -1], [-1, -1]]
+        Utility.filter_indices(positions1, positions2)
+        self.assertEqual(expected, positions1)
+
     # escape_html_chars
     def test_escape_html_chars_throws_assertion_error_when_input_is_not_unicode(self):
         s        = "this&that"

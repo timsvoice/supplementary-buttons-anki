@@ -20,17 +20,22 @@
 from PyQt4 import QtGui, QtCore
 import const
 
+
 class OrderedList(QtGui.QDialog):
+    """
+    Create an ordered list.
+    """
     def __init__(self, other, parent_window, preferences, fixed=False):
         super(OrderedList, self).__init__(parent_window)
         self.editor_instance = other
 
         if not fixed:
-            self.setupGUI()
+            self.show_dialog_window()
         else:
-            self.insertOrderedList(const.preferences.prefs["fixed_ol_type"][0], 1)
+            self.insert_ordered_list(
+                    const.preferences.prefs["fixed_ol_type"][0], 1)
 
-    def setupGUI(self):
+    def show_dialog_window(self):
         self.setWindowTitle("Choose format for ordered list")
 
         stylesheet = """
@@ -90,7 +95,9 @@ class OrderedList(QtGui.QDialog):
         spinbox_vbox.addStretch(1)
 
         button_box = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok |
-            QtGui.QDialogButtonBox.Cancel, QtCore.Qt.Horizontal, self)
+                                            QtGui.QDialogButtonBox.Cancel,
+                                            QtCore.Qt.Horizontal,
+                                            self)
 
         button_box.accepted.connect(self.accept)
         button_box.rejected.connect(self.reject)
@@ -113,23 +120,34 @@ class OrderedList(QtGui.QDialog):
             }
 
             choice = type_of_list.get(
-                    radio_button_group.id(radio_button_group.checkedButton()), "1")
+                    radio_button_group.id(
+                        radio_button_group.checkedButton()), "1")
 
-            self.insertOrderedList(choice, spinbox.value())
+            self.insert_ordered_list(choice, spinbox.value())
 
-    def insertOrderedList(self, type_of_list, start_num):
-        """Create a new ordered list based on the input of the user.
-        type_of_list is a string ("1", "A", "a", "I", "i") and
-        start_num is an integer."""
+    def insert_ordered_list(self, type_of_list, start_num):
+        """
+        Create a new ordered list based on the input of the user.
+        `type_of_list` is a string ("1", "A", "a", "I", "i") and
+        `start_num` is an integer.
+        """
         self.editor_instance.web.eval("""
             document.execCommand('insertOrderedList');
             var olElem = window.getSelection().focusNode.parentNode;
-            if (olElem.toString() !== "[object HTMLOListElement]") {
-                olElem = olElem.parentNode;
+            if (olElem !== null) {
+                var setAttrs = true;
+                while (olElem.toString() !== "[object HTMLOListElement]") {
+                    olElem = olElem.parentNode;
+                    if (olElem === null) {
+                        setAttrs = false;
+                        break;
+                    }
+                }
+                if (setAttrs) {
+                    olElem.setAttribute("type", "%s");
+                    olElem.setAttribute("start", "%s");
+                    olElem.style.marginLeft = "20px";
+                }
             }
-            olElem.setAttribute("type", "%s");
-            olElem.setAttribute("start", "%s");
-            olElem.style.marginLeft = "20px";
             """ % (type_of_list, str(start_num))
         )
-

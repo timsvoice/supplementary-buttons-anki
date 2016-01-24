@@ -561,6 +561,89 @@ def x[R](f: => R)
         Utility.end_safe_block(hashmap)
         self.assertEqual(expected.get("safe_block"), hashmap.get("safe_block"))
 
+    # convert_html_to_markdown
+    def test_convert_html_to_markdown_throws_assertion_error_when_input_is_not_unicode(self):
+        html        = "<div>- aaa</div>"
+        self.assertRaises(AssertionError, Utility.convert_html_to_markdown, html)
+
+    def test_convert_html_to_markdown_returns_empty_string_when_input_is_empty_string(self):
+        html        = u""
+        expected    = u""
+        result      = Utility.convert_html_to_markdown(html)
+        self.assertEqual(expected, result)
+
+    def test_convert_html_to_markdown_returns_empty_string_when_input_is_empty_string_and_keep_empty_lines_is_true(self):
+        html        = u""
+        expected    = u""
+        result      = Utility.convert_html_to_markdown(html, True)
+        self.assertEqual(expected, result)
+
+    def test_convert_html_to_markdown_does_not_escape_leading_dash(self):
+        html        = u"<div>- aaa</div>"
+        expected    = u"- aaa\n"
+        result      = Utility.convert_html_to_markdown(html)
+        self.assertEqual(expected, result)
+
+    def test_convert_html_to_markdown_does_not_escape_leading_plus_sign(self):
+        html        = u"<div>+ aaa</div>"
+        expected    = u"+ aaa\n"
+        result      = Utility.convert_html_to_markdown(html)
+        self.assertEqual(expected, result)
+
+    def test_convert_html_to_markdown_does_not_escape_backward_slash(self):
+        html        = u"<div>`:\`</div>"
+        expected    = u"`:\`\n"
+        result      = Utility.convert_html_to_markdown(html)
+        self.assertEqual(expected, result)
+
+    def test_convert_html_to_markdown_does_not_escape_backward_slash_followed_by_dash(self):
+        html        = u"\- one<div>\- two</div>"
+        expected    = u"\- one\n\- two\n"
+        result      = Utility.convert_html_to_markdown(html)
+        self.assertEqual(expected, result)
+
+    def test_convert_html_to_markdown_does_not_escape_backward_slash_followed_by_underscore(self):
+        html        = u"\_ one<div>\_ two</div>"
+        expected    = u"\_ one\n\_ two\n"
+        result      = Utility.convert_html_to_markdown(html)
+        self.assertEqual(expected, result)
+
+    def test_convert_html_to_markdown_does_not_escape_dots(self):
+        html        = u"1. one<div>2. two</div>"
+        expected    = u"1. one\n2. two\n"
+        result      = Utility.convert_html_to_markdown(html)
+        self.assertEqual(expected, result)
+
+    def test_convert_html_to_markdown_does_not_escape_dots_with_keep_empty_lines(self):
+        html        = u"1. one<div>2. two</div>"
+        expected    = u"1. one\n\n2. two\n"
+        result      = Utility.convert_html_to_markdown(html, True)
+        self.assertEqual(expected, result)
+
+    def test_convert_html_to_markdown_does_not_escape_curly_braces(self):
+        html        = u"{ and { and } and }"
+        expected    = u"{ and { and } and }\n"
+        result      = Utility.convert_html_to_markdown(html)
+        self.assertEqual(expected, result)
+
+    def test_convert_html_to_markdown_does_not_escape_curly_braces_in_divs(self):
+        html        = u"{ and<div>{ and</div><div>} and }</div>"
+        expected    = u"{ and\n{ and\n} and }\n"
+        result      = Utility.convert_html_to_markdown(html)
+        self.assertEqual(expected, result)
+
+    def test_convert_html_to_markdown_does_not_escape_inverted_comma(self):
+        html        = u"` and<div>`</div>"
+        expected    = u"` and\n`\n"
+        result      = Utility.convert_html_to_markdown(html)
+        self.assertEqual(expected, result)
+
+    def test_convert_html_to_markdown_does_not_escape_hash_sign(self):
+        html        = u"# one<div># two</div>"
+        expected    = u"# one\n# two\n"
+        result      = Utility.convert_html_to_markdown(html)
+        self.assertEqual(expected, result)
+
     # convert_clean_md_to_html
     def test_convert_clean_md_to_html_throws_assertion_error_when_input_is_not_unicode(self):
         s           = ""
@@ -571,7 +654,6 @@ def x[R](f: => R)
         expected = u"<div>&nbsp; &nbsp; :::python</div><div>&nbsp; &nbsp; def fn(): pass</div>"
         result = Utility.convert_clean_md_to_html(s)
         self.assertEqual(expected, result)
-
 
     def test_convert_clean_md_to_html_returns_empty_string_when_input_is_empty_string(self):
         s        = u""

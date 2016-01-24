@@ -30,6 +30,7 @@ import BeautifulSoup
 from anki.utils import intTime, json, isWin, isMac
 
 from html2text import html2text
+from html2text_overrides import escape_md_section_override
 import const
 
 import markdown
@@ -55,7 +56,7 @@ class Utility(object):
     ##################################################
 
     const.PROGRAM_NAME  = "Supplementary Buttons for Anki"
-    const.VERSION       = "0.8.3.5"
+    const.VERSION       = "0.8.4"
     const.YEAR_START    = 2014
     const.YEAR_LAST     = 2016
     const.ANKIWEB_URL   = "https://ankiweb.net/shared/info/162313389"
@@ -153,12 +154,14 @@ class Utility(object):
     @staticmethod
     def convert_html_to_markdown(org_html, keep_empty_lines=False):
         """
-        Take a org_html string and return a Markdown string. Empty lines are
+        Take an `org_html` string and return a Markdown string. Empty lines are
         removed from the result, unless `keep_empty_lines` is set to `True`.
         """
         if not org_html:
             return u""
         assert isinstance(org_html, unicode), "Input `org_html` is not Unicode"
+        # disable the escaping of Markdown-sensitive characters
+        html2text.escape_md_section = escape_md_section_override
         h = html2text.HTML2Text()
         h.body_width = 0
         md_text = h.handle(org_html)
@@ -172,10 +175,15 @@ class Utility(object):
                     clean_md += (line + u"\n")
 
         # undo the html2text escaping of dots (which interferes
-        # with the creation of ordered lists) and parentheses
+        # with the creation of ordered lists)
         dot_regex = re.compile(ur"(\d+)\\(\.\s)")
         clean_md = re.sub(dot_regex, ur"\g<1>\g<2>", clean_md)
 
+        # this is needed to keep inner parentheses and whitespace in links and
+        # images from prematurely ending the Markdown syntax; e.g.
+        # ![](image (1).jpg) would otherwise break on the whitespace in the
+        # filename and the inner parentheses, so we change it to
+        # ![](image&#32;&#40;1&#41;.jpg) to prevent this from happening
         left_paren_regex = re.compile(ur"\\\(")
         clean_md = Utility.replace_link_img_matches(
                 left_paren_regex, u"&#40;", clean_md)

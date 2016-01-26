@@ -51,6 +51,7 @@ class Preferences(object):
                 const.MARKDOWN_CODE_DIRECTION:  "left",
                 const.MARKDOWN_LINE_NUMS:       False,
                 const.MARKDOWN_ALWAYS_REVERT:   False,
+                const.BUTTON_PLACEMENT:         "adjacent",
                 const.CODE:                     True,
                 const.UNORDERED_LIST:           True,
                 const.ORDERED_LIST:             True,

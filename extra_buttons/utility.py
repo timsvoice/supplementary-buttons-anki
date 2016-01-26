@@ -49,14 +49,16 @@ from markdown.extensions.sane_lists import SaneListExtension
 
 
 class Utility(object):
-    """Utility class with all helper functions that are needed throughout
-    the addon. All methods are static, and all fields are constants."""
+    """
+    Utility class with all helper functions that are needed throughout
+    the addon. All methods are static, and all fields are constants.
+    """
 
     # Constants
     ##################################################
 
     const.PROGRAM_NAME  = "Supplementary Buttons for Anki"
-    const.VERSION       = "0.8.5"
+    const.VERSION       = "0.8.6"
     const.YEAR_START    = 2014
     const.YEAR_LAST     = 2016
     const.ANKIWEB_URL   = "https://ankiweb.net/shared/info/162313389"
@@ -81,7 +83,11 @@ class Utility(object):
                        "dl", "dt", "dd", "code", "s", "pre", "kbd",
                        "a", "strike", "blockquote", "abbr")
 
-    const.HEADING_TAGS  = ("h1", "h2", "h3", "h4", "h5", "h6")
+    const.HEADING_TAGS = ("h1", "h2", "h3", "h4", "h5", "h6")
+
+    # buttons placement positions
+    const.PLACEMENT_POSITIONS   = ("adjacent", "below", "above")
+    const.BUTTONS               = list()
 
     const.CODE_AND_PRE_CLASS = "myCodeClass"
 
@@ -117,6 +123,7 @@ class Utility(object):
     const.MARKDOWN_LINE_NUMS            = "markdown_line_nums"
     const.MARKDOWN_CODE_DIRECTION       = "markdown_code_direction"
     const.MARKDOWN_ALWAYS_REVERT        = "markdown_always_revert"
+    const.BUTTON_PLACEMENT              = "button_placement"
 
     # constants for key sequence
     const.KEY_MODIFIERS                 = ("ctrl", "alt", "shift")

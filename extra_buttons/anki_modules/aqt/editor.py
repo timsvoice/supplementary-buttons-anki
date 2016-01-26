@@ -3,10 +3,10 @@
 # Changes: Stefan van den Akker <srvandenakker.dev@gmail.com>
 
 from aqt.qt import *
-from aqt.utils import openHelp, showInfo
-from anki.utils import isWin, isMac
-from aqt.utils import shortcut, showInfo, showWarning, getBase, getFile, \
-            openHelp, tooltip, downArrow
+from aqt.utils import openHelp
+from anki.utils import isWin
+from aqt.utils import shortcut
+
 import aqt
 from BeautifulSoup import BeautifulSoup
 if isWin:

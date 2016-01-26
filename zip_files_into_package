@@ -36,28 +36,29 @@ zip -r --exclude=*.pyc* --exclude=*__pycache__* ~/Desktop/supplementary_buttons_
     "Supplementary Buttons Anki.py" \
     extra_buttons/__init__.py \
     extra_buttons/abbreviation.py \
+    extra_buttons/anki_modules/* \
     extra_buttons/blockquote.py \
     extra_buttons/const.py \
     extra_buttons/deflist.py \
+    extra_buttons/docs/__init__.py \
+    extra_buttons/docs/_version.py \
+    extra_buttons/docs/doc_start.html \
+    extra_buttons/docs/github-markdown.css \
     extra_buttons/extra_buttons.py \
     extra_buttons/heading.py \
+    extra_buttons/html2text/* \
+    extra_buttons/html2text_overrides.py \
     extra_buttons/hyperlink.py \
+    extra_buttons/icons/* \
+    extra_buttons/markdown/* \
     extra_buttons/markdowner.py \
     extra_buttons/menu.py \
     extra_buttons/orderedlist.py \
     extra_buttons/preferences.py \
-    extra_buttons/table.py \
-    extra_buttons/utility.py \
-    extra_buttons/docs/doc_start.html \
-    extra_buttons/docs/github-markdown.css \
-    extra_buttons/docs/__init__.py \
-    extra_buttons/docs/_version.py \
-    extra_buttons/anki_modules/* \
-    extra_buttons/icons/* \
-    extra_buttons/html2text/* \
-    extra_buttons/markdown/* \
     extra_buttons/pygments/* \
-    extra_buttons/python_modules/*
+    extra_buttons/python_modules/* \
+    extra_buttons/table.py \
+    extra_buttons/utility.py
 
 # reinsert asserts and warnings comments
 for file in extra_buttons/*.bak; do

@@ -24,15 +24,19 @@ from utility import Utility
 
 
 class ExtraButtons_Options(QtGui.QMenu):
-    """Display the various options in the main menu."""
+    """
+    Display the various options in the main menu.
+    """
 
     def __init__(self, main_window, preferences):
         super(ExtraButtons_Options, self).__init__()
         self.main_window = main_window
-        self.listOfRadioButtons = list()
+        self.list_of_radio_buttons = list()
 
     def button_switch(self, state):
-        """Puts a button either on or off. Reverses current state."""
+        """
+        Puts a button either on or off. Reverses current state.
+        """
         source = self.sender()
         name = source.text()
         # deprettify
@@ -106,7 +110,8 @@ class ExtraButtons_Options(QtGui.QMenu):
         dialog.exec_()
 
     def show_about_dialog(self):
-        about_dialog = QtGui.QMessageBox.about(self.main_window,
+        QtGui.QMessageBox.about(
+            self.main_window,
             "About {0} v{1}".format(const.PROGRAM_NAME, const.VERSION),
             """\
         Copyright: <b>Stefan van den Akker</b>, {0}-{1}<br />
@@ -116,17 +121,17 @@ class ExtraButtons_Options(QtGui.QMenu):
             <a href="{4}">Github</a><br /><br />
         Don't forget to rate and share your thoughts on <a href="{5}">AnkiWeb</a>!
             """.format(const.YEAR_START, const.YEAR_LAST, const.VERSION,
-                        const.EMAIL, const.GITHUB_URL, const.ANKIWEB_URL)
+                       const.EMAIL, const.GITHUB_URL, const.ANKIWEB_URL)
         )
 
-    def enableRadioButtons(self, checkbox):
+    def enable_radio_buttons(self, checkbox):
         if checkbox.isChecked():
             # enable radio buttons
-            for rb in self.listOfRadioButtons:
+            for rb in self.list_of_radio_buttons:
                 rb.setEnabled(True)
         else:
             # disable radiobuttons
-            for rb in self.listOfRadioButtons:
+            for rb in self.list_of_radio_buttons:
                 rb.setEnabled(False)
 
     def show_option_dialog(self):
@@ -141,7 +146,8 @@ class ExtraButtons_Options(QtGui.QMenu):
                                                 const.MARKDOWN_SYNTAX_STYLE,
                                                 const.MARKDOWN_LINE_NUMS,
                                                 const.MARKDOWN_ALWAYS_REVERT,
-                                                const.MARKDOWN_CODE_DIRECTION
+                                                const.MARKDOWN_CODE_DIRECTION,
+                                                const.BUTTON_PLACEMENT
                                             )]
         num_items = len(l) / 2.0
         num_items = num_items + 0.5 if (num_items % 1.0 > 0.0) else num_items
@@ -174,25 +180,27 @@ red.\
 
         checkBox = QtGui.QCheckBox("Fix ordered list type", self)
         checkBox.setToolTip("Do not show the choice dialog each time, "
-                "but always use the selected list type.")
+                            "but always use the selected list type.")
         if const.preferences.prefs.get(const.FIXED_OL_TYPE):
             checkBox.setChecked(True)
         else:
             checkBox.setChecked(False)
 
-        checkBox.stateChanged.connect(lambda: self.enableRadioButtons(checkBox))
+        checkBox.stateChanged.connect(
+                lambda: self.enable_radio_buttons(checkBox))
 
-        # make sure self.listOfRadioButtons is empty before adding new buttons
-        self.listOfRadioButtons = list()
+        # make sure self.list_of_radio_buttons is empty
+        # before adding new buttons
+        self.list_of_radio_buttons = list()
         for type_ol in ("1.", "A.", "a.", "I.", "i."):
             rb = self.create_radiobutton(type_ol)
-            self.listOfRadioButtons.append(rb)
+            self.list_of_radio_buttons.append(rb)
 
         ol_type = const.preferences.prefs.get(const.FIXED_OL_TYPE)
         if not ol_type:
-            self.listOfRadioButtons[0].toggle()
+            self.list_of_radio_buttons[0].toggle()
         else:
-            for rb in self.listOfRadioButtons:
+            for rb in self.list_of_radio_buttons:
                 if ol_type == rb.text():
                     rb.toggle()
                     break
@@ -200,24 +208,28 @@ red.\
         buttonGroup = QtGui.QButtonGroup(self)
 
         numRadioButton = 0
-        for rb in self.listOfRadioButtons:
+        for rb in self.list_of_radio_buttons:
             buttonGroup.addButton(rb, numRadioButton)
             numRadioButton += 1
 
         hbox = QtGui.QHBoxLayout()
         hbox.addWidget(checkBox)
-        for rb in self.listOfRadioButtons:
+        for rb in self.list_of_radio_buttons:
             if not checkBox.isChecked():
                 rb.setEnabled(False)
             hbox.addWidget(rb)
 
         # Markdown syntax highlighting
 
-        md_style_label = QtGui.QLabel("Markdown syntax highlighting style", self)
+        md_style_label = QtGui.QLabel(
+                "Markdown syntax highlighting style", self)
         md_style_combo = QtGui.QComboBox(self)
-        md_style_combo.setMinimumWidth(const.MIN_COMBOBOX_WIDTH);
+        md_style_combo.setMinimumWidth(const.MIN_COMBOBOX_WIDTH)
         md_style_files = os.listdir(os.path.join(
-            const.preferences.get_addons_folder(), const.FOLDER_NAME, "pygments", "styles"))
+            const.preferences.get_addons_folder(),
+            const.FOLDER_NAME,
+            "pygments",
+            "styles"))
 
         # pretty print styles
         for filename in sorted(md_style_files):
@@ -242,17 +254,17 @@ red.\
 
         # line numbers Markdown code highlighting
         linenums_cb = QtGui.QCheckBox(
-                "Toggle line numbers code blocks", self)
+                "Toggle line numbers in code blocks", self)
         if const.preferences.prefs.get(const.MARKDOWN_LINE_NUMS):
             linenums_cb.setChecked(True)
 
         linenums_hbox = QtGui.QHBoxLayout()
         linenums_hbox.addWidget(linenums_cb)
 
-        # align code block
+        # align Markdown code block
         code_align_label = QtGui.QLabel(u"Alignment for Markdown code blocks")
         code_align_combo = QtGui.QComboBox(self)
-        code_align_combo.setMinimumWidth(const.MIN_COMBOBOX_WIDTH);
+        code_align_combo.setMinimumWidth(const.MIN_COMBOBOX_WIDTH)
         alignments = ("left", "center", "right")
         for alignment in alignments:
             code_align_combo.addItem(alignment)
@@ -278,6 +290,21 @@ the old Markdown, discarding any changes made.\
         automatic_revert_hbox = QtGui.QHBoxLayout()
         automatic_revert_hbox.addWidget(automatic_revert_cb)
 
+        # button placement
+        button_placement_label = QtGui.QLabel(u"Buttons placement")
+        button_placement_combo = QtGui.QComboBox(self)
+        button_placement_combo.setMinimumWidth(const.MIN_COMBOBOX_WIDTH)
+        for placement in const.PLACEMENT_POSITIONS:
+            button_placement_combo.addItem(placement)
+        current_placement = const.preferences.prefs.get(
+                const.BUTTON_PLACEMENT)
+        button_placement_combo.setCurrentIndex(
+                const.PLACEMENT_POSITIONS.index(current_placement))
+        button_placement_hbox = QtGui.QHBoxLayout()
+        button_placement_hbox.addWidget(button_placement_label)
+        button_placement_hbox.addStretch(1)
+        button_placement_hbox.addWidget(button_placement_combo)
+
         button_box = QtGui.QDialogButtonBox(
                 QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel)
         button_box.accepted.connect(option_dialog.accept)
@@ -285,6 +312,8 @@ the old Markdown, discarding any changes made.\
 
         vbox = QtGui.QVBoxLayout()
         vbox.addLayout(grid)
+        vbox.addWidget(Utility.create_horizontal_rule())
+        vbox.addLayout(button_placement_hbox)
         vbox.addWidget(Utility.create_horizontal_rule())
         vbox.addLayout(cssClassHBox)
         vbox.addWidget(Utility.create_horizontal_rule())
@@ -301,9 +330,10 @@ the old Markdown, discarding any changes made.\
         if option_dialog.exec_() == QtGui.QDialog.Accepted:
             # fixed ordered list type
             if checkBox.isChecked():
-                selectedRadioButton = buttonGroup.id(buttonGroup.checkedButton())
+                selected_radio_button = \
+                        buttonGroup.id(buttonGroup.checkedButton())
                 const.preferences.prefs[const.FIXED_OL_TYPE] = \
-                    self.listOfRadioButtons[selectedRadioButton].text()
+                    self.list_of_radio_buttons[selected_radio_button].text()
             else:
                 const.preferences.prefs[const.FIXED_OL_TYPE] = ""
 
@@ -327,7 +357,11 @@ the old Markdown, discarding any changes made.\
             # alignment for Markdown code blocks
             chosen_alignment = str(code_align_combo.currentText())
             const.preferences.prefs[const.MARKDOWN_CODE_DIRECTION] = \
-                    chosen_alignment
+                chosen_alignment
+
+            # button placement
+            chosen_placement = str(button_placement_combo.currentText())
+            const.preferences.prefs[const.BUTTON_PLACEMENT] = chosen_placement
 
             const.preferences.prefs[const.CODE_CLASS] = cssClassText.text()
 

@@ -21,10 +21,14 @@ import json
 import BeautifulSoup
 
 from PyQt4 import QtGui, QtCore
+import utility
 import const
-from utility import Utility
+
 
 class Heading(object):
+    """
+    Create a heading.
+    """
     def __init__(self, other, parent_window, selected_text):
         self.editor_instance    = other
         self.selected_text      = selected_text
@@ -38,7 +42,7 @@ class Heading(object):
             self.create_custom_heading()
             return
         soup = BeautifulSoup.BeautifulSoup(selection)
-        size = Utility.check_size_heading(soup.text)
+        size = utility.check_size_heading(soup.text)
         if size == -1:
             self.create_custom_heading(soup.text)
             return
@@ -49,7 +53,7 @@ class Heading(object):
 
         # delete leading hashes
         relevant_text = soup.text[size:]
-        relevant_text = Utility.strip_leading_whitespace(relevant_text)
+        relevant_text = utility.strip_leading_whitespace(relevant_text)
 
         # wrap new heading around the selection
         result_soup = BeautifulSoup.BeautifulSoup()
@@ -57,8 +61,9 @@ class Heading(object):
         result_soup.insert(0, tag)
         tag.insert(0, relevant_text)
 
-        self.editor_instance.web.eval("document.execCommand('insertHTML', false, %s);"
-            % json.dumps(unicode(result_soup)))
+        self.editor_instance.web.eval(
+                "document.execCommand('insertHTML', false, %s);"
+                % json.dumps(unicode(result_soup)))
 
         self.cleanup_headings()
 
@@ -121,7 +126,8 @@ class Heading(object):
         groupbox.setLayout(radio_hbox)
 
         button_box = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok |
-            QtGui.QDialogButtonBox.Cancel, QtCore.Qt.Horizontal, dialog)
+                                            QtGui.QDialogButtonBox.Cancel,
+                                            QtCore.Qt.Horizontal, dialog)
 
         button_box.accepted.connect(dialog.accept)
         button_box.rejected.connect(dialog.reject)
@@ -138,27 +144,33 @@ class Heading(object):
 
         if dialog.exec_() == QtGui.QDialog.Accepted:
             text = unicode(text_line_edit.text())
-            size_heading = radio_button_group.id(radio_button_group.checkedButton())
+            size_heading = radio_button_group.id(
+                    radio_button_group.checkedButton())
             heading_tag = "h" + str(size_heading)
             if text == "":
                 return
             else:
-                text = Utility.escape_html_chars(text)
+                text = utility.escape_html_chars(text)
                 start_tag = "<{0}>".format(heading_tag)
                 end_tag = "</{0}>".format(heading_tag)
                 if selected_text:
-                    self.editor_instance.web.eval("wrap('{0}', '{1}')".format(start_tag, end_tag))
+                    self.editor_instance.web.eval(
+                            "wrap('{0}', '{1}')".format(start_tag, end_tag))
                     self.cleanup_headings()
                 else:
                     result = u"{0}{1}{2}".format(start_tag, text, end_tag)
-                    self.editor_instance.web.eval("document.execCommand('insertHTML', false, %s);"
-                        % json.dumps(unicode(result)))
+                    self.editor_instance.web.eval(
+                            "document.execCommand('insertHTML', false, %s);"
+                            % json.dumps(unicode(result)))
 
     def cleanup_headings(self):
-        """Clean up empty headers from the card."""
+        """
+        Clean up empty headers from the card.
+        """
         self.editor_instance.saveNow()
         self.editor_instance.web.setFocus()
-        self.editor_instance.web.eval("focusField(%d);" % self.editor_instance.currentField)
+        self.editor_instance.web.eval(
+                "focusField(%d);" % self.editor_instance.currentField)
 
         html = self.editor_instance.note.fields[self.editor_instance.currentField]
         soup = BeautifulSoup.BeautifulSoup(html)
@@ -168,5 +180,6 @@ class Heading(object):
                 if match.parent.name in const.HEADING_TAGS:
                     match.parent.replaceWithChildren()
 
-        self.editor_instance.note.fields[self.editor_instance.currentField] = unicode(soup)
+        self.editor_instance.note.fields[self.editor_instance.currentField] = \
+            unicode(soup)
         self.editor_instance.loadNote()

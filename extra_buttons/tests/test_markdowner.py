@@ -6,9 +6,9 @@ import json
 import time
 
 import sys
-from extra_buttons.markdowner import Markdowner
 if "/usr/share/anki/" not in sys.path:
     sys.path.append("/usr/share/anki/")
+from extra_buttons.markdowner import Markdowner
 
 
 class MarkdownerTester(unittest.TestCase):

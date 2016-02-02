@@ -19,11 +19,15 @@
 
 import json
 
-from PyQt4 import QtGui, QtCore
-from utility import Utility
+from PyQt4 import QtGui
+import utility
+
 
 class DefList(QtGui.QDialog):
-    """Creates a definition list with one or more terms and descriptions."""
+    """
+    Creates a definition list with one or more terms and descriptions.
+    """
+
     def __init__(self, other, parentWindow, selection=None):
         super(DefList, self).__init__()
         # other is whatever self is in the other methods
@@ -80,8 +84,8 @@ class DefList(QtGui.QDialog):
             # create all the terms and descriptions
             result = "<dl>"
             for key, value in self.data:
-                key = Utility.escape_html_chars(key)
-                value = Utility.escape_html_chars(value)
+                key = utility.escape_html_chars(key)
+                value = utility.escape_html_chars(value)
                 result = result + "<dt><b>" + key + "</b></dt><dd>" + \
                     value + "</dd>"
 

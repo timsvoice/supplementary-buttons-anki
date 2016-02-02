@@ -24,14 +24,17 @@ import time
 
 from anki.utils import json
 from aqt import editor, mw
+from aqt.utils import downArrow
 from anki.hooks import wrap, addHook
 from anki.utils import isWin, isMac
 from PyQt4 import QtGui, QtCore
 import BeautifulSoup
 
+import utility
 import const
-from utility import Utility
+import preferences
 from preferences import Preferences
+from prefhelper import PrefHelper
 from menu import ExtraButtons_Options
 from markdowner import Markdowner
 from anki_modules.aqt import editor as myeditor
@@ -55,140 +58,192 @@ editor.Editor.onHtmlEdit = myeditor.onHtmlEdit
 
 def setup_buttons(self):
 
-    button_placement_pref = const.preferences.prefs.get(const.BUTTON_PLACEMENT)
+    button_placement_pref = preferences.PREFS.get(const.BUTTON_PLACEMENT)
 
     self.supp_buttons_hbox = QtGui.QHBoxLayout()
 
-    if preferences.prefs.get(const.CODE):
-        shortcut = preferences.get_keybinding(const.CODE)
-        b = self.create_button(const.CODE, lambda: self.wrap_in_tags("code",
-            preferences.prefs.get(const.CODE_CLASS)), _(shortcut),
-            _("Code format text ({})".format(shortcut)),
-            check=False)
+    if preferences.PREFS.get(const.CODE):
+        shortcut = utility.get_keybinding(preferences.KEYS, const.CODE)
+        b = self.create_button(const.CODE,
+                               lambda: self.wrap_in_tags("code",
+                               preferences.PREFS.get(const.CODE_CLASS)),
+                               _(shortcut),
+                               _("Code format text ({})".format(shortcut)),
+                               check=False)
 
-    if preferences.prefs.get(const.UNORDERED_LIST):
-        shortcut = preferences.get_keybinding(const.UNORDERED_LIST)
-        b = self.create_button(const.UNORDERED_LIST, self.toggleUnorderedList,
-            _(shortcut), _("Create unordered list ({})".format(shortcut)),
-            check=False)
+    if preferences.PREFS.get(const.UNORDERED_LIST):
+        shortcut = utility.get_keybinding(preferences.KEYS, const.UNORDERED_LIST)
+        b = self.create_button(const.UNORDERED_LIST,
+                               self.toggleUnorderedList,
+                               _(shortcut),
+                               _("Create unordered list ({})".format(shortcut)),
+                               check=False)
 
-    if preferences.prefs.get(const.ORDERED_LIST):
-        shortcut = preferences.get_keybinding(const.ORDERED_LIST)
-        b = self.create_button(const.ORDERED_LIST, self.toggleOrderedList, _(shortcut),
-            _("Create ordered list ({})".format(shortcut)), check=False)
+    if preferences.PREFS.get(const.ORDERED_LIST):
+        shortcut = utility.get_keybinding(preferences.KEYS, const.ORDERED_LIST)
+        b = self.create_button(const.ORDERED_LIST,
+                               self.toggleOrderedList,
+                               _(shortcut),
+                               _("Create ordered list ({})".format(shortcut)),
+                               check=False)
 
-    if preferences.prefs.get(const.STRIKETHROUGH):
-        shortcut = preferences.get_keybinding(const.STRIKETHROUGH)
-        b = self.create_button(const.STRIKETHROUGH, self.toggleStrikeThrough,
-            _(shortcut), _("Strikethrough text ({})".format(shortcut)),
-            check=True)
+    if preferences.PREFS.get(const.STRIKETHROUGH):
+        shortcut = utility.get_keybinding(preferences.KEYS, const.STRIKETHROUGH)
+        b = self.create_button(const.STRIKETHROUGH,
+                               self.toggleStrikeThrough,
+                               _(shortcut),
+                               _("Strikethrough text ({})".format(shortcut)),
+                               check=True)
 
     # FIXME: think of better symbol to represent a <pre> block
-    if preferences.prefs.get(const.PRE):
-        shortcut = preferences.get_keybinding(const.PRE)
-        b = self.create_button(const.PRE, lambda: self.wrap_in_tags("pre",
-            preferences.prefs.get(const.CODE_CLASS)), _(shortcut),
-            tip=_("Create a code block ({})".format(shortcut)), check=False)
+    if preferences.PREFS.get(const.PRE):
+        shortcut = utility.get_keybinding(preferences.KEYS, const.PRE)
+        b = self.create_button(const.PRE,
+                               lambda: self.wrap_in_tags("pre", preferences.PREFS.get(const.CODE_CLASS)),
+                               _(shortcut),
+                               tip=_("Create a code block ({})".format(shortcut)),
+                               check=False)
 
-    if preferences.prefs.get(const.HORIZONTAL_RULE):
-        shortcut = preferences.get_keybinding(const.HORIZONTAL_RULE)
-        b = self.create_button(const.HORIZONTAL_RULE, self.toggleHorizontalLine,
-                            _(shortcut),
-            tip=_("Create a horizontal rule ({})".format(shortcut)), check=False)
+    if preferences.PREFS.get(const.HORIZONTAL_RULE):
+        shortcut = utility.get_keybinding(preferences.KEYS, const.HORIZONTAL_RULE)
+        b = self.create_button(const.HORIZONTAL_RULE,
+                               self.toggleHorizontalLine,
+                               _(shortcut),
+                               tip=_("Create a horizontal rule ({})".format(shortcut)),
+                               check=False)
 
-    if preferences.prefs.get(const.INDENT):
-        shortcut = preferences.get_keybinding(const.INDENT)
-        b = self.create_button(const.INDENT, self.toggleIndent, _(shortcut),
-            _("Indent text or list ({})".format(shortcut)), check=False)
+    if preferences.PREFS.get(const.INDENT):
+        shortcut = utility.get_keybinding(preferences.KEYS, const.INDENT)
+        b = self.create_button(const.INDENT,
+                               self.toggleIndent,
+                               _(shortcut),
+                               _("Indent text or list ({})".format(shortcut)),
+                               check=False)
 
-    if preferences.prefs.get(const.OUTDENT):
-        shortcut = preferences.get_keybinding(const.OUTDENT)
-        b = self.create_button(const.OUTDENT, self.toggleOutdent, _(shortcut),
-            _("Outdent text or list ({})".format(shortcut)), check=False)
+    if preferences.PREFS.get(const.OUTDENT):
+        shortcut = utility.get_keybinding(preferences.KEYS, const.OUTDENT)
+        b = self.create_button(const.OUTDENT,
+                               self.toggleOutdent,
+                               _(shortcut),
+                               _("Outdent text or list ({})".format(shortcut)),
+                               check=False)
 
     # FIXME: better symbol for <dl>
-    if preferences.prefs.get(const.DEFINITION_LIST):
-        shortcut = preferences.get_keybinding(const.DEFINITION_LIST)
-        b = self.create_button(const.DEFINITION_LIST, self.toggleDefList, _(shortcut),
-            _("Create definition list (shortcut)"), check=False)
+    if preferences.PREFS.get(const.DEFINITION_LIST):
+        shortcut = utility.get_keybinding(preferences.KEYS, const.DEFINITION_LIST)
+        b = self.create_button(const.DEFINITION_LIST,
+                               self.toggleDefList,
+                               _(shortcut),
+                               _("Create definition list (shortcut)"),
+                               check=False)
 
-    if preferences.prefs.get(const.TABLE):
-        shortcut = preferences.get_keybinding(const.TABLE)
-        b = self.create_button(const.TABLE, self.toggleTable, _(shortcut),
-            _("Create a table ({})".format(shortcut)), check=False)
+    if preferences.PREFS.get(const.TABLE):
+        shortcut = utility.get_keybinding(preferences.KEYS, const.TABLE)
+        b = self.create_button(const.TABLE,
+                               self.toggleTable,
+                               _(shortcut),
+                               _("Create a table ({})".format(shortcut)),
+                               check=False)
 
-    if preferences.prefs.get(const.KEYBOARD):
-        shortcut = preferences.get_keybinding(const.KEYBOARD)
-        b = self.create_button(const.KEYBOARD, lambda: self.wrap_in_tags("kbd"),
-            _(shortcut), _("Create a keyboard button ({})".format(shortcut)),
-            check=False)
+    if preferences.PREFS.get(const.KEYBOARD):
+        shortcut = utility.get_keybinding(preferences.KEYS, const.KEYBOARD)
+        b = self.create_button(const.KEYBOARD,
+                               lambda: self.wrap_in_tags("kbd"),
+                               _(shortcut),
+                               _("Create a keyboard button ({})".format(shortcut)),
+                               check=False)
 
-    if preferences.prefs.get(const.HYPERLINK):
-        shortcut = preferences.get_keybinding(const.HYPERLINK)
-        b1 = self.create_button(const.HYPERLINK, self.toggleHyperlink, _(shortcut),
-            _("Insert link ({})".format(shortcut)), check=False)
+    if preferences.PREFS.get(const.HYPERLINK):
+        shortcut = utility.get_keybinding(preferences.KEYS, const.HYPERLINK)
+        b1 = self.create_button(const.HYPERLINK,
+                                self.toggleHyperlink,
+                                _(shortcut),
+                                _("Insert link ({})".format(shortcut)),
+                                check=False)
 
-        shortcut = preferences.get_keybinding(const.REMOVE_HYPERLINK)
-        b2 = self.create_button(const.REMOVE_HYPERLINK, self.unlink, _(shortcut),
-            _("Unlink ({})".format(shortcut)), check=False)
+        shortcut = utility.get_keybinding(preferences.KEYS, const.REMOVE_HYPERLINK)
+        b2 = self.create_button(const.REMOVE_HYPERLINK,
+                                self.unlink,
+                                _(shortcut),
+                                _("Unlink ({})".format(shortcut)),
+                                check=False)
 
-    if preferences.prefs.get(const.BACKGROUND_COLOR):
-        shortcut = preferences.get_keybinding(const.BACKGROUND_COLOR)
-        b1 = self.create_button(const.BACKGROUND_COLOR, self.on_background,
-            _(shortcut), _("Set background color ({})".format(shortcut)),
-            text=" ")
+    if preferences.PREFS.get(const.BACKGROUND_COLOR):
+        shortcut = utility.get_keybinding(preferences.KEYS, const.BACKGROUND_COLOR)
+        b1 = self.create_button(const.BACKGROUND_COLOR,
+                                self.on_background,
+                                _(shortcut),
+                                _("Set background color ({})".format(shortcut)),
+                                text=" ")
         self.setup_background_button(b1)
-        shortcut = preferences.get_keybinding(const.BACKGROUND_COLOR_CHANGE)
+        shortcut = utility.get_keybinding(preferences.KEYS, const.BACKGROUND_COLOR_CHANGE)
         b2 = self.create_button(const.BACKGROUND_COLOR_CHANGE,
-                             self.on_change_col, _(shortcut),
-                             _("Change color ({})".format(shortcut)),
-                             text=u"▾")
+                                self.on_change_col, _(shortcut),
+                                _("Change color ({})".format(shortcut)),
+                                # space is needed to center the arrow
+                                text=downArrow() + " ")
         b2.setFixedWidth(12)
 
-    if preferences.prefs.get(const.BLOCKQUOTE):
-        shortcut = preferences.get_keybinding(const.BLOCKQUOTE)
-        b = self.create_button(const.BLOCKQUOTE, self.toggleBlockquote,
-            _(shortcut), _("Insert blockquote ({})".format(shortcut)),
-            check=False)
+    if preferences.PREFS.get(const.BLOCKQUOTE):
+        shortcut = utility.get_keybinding(preferences.KEYS, const.BLOCKQUOTE)
+        b = self.create_button(const.BLOCKQUOTE,
+                               self.toggleBlockquote,
+                               _(shortcut),
+                               _("Insert blockquote ({})".format(shortcut)),
+                               check=False)
 
-    if preferences.prefs.get(const.TEXT_ALLIGN):
-        shortcut = preferences.get_keybinding(const.TEXT_ALLIGN_FLUSH_LEFT)
-        b1 = self.create_button(const.TEXT_ALLIGN_FLUSH_LEFT, self.justifyLeft,
-        _(shortcut), _("Align text left ({})".format(shortcut)),
-        check=False)
+    if preferences.PREFS.get(const.TEXT_ALLIGN):
+        shortcut = utility.get_keybinding(preferences.KEYS, const.TEXT_ALLIGN_FLUSH_LEFT)
+        b1 = self.create_button(const.TEXT_ALLIGN_FLUSH_LEFT,
+                                self.justifyLeft,
+                                _(shortcut),
+                                _("Align text left ({})".format(shortcut)),
+                                check=False)
 
-        shortcut = preferences.get_keybinding(const.TEXT_ALLIGN_CENTERED)
-        b2 = self.create_button(const.TEXT_ALLIGN_CENTERED, self.justifyCenter,
-            _(shortcut), _("Align text center ({})".format(shortcut)),
-            check=False)
+        shortcut = utility.get_keybinding(preferences.KEYS, const.TEXT_ALLIGN_CENTERED)
+        b2 = self.create_button(const.TEXT_ALLIGN_CENTERED,
+                                self.justifyCenter,
+                                _(shortcut),
+                                _("Align text center ({})".format(shortcut)),
+                                check=False)
 
-        shortcut = preferences.get_keybinding(const.TEXT_ALLIGN_FLUSH_RIGHT)
-        b3 = self.create_button(const.TEXT_ALLIGN_FLUSH_RIGHT, self.justifyRight,
-            _(shortcut), _("Align text right ({})".format(shortcut)),
-            check=False)
+        shortcut = utility.get_keybinding(preferences.KEYS, const.TEXT_ALLIGN_FLUSH_RIGHT)
+        b3 = self.create_button(const.TEXT_ALLIGN_FLUSH_RIGHT,
+                                self.justifyRight,
+                                _(shortcut),
+                                _("Align text right ({})".format(shortcut)),
+                                check=False)
 
-        shortcut = preferences.get_keybinding(const.TEXT_ALLIGN_JUSTIFIED)
-        b4 = self.create_button(const.TEXT_ALLIGN_JUSTIFIED, self.justifyFull,
-            _(shortcut), _("Justify text ({})".format(shortcut)),
-            check=False)
+        shortcut = utility.get_keybinding(preferences.KEYS, const.TEXT_ALLIGN_JUSTIFIED)
+        b4 = self.create_button(const.TEXT_ALLIGN_JUSTIFIED,
+                                self.justifyFull,
+                                _(shortcut),
+                                _("Justify text ({})".format(shortcut)),
+                                check=False)
 
-    if preferences.prefs.get(const.HEADING):
-        shortcut = preferences.get_keybinding(const.HEADING)
-        b = self.create_button(const.HEADING, self.toggleHeading,
-            _(shortcut), _("Insert heading ({})".format(shortcut)),
-            check=False)
+    if preferences.PREFS.get(const.HEADING):
+        shortcut = utility.get_keybinding(preferences.KEYS, const.HEADING)
+        b = self.create_button(const.HEADING,
+                               self.toggleHeading,
+                               _(shortcut),
+                               _("Insert heading ({})".format(shortcut)),
+                               check=False)
 
-    if preferences.prefs.get(const.ABBREVIATION):
-        shortcut = preferences.get_keybinding(const.ABBREVIATION)
-        b = self.create_button(const.ABBREVIATION, self.toggleAbbreviation,
-            _(shortcut), _("Insert abbreviation ({})".format(shortcut)),
-            check=False)
+    if preferences.PREFS.get(const.ABBREVIATION):
+        shortcut = utility.get_keybinding(preferences.KEYS, const.ABBREVIATION)
+        b = self.create_button(const.ABBREVIATION,
+                               self.toggleAbbreviation,
+                               _(shortcut),
+                               _("Insert abbreviation ({})".format(shortcut)),
+                               check=False)
 
-    if preferences.prefs.get(const.MARKDOWN):
-        shortcut = preferences.get_keybinding(const.MARKDOWN)
-        b = self.create_button(const.MARKDOWN, self.toggleMarkdown,
-            _(shortcut), _("Toggle Markdown ({})".format(shortcut)),
-            check=True)
+    if preferences.PREFS.get(const.MARKDOWN):
+        shortcut = utility.get_keybinding(preferences.KEYS, const.MARKDOWN)
+        b = self.create_button(const.MARKDOWN,
+                               self.toggleMarkdown,
+                               _(shortcut),
+                               _("Toggle Markdown ({})".format(shortcut)),
+                               check=True)
 
     if button_placement_pref != "adjacent":
         self.supp_buttons_hbox.insertStretch(0, 1)
@@ -214,7 +269,7 @@ def wrap_in_tags(self, tag, class_name=None):
     if not selection:
         return
 
-    selection = Utility.escape_html_chars(selection)
+    selection = utility.escape_html_chars(selection)
 
     tag_string_begin = ("<{0} class='{1}'>".format(tag, class_name) if
                         class_name else "<{0}>".format(tag))
@@ -310,10 +365,10 @@ def toggleUnorderedList(self):
 
 
 def toggleOrderedList(self):
-    if preferences.prefs.get("fixed_ol_type"):
-        OrderedList(self, self.parentWindow, preferences, True)
+    if preferences.PREFS.get("fixed_ol_type"):
+        OrderedList(self, self.parentWindow, utility, True)
     else:
-        OrderedList(self, self.parentWindow, preferences)
+        OrderedList(self, self.parentWindow, utility)
 
 
 def toggleStrikeThrough(self):
@@ -350,7 +405,7 @@ def setup_background_button(self, but):
     self.background_frame = QtGui.QFrame()
     self.background_frame.setAutoFillBackground(True)
     self.background_frame.setFocusPolicy(QtCore.Qt.NoFocus)
-    self.bg_color = preferences.prefs.get("last_bg_color", "#00f")
+    self.bg_color = preferences.PREFS.get("last_bg_color", "#00f")
     self.on_bg_color_changed()
     hbox = QtGui.QHBoxLayout()
     hbox.addWidget(self.background_frame)
@@ -380,8 +435,8 @@ def _update_background_button(self):
 
 def on_bg_color_changed(self):
     self._update_background_button()
-    preferences.prefs["last_bg_color"] = self.bg_color
-    preferences.save_prefs()
+    preferences.PREFS["last_bg_color"] = self.bg_color
+    PrefHelper.save_prefs(preferences.PREFS)
 
 
 def _wrap_with_bg_color(self, color):
@@ -500,7 +555,7 @@ def toggleHyperlink(self):
 
 
 def toggleMarkdown(self):
-    Utility.start_safe_block(const.MARKDOWN_PREFS)
+    utility.start_safe_block(const.MARKDOWN_PREFS)
     self.saveNow()
     selected = self.web.selectedHtml()
     current_field = self.currentField
@@ -519,7 +574,7 @@ def toggleMarkdown(self):
     self.saveNow()
     self.web.setFocus()
     self.web.eval("focusField(%d);" % self.currentField)
-    Utility.end_safe_block(const.MARKDOWN_PREFS)
+    utility.end_safe_block(const.MARKDOWN_PREFS)
 
 
 def on_focus_gained(self, note, field):
@@ -537,7 +592,7 @@ def on_focus_gained(self, note, field):
     if const.MARKDOWN_PREFS.get("safe_block"):
         return
     else:
-        Utility.start_safe_block(const.MARKDOWN_PREFS)
+        utility.start_safe_block(const.MARKDOWN_PREFS)
         try:
             time.sleep(0.001)
             self.saveNow()
@@ -559,7 +614,7 @@ def on_focus_gained(self, note, field):
             self.updateTags()
         except AttributeError as e:
             print e  # TODO: log error
-        Utility.end_safe_block(const.MARKDOWN_PREFS)
+        utility.end_safe_block(const.MARKDOWN_PREFS)
 
 
 def init_hook(self, mw, widget, parentWindow, addMode=False):
@@ -599,11 +654,7 @@ editor.Editor.toggleDefList = toggleDefList
 editor.Editor.toggleTable = toggleTable
 editor.Editor.setupButtons = wrap(editor.Editor.setupButtons, setup_buttons)
 
-preferences = Preferences(mw)
-try:
-    const.preferences
-except AttributeError:
-    const.preferences = preferences
+Preferences.init()
 
-mw.ExtraButtons_Options = ExtraButtons_Options(mw, preferences)
+mw.ExtraButtons_Options = ExtraButtons_Options(mw, preferences.PREFS)
 mw.ExtraButtons_Options.setup_extra_buttons_options()

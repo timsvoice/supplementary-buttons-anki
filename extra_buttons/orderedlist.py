@@ -18,7 +18,7 @@
 # with Supplementary Buttons for Anki. If not, see http://www.gnu.org/licenses/.
 
 from PyQt4 import QtGui, QtCore
-import const
+import utility
 
 
 class OrderedList(QtGui.QDialog):
@@ -33,7 +33,7 @@ class OrderedList(QtGui.QDialog):
             self.show_dialog_window()
         else:
             self.insert_ordered_list(
-                    const.preferences.prefs["fixed_ol_type"][0], 1)
+                    utility.preferences.prefs["fixed_ol_type"][0], 1)
 
     def show_dialog_window(self):
         self.setWindowTitle("Choose format for ordered list")

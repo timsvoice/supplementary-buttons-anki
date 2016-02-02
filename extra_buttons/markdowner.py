@@ -23,8 +23,9 @@ from anki.utils import json
 from aqt import mw
 from PyQt4 import QtGui
 
-from utility import Utility
+import utility
 import const
+import preferences
 
 
 class Markdowner(object):
@@ -75,39 +76,39 @@ class Markdowner(object):
             has_def_list = True
             self.create_correct_md_for_def_list()
             self.html = self.note.fields[self.current_field]
-        clean_md = Utility.convert_html_to_markdown(self.html)
+        clean_md = utility.convert_html_to_markdown(self.html)
         if has_def_list:
-            clean_md = Utility.remove_leading_whitespace_from_dd_element(clean_md)
-        clean_md = Utility.remove_whitespace_before_abbreviation_definition(
+            clean_md = utility.remove_leading_whitespace_from_dd_element(clean_md)
+        clean_md = utility.remove_whitespace_before_abbreviation_definition(
                 clean_md)
-        clean_md_escaped = Utility.escape_html_chars(clean_md)
+        clean_md_escaped = utility.escape_html_chars(clean_md)
         if not clean_md:
             return
         # check for changed Markdown between the stored data and the current text
         if (self.has_data and self.isconverted == "True"):
-            compare_md = Utility.convert_markdown_to_html(self.md)
-            compare_md = Utility.put_colons_in_html_def_list(compare_md)
-            compare_md = Utility.convert_html_to_markdown(compare_md)
+            compare_md = utility.convert_markdown_to_html(self.md)
+            compare_md = utility.put_colons_in_html_def_list(compare_md)
+            compare_md = utility.convert_html_to_markdown(compare_md)
             if has_def_list:
-                compare_md = Utility.remove_leading_whitespace_from_dd_element(compare_md)
-            compare_md = Utility.remove_whitespace_before_abbreviation_definition(
+                compare_md = utility.remove_leading_whitespace_from_dd_element(compare_md)
+            compare_md = utility.remove_whitespace_before_abbreviation_definition(
                     compare_md)
             if not any(x in compare_md for x in("&amp;", "&quot;", "&apos;",
                                                 "&gt;", "&lt;")):
-                compare_md_escaped = Utility.escape_html_chars(compare_md)
+                compare_md_escaped = utility.escape_html_chars(compare_md)
                 compare_md = compare_md_escaped
-            if (Utility.is_same_markdown(clean_md_escaped, compare_md) or
-                   const.preferences.prefs.get(const.MARKDOWN_ALWAYS_REVERT)):
+            if (utility.is_same_markdown(clean_md_escaped, compare_md) or
+                   preferences.PREFS.get(const.MARKDOWN_ALWAYS_REVERT)):
                 self.revert_to_stored_markdown()
             else:
                 self.handle_conflict()
         else:
             # make abbreviations behave correctly
-            new_html = Utility.convert_markdown_to_html(clean_md)
+            new_html = utility.convert_markdown_to_html(clean_md)
             # needed for proper display of images
             if "<img" in new_html:
-                new_html = Utility.unescape_html(new_html)
-            html_with_data = Utility.make_data_ready_to_insert(
+                new_html = utility.unescape_html(new_html)
+            html_with_data = utility.make_data_ready_to_insert(
                     self.current_note_id_and_field, "True",
                     clean_md_escaped, new_html)
             self.insert_markup_in_field(
@@ -125,8 +126,8 @@ class Markdowner(object):
         instance variables get set. Return True when data was found in the
         field, False otherwise.
         """
-        compr_dict = Utility.get_md_data_from_string(self.html)
-        md_dict = Utility.decompress_and_json_load(compr_dict)
+        compr_dict = utility.get_md_data_from_string(self.html)
+        md_dict = utility.decompress_and_json_load(compr_dict)
         if md_dict and md_dict == "corrupted":
             # TODO: fallback when JSON is corrupted
             # TODO: log this
@@ -212,16 +213,16 @@ class Markdowner(object):
         """
         Create new Markdown from the current HTML.
         """
-        clean_md = Utility.convert_html_to_markdown(
+        clean_md = utility.convert_html_to_markdown(
                 self.html, keep_empty_lines=True)
-        clean_md = Utility.remove_whitespace_before_abbreviation_definition(
+        clean_md = utility.remove_whitespace_before_abbreviation_definition(
                 clean_md)
         if "<dl" in self.html:
-            clean_md = Utility.remove_leading_whitespace_from_dd_element(
+            clean_md = utility.remove_leading_whitespace_from_dd_element(
                     clean_md, add_newline=True)
         if re.search(const.IS_LINK_OR_IMG_REGEX, clean_md):
-            clean_md = Utility.escape_html_chars(clean_md)
-        new_html = Utility.convert_clean_md_to_html(clean_md,
+            clean_md = utility.escape_html_chars(clean_md)
+        new_html = utility.convert_clean_md_to_html(clean_md,
                                                     put_breaks=True)
         self.insert_markup_in_field(new_html, self.current_field)
         const.MARKDOWN_PREFS["disable_buttons"] = False
@@ -232,7 +233,7 @@ class Markdowner(object):
         """
         Revert to the previous version of Markdown that was stored in the field.
         """
-        new_html = Utility.convert_clean_md_to_html(self.md, put_breaks=True)
+        new_html = utility.convert_clean_md_to_html(self.md, put_breaks=True)
         self.insert_markup_in_field(new_html, self.current_field)
         const.MARKDOWN_PREFS["disable_buttons"] = False
         const.MARKDOWN_PREFS["isconverted"] = False
@@ -283,7 +284,7 @@ class Markdowner(object):
             for (var j = 0; j < tables.length; j++) {
                 tables[j].setAttribute('align', '%s');
             }
-        """ % const.preferences.prefs.get(const.MARKDOWN_CODE_DIRECTION))
+        """ % preferences.PREFS.get(const.MARKDOWN_CODE_DIRECTION))
 
         # footnotes
         self.editor_instance.web.eval("""

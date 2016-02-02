@@ -13,7 +13,7 @@ else
 fi
 
 CURRENT_VERSION=$(sed -r 's/__version__ = "([^"]+)"/\1/' extra_buttons/docs/_version.py)
-FILES=("extra_buttons/utility.py" "extra_buttons/docs/_version.py")
+FILES=(extra_buttons/const.py extra_buttons/docs/_version.py)
 
 for file in "${FILES[@]}"; do
     if [ -f "$file".bak ]; then

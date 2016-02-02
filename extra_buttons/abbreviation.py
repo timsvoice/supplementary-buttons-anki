@@ -21,7 +21,7 @@ import string
 import random
 
 from PyQt4 import QtGui
-from utility import Utility
+import utility
 
 
 class Abbreviation(object):
@@ -98,8 +98,8 @@ class Abbreviation(object):
 
     def insert_abbreviation(self, text, title):
         # escape HTML
-        text = Utility.escape_html_chars(text)
-        title = Utility.escape_html_chars(title)
+        text = utility.escape_html_chars(text)
+        title = utility.escape_html_chars(title)
         # unicode
         assert isinstance(text, unicode)
         assert isinstance(title, unicode)
@@ -114,7 +114,6 @@ class Abbreviation(object):
                 var marker = '@#!';
                 var toBeInserted = marker + abbr.outerHTML + marker;
                 document.execCommand('insertHTML', false, toBeInserted);
-
                 var elem = document.getElementById('%s');
                 var leftString = elem.previousSibling.nodeValue;
                 var rightString = elem.nextSibling.nodeValue;
@@ -123,4 +122,4 @@ class Abbreviation(object):
                 elem.nextSibling.nodeValue =
                         rightString.substring(marker.length);
                 elem.removeAttribute('id');
-        """ % (text, title, div_id, self.editor_instance.currentField, div_id))
+        """ % (text, title, div_id, div_id))

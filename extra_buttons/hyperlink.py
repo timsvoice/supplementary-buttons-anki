@@ -17,12 +17,12 @@
 # You should have received a copy of the GNU General Public License along
 # with Supplementary Buttons for Anki. If not, see http://www.gnu.org/licenses/.
 
-import re
+# import re
 import json
 
 from PyQt4 import QtGui
+import utility
 import const
-from utility import Utility
 
 
 class Hyperlink(object):
@@ -104,7 +104,7 @@ class Hyperlink(object):
         # if not match:
         #     url = u"http://" + url
 
-        text = Utility.escape_html_chars(text)
+        text = utility.escape_html_chars(text)
 
         return u"<a href=\"{0}\">{1}</a>".format(url, text)
 

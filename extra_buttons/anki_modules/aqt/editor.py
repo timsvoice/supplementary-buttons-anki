@@ -4,17 +4,13 @@
 
 from aqt.qt import *
 from aqt.utils import openHelp
-from anki.utils import isWin
 from aqt.utils import shortcut
 
 import aqt
 from BeautifulSoup import BeautifulSoup
-if isWin:
-    from utility import Utility
-    import const
-else:
-    from ...utility import Utility
-    from ... import const
+from ... import const
+from ... import preferences
+from ...prefhelper import PrefHelper
 
 
 def onHtmlEdit(self):
@@ -81,11 +77,11 @@ def create_button(self, name, func, key=None, tip=None, size=True, text="",
     if canDisable:
         self._buttons[name] = button
 
-    Utility.set_icon(button, name)
+    PrefHelper.set_icon(button, name)
 
     const.BUTTONS.append(button)
 
-    button_placement_pref = const.preferences.prefs.get(const.BUTTON_PLACEMENT)
+    button_placement_pref = preferences.PREFS.get(const.BUTTON_PLACEMENT)
 
     if button_placement_pref == "adjacent":
         self.iconsBox.addWidget(button)

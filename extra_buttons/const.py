@@ -28,7 +28,7 @@ import time
 ##################################################
 
 PROGRAM_NAME  = "Supplementary Buttons for Anki"
-VERSION       = "0.8.6.2"
+VERSION       = "0.8.6.3"
 YEAR_START    = 2014
 YEAR_LAST     = time.strftime("%Y")
 ANKIWEB_URL   = "https://ankiweb.net/shared/info/162313389"

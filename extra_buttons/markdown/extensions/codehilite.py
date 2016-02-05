@@ -17,6 +17,9 @@ License: [BSD](http://www.opensource.org/licenses/bsd-license.php)
 
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import platform
+
 from . import Extension
 from ..treeprocessors import Treeprocessor
 
@@ -24,6 +27,7 @@ try:
     import os
     import sys
     # hack to put the the addons's path on PYTHONPATH
+    isWin = platform.system() == "Windows"
 
     # first delete pygments if it is already imported from another source
     try:
@@ -32,14 +36,18 @@ try:
         print e
 
     for package in sys.path:
-        if type(package) != unicode:
-            package = unicode(package, "utf8")
+        if isWin:
+            package = package.decode(sys.getfilesystemencoding())
 
         try:
             if package.endswith(u"addons"):
-                sys.path.insert(0, os.path.join(package, u"extra_buttons"))
+                if isWin:
+                    path = os.path.join(package, u"extra_buttons")
+                    sys.path.insert(0, path.encode(sys.getfilesystemencoding()))
+                else:
+                    sys.path.insert(0, os.path.join(package, u"extra_buttons"))
                 break
-        except UnicodeDecodeError as e:
+        except (UnicodeDecodeError, UnicodeEncodeError) as e:
             print e  # TODO: log error
             raise ImportError
 

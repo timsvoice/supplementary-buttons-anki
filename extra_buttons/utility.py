@@ -29,6 +29,7 @@ import time
 
 from PyQt4 import QtGui
 from anki.utils import intTime, json, isMac
+from aqt.utils import isWin
 
 from html2text import html2text
 from html2text_overrides import escape_md_section_override
@@ -733,3 +734,10 @@ def split_string(text, splitlist):
     for sep in splitlist:
         text = text.replace(sep, splitlist[0])
     return [x for x in text.split(splitlist[0]) if x]
+
+
+def downArrow():
+    if isWin:
+        return u"▼"
+    # windows 10 is lacking the smaller arrow on English installs
+    return u"▾"

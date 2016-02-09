@@ -24,7 +24,6 @@ import time
 
 from anki.utils import json
 from aqt import editor, mw
-from aqt.utils import downArrow
 from anki.hooks import wrap, addHook
 from anki.utils import isWin, isMac
 from PyQt4 import QtGui, QtCore
@@ -181,7 +180,7 @@ def setup_buttons(self):
                                 self.on_change_col, _(shortcut),
                                 _("Change color ({})".format(shortcut)),
                                 # space is needed to center the arrow
-                                text=downArrow() + " ")
+                                text=utility.downArrow() + " ")
         b2.setFixedWidth(12)
 
     if preferences.PREFS.get(const.BLOCKQUOTE):

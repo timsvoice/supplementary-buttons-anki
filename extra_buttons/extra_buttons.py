@@ -365,9 +365,9 @@ def toggleUnorderedList(self):
 
 def toggleOrderedList(self):
     if preferences.PREFS.get("fixed_ol_type"):
-        OrderedList(self, self.parentWindow, utility, True)
+        OrderedList(self, self.parentWindow, True)
     else:
-        OrderedList(self, self.parentWindow, utility)
+        OrderedList(self, self.parentWindow)
 
 
 def toggleStrikeThrough(self):

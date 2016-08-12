@@ -5,16 +5,36 @@ set -o nounset
 
 set -xv
 
+if [ -d extra_buttons ]; then
+    case "$PYTHONPATH" in
+        *extra_buttons*)
+            echo "PYTHONPATH already contains the needed path..."
+            ;;
+        *)
+            extra_path="$(pwd)"/extra_buttons
+            export PYTHONPATH="$PYTHONPATH:$extra_path"
+            echo "Added '$extra_path' to PYTHONPATH..."
+            ;;
+    esac
+fi
+
+# override unit testing
+override="${1:-}"
+
 check_return_value() {
-    if [ $1 -ne 0 ]; then
+    if [ "$1" -ne 0 ]; then
         echo "Command did not run succesfully. Please check. Exiting..."
         exit 1
     fi
 }
 
-# run tests before creating zip
-nosetests2 -x --rednose
-check_return_value $?
+if [ -n "$override" ] && [ "$override" = "override" ]; then
+    echo "Not running unit tests..."
+else
+    # run tests before creating zip
+    nosetests2 -x --rednose
+    check_return_value $?
+fi
 
 # remove asserts from files
 while read -r file; do

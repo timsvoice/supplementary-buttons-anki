@@ -242,7 +242,7 @@ def setup_buttons(self):
                                self.toggleMarkdown,
                                _(shortcut),
                                _("Toggle Markdown ({})".format(shortcut)),
-                               check=True)
+                               check=False)
 
     if button_placement_pref != "adjacent":
         self.supp_buttons_hbox.insertStretch(0, 1)
@@ -580,13 +580,14 @@ def on_focus_gained(self, note, field):
 
     tags = note.tags
 
-    if const.MARKDOWN_PREFS.get("disable_buttons"):
-        # disable all buttons except for the Markdown toggle
-        self.disableButtons()
-        markdown_button = self._buttons.get(const.MARKDOWN)
-        if markdown_button:
-            markdown_button.setChecked(True)
-            markdown_button.setEnabled(True)
+    if not preferences.PREFS.get(const.MARKDOWN_OVERRIDE_EDITING):
+        if const.MARKDOWN_PREFS.get("disable_buttons"):
+            # disable all buttons except for the Markdown toggle
+            self.disableButtons()
+            markdown_button = self._buttons.get(const.MARKDOWN)
+            if markdown_button:
+                # markdown_button.setChecked(True)
+                markdown_button.setEnabled(True)
 
     if const.MARKDOWN_PREFS.get("safe_block"):
         return

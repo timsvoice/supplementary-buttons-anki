@@ -34,48 +34,68 @@ class ExtraButtons_Options(QtGui.QMenu):
         super(ExtraButtons_Options, self).__init__()
         self.main_window = main_window
         self.list_of_radio_buttons = list()
+        config_path = os.path.join(PrefHelper.get_addons_folder(),
+                                   const.FOLDER_NAME,
+                                   const.CONFIG_FILENAME)
+        self.c = utility.get_config_parser(config_path)
 
-    def button_switch(self, state):
+    def button_switch(self, state, name):
         """
         Puts a button either on or off. Reverses current state.
         """
-        source = self.sender()
-        name = source.text()
+        # source = self.sender()
+        # name = source.text()
         # deprettify
-        name = name.lower().replace(" ", "_")
+        # name = self.deprettify_option_name(name)
         current_state = preferences.PREFS.get(name)
         if current_state is None:
             raise Exception("{!r} not in preferences".format(name))
         if bool(state) != current_state:
             preferences.PREFS[name] = not current_state
 
-    def create_checkbox(self, name):
-        # TODO: better names, maybe stored in properties file
-        # prettify option name
-        pretty_name = name.replace("_", " ").capitalize()
-        checkbox = QtGui.QCheckBox(pretty_name, self)
+    def prettify_option_name(self, s):
+        """
+        Replace the underscore in the option name with a space and capitalize
+        the resulting string.
+        """
+        return s.replace("_", " ").capitalize()
+
+    def deprettify_option_name(self, s):
+        """
+        Replace the space in the option name with an underscore and make the
+        resultant string lowercase.
+        """
+        return s.replace(" ", "_").lower()
+
+    def create_checkbox(self, name, pretty_name=None, label=None):
+        checkbox = QtGui.QCheckBox(pretty_name or label or name, self)
         if preferences.PREFS.get(name):
             checkbox.setChecked(True)
-        checkbox.stateChanged.connect(self.button_switch)
+        checkbox.stateChanged.connect(
+                lambda: self.button_switch(checkbox.isChecked(), name))
         return checkbox
 
     def create_radiobutton(self, name):
-        radiobutton = QtGui.QRadioButton(name)
-        return radiobutton
+        return QtGui.QRadioButton(name)
 
     def setup_extra_buttons_options(self):
 
-        sub_menu_title = "&Supplementary buttons add-on (options)"
+        sub_menu_title = self.c.get(const.CONFIG_MENU_NAMES, "sub_menu")
         sub_menu = self.main_window.form.menuTools.addMenu(sub_menu_title)
 
-        options_action = QtGui.QAction("&Button options...", self.main_window)
+        options_action = QtGui.QAction(
+                self.c.get(const.CONFIG_MENU_NAMES, "options_action"),
+                self.main_window)
         options_action.triggered.connect(self.show_option_dialog)
 
         about_action = QtGui.QAction(
-                "&About {0}...".format(const.PROGRAM_NAME), self.main_window)
+                self.c.get(const.CONFIG_MENU_NAMES, "about_action"),
+                self.main_window)
         about_action.triggered.connect(self.show_about_dialog)
 
-        doc_action = QtGui.QAction("&Documentation...", self.main_window)
+        doc_action = QtGui.QAction(
+                self.c.get(const.CONFIG_MENU_NAMES, "doc_action"),
+                self.main_window)
         doc_action.triggered.connect(self.show_doc_dialog)
 
         sub_menu.addAction(options_action)
@@ -84,10 +104,11 @@ class ExtraButtons_Options(QtGui.QMenu):
 
     def show_doc_dialog(self):
         dialog = QtGui.QDialog(self)
-        dialog.setWindowTitle("Supplementary Buttons for Anki Documentation")
+        dialog.setWindowTitle(self.c.get(const.CONFIG_WINDOW_TITLES,
+                                         "doc_dialog"))
 
         filename = os.path.join(PrefHelper.get_addons_folder(),
-                                "extra_buttons",
+                                const.FOLDER_NAME,
                                 "docs",
                                 "doc_start.html")
 
@@ -112,19 +133,9 @@ class ExtraButtons_Options(QtGui.QMenu):
         dialog.exec_()
 
     def show_about_dialog(self):
-        QtGui.QMessageBox.about(
-            self.main_window,
-            "About {0} v{1}".format(const.PROGRAM_NAME, const.VERSION),
-            """\
-        Copyright: <b>Stefan van den Akker</b>, {0}-{1}<br />
-        Version: {2}<br />
-        Email: <a href="mailto:{3}">{3}</a><br />
-        Bugs & feature requests or if you want to help out with code:
-            <a href="{4}">Github</a><br /><br />
-        Don't forget to rate and share your thoughts on <a href="{5}">AnkiWeb</a>!
-            """.format(const.YEAR_START, const.YEAR_LAST, const.VERSION,
-                       const.EMAIL, const.GITHUB_URL, const.ANKIWEB_URL)
-        )
+        QtGui.QMessageBox.about(self.main_window,
+                                self.c.get(const.CONFIG_WINDOW_TITLES, "about"),
+                                self.c.get(const.CONFIG_ABOUT, "about"))
 
     def enable_radio_buttons(self, checkbox):
         if checkbox.isChecked():
@@ -136,9 +147,23 @@ class ExtraButtons_Options(QtGui.QMenu):
             for rb in self.list_of_radio_buttons:
                 rb.setEnabled(False)
 
+    def override_disabled_buttons_rendered_markdown(self):
+        """
+        Create a checkbox that controls whether or not to allow editing when
+        the Markdown is rendered.
+        """
+        cb = self.create_checkbox(const.MARKDOWN_OVERRIDE_EDITING,
+                                  None,
+                                  self.c.get(const.CONFIG_LABELS,
+                                             "edit_rendered_markdown_label"))
+        utility.set_tool_tip(cb, self.c.get(const.CONFIG_TOOLTIPS,
+                                            "edit_rendered_markdown_tooltip"))
+        return cb
+
     def show_option_dialog(self):
         option_dialog = QtGui.QDialog(self.main_window)
-        option_dialog.setWindowTitle("Options for Supplementary Buttons")
+        option_dialog.setWindowTitle(self.c.get(const.CONFIG_WINDOW_TITLES,
+                                                "option_dialog"))
 
         grid = QtGui.QGridLayout()
         l = [k for k in preferences.PREFS.keys() if k not in (
@@ -149,14 +174,16 @@ class ExtraButtons_Options(QtGui.QMenu):
                                                 const.MARKDOWN_LINE_NUMS,
                                                 const.MARKDOWN_ALWAYS_REVERT,
                                                 const.MARKDOWN_CODE_DIRECTION,
-                                                const.BUTTON_PLACEMENT
+                                                const.BUTTON_PLACEMENT,
+                                                const.MARKDOWN_OVERRIDE_EDITING
                                             )]
         num_items = len(l) / 2.0
         num_items = num_items + 0.5 if (num_items % 1.0 > 0.0) else num_items
 
         # go through the keys in the prefs and make QCheckBoxes for them
         for index, option in enumerate(sorted(l)):
-            checkbox = self.create_checkbox(option)
+            pretty_option = self.prettify_option_name(option)
+            checkbox = self.create_checkbox(option, pretty_option)
             if index >= num_items:
                 col = 1
                 row = index - num_items
@@ -167,22 +194,21 @@ class ExtraButtons_Options(QtGui.QMenu):
                 grid.addWidget(checkbox, row, col)
 
         cssClassLabel = QtGui.QLabel(
-                "CSS class for &lt;code&gt; and &lt;pre&gt; code blocks", self)
-        cssClassLabel.setToolTip("""\
-This class will be automatically added when you use the code and pre buttons.
-You can add the CSS you want in your stylesheet and refer to this class. E.g.
-.myCodeClass { color: red; } will color the text of your code and pre elements
-red.\
-        """)
+            self.c.get(const.CONFIG_LABELS, "code_pre_label"), self)
+        cssClassLabel.setToolTip(self.c.get(const.CONFIG_TOOLTIPS,
+                                            "code_pre_tooltip"))
         cssClassText = QtGui.QLineEdit(
                 preferences.PREFS.get(const.CODE_CLASS), self)
         cssClassHBox = QtGui.QHBoxLayout()
         cssClassHBox.addWidget(cssClassLabel)
         cssClassHBox.addWidget(cssClassText)
 
-        checkBox = QtGui.QCheckBox("Fix ordered list type", self)
-        checkBox.setToolTip("Do not show the choice dialog each time, "
-                            "but always use the selected list type.")
+        checkBox = QtGui.QCheckBox(
+                self.c.get(const.CONFIG_LABELS,
+                           "ordered_list_type_label"),
+                self)
+        checkBox.setToolTip(self.c.get(const.CONFIG_TOOLTIPS,
+                                       "ordered_list_type_tooltip"))
         if preferences.PREFS.get(const.FIXED_OL_TYPE):
             checkBox.setChecked(True)
         else:
@@ -224,7 +250,7 @@ red.\
         # Markdown syntax highlighting
 
         md_style_label = QtGui.QLabel(
-                "Markdown syntax highlighting style", self)
+                    self.c.get(const.CONFIG_LABELS, "md_style_label"), self)
         md_style_combo = QtGui.QComboBox(self)
         md_style_combo.setMinimumWidth(const.MIN_COMBOBOX_WIDTH)
         md_style_files = os.listdir(os.path.join(PrefHelper.get_addons_folder(),
@@ -255,7 +281,7 @@ red.\
 
         # line numbers Markdown code highlighting
         linenums_cb = QtGui.QCheckBox(
-                "Toggle line numbers in code blocks", self)
+                self.c.get(const.CONFIG_LABELS, "linenums_cb_label"), self)
         if preferences.PREFS.get(const.MARKDOWN_LINE_NUMS):
             linenums_cb.setChecked(True)
 
@@ -263,7 +289,8 @@ red.\
         linenums_hbox.addWidget(linenums_cb)
 
         # align Markdown code block
-        code_align_label = QtGui.QLabel(u"Alignment for Markdown code blocks")
+        code_align_label = QtGui.QLabel(self.c.get(const.CONFIG_LABELS,
+                                                   "code_align_label"))
         code_align_combo = QtGui.QComboBox(self)
         code_align_combo.setMinimumWidth(const.MIN_COMBOBOX_WIDTH)
         alignments = ("left", "center", "right")
@@ -277,19 +304,25 @@ red.\
         code_align_hbox.addStretch(1)
         code_align_hbox.addWidget(code_align_combo)
 
-        # always revert automatically back to old Markdown
+        # option to always revert automatically back to old Markdown
         # and skip the warning dialog
         automatic_revert_cb = QtGui.QCheckBox(
-                "Always revert back automatically to old Markdown", self)
-        automatic_revert_cb.setToolTip("""\
-Do not show the warning dialog each time a conflict occurs, but revert back to
-the old Markdown, discarding any changes made.\
-""")
+                self.c.get(const.CONFIG_LABELS,
+                           "automatic_revert_cb_label"),
+                self)
+        utility.set_tool_tip(automatic_revert_cb,
+                             self.c.get(const.CONFIG_TOOLTIPS,
+                                        "automatic_revert_cb_tooltip"))
         if preferences.PREFS.get(const.MARKDOWN_ALWAYS_REVERT):
             automatic_revert_cb.setChecked(True)
 
         automatic_revert_hbox = QtGui.QHBoxLayout()
         automatic_revert_hbox.addWidget(automatic_revert_cb)
+
+        # override disabled buttons in rendered Markdown
+        edit_rendered_md_cb = self.override_disabled_buttons_rendered_markdown()
+        edit_rendered_md_cb_hbox = QtGui.QHBoxLayout()
+        edit_rendered_md_cb_hbox.addWidget(edit_rendered_md_cb)
 
         # button placement
         button_placement_label = QtGui.QLabel(u"Buttons placement")
@@ -324,6 +357,7 @@ the old Markdown, discarding any changes made.\
         vbox.addLayout(code_align_hbox)
         vbox.addLayout(linenums_hbox)
         vbox.addLayout(automatic_revert_hbox)
+        vbox.addLayout(edit_rendered_md_cb_hbox)
         vbox.addWidget(button_box)
 
         option_dialog.setLayout(vbox)

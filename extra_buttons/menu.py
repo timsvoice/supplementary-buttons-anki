@@ -187,11 +187,10 @@ class ExtraButtons_Options(QtGui.QMenu):
             if index >= num_items:
                 col = 1
                 row = index - num_items
-                grid.addWidget(checkbox, row, col)
             else:
                 col = 0
                 row = index
-                grid.addWidget(checkbox, row, col)
+            grid.addWidget(checkbox, row, col)
 
         cssClassLabel = QtGui.QLabel(
             self.c.get(const.CONFIG_LABELS, "code_pre_label"), self)
@@ -248,7 +247,6 @@ class ExtraButtons_Options(QtGui.QMenu):
             hbox.addWidget(rb)
 
         # Markdown syntax highlighting
-
         md_style_label = QtGui.QLabel(
                     self.c.get(const.CONFIG_LABELS, "md_style_label"), self)
         md_style_combo = QtGui.QComboBox(self)

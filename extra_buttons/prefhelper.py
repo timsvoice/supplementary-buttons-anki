@@ -109,7 +109,7 @@ class PrefHelper(object):
                 const.TEXT_ALLIGN:                  True,
                 const.HEADING:                      True,
                 const.ABBREVIATION:                 True,
-                const.MARKDOWN:                     True
+                const.MARKDOWN:                     False
         }
 
         return _default_conf

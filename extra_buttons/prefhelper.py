@@ -83,32 +83,33 @@ class PrefHelper(object):
         # the default preferences that are used when no custom preferences
         # are found, or when the user preferences are corrupted
         _default_conf = {
-                const.CODE_CLASS:               const.CODE_AND_PRE_CLASS,
-                const.LAST_BG_COLOR:            "#00f",
-                const.FIXED_OL_TYPE:            "",
-                const.MARKDOWN_SYNTAX_STYLE:    "tango",
-                const.MARKDOWN_CODE_DIRECTION:  "left",
-                const.MARKDOWN_LINE_NUMS:       False,
-                const.MARKDOWN_ALWAYS_REVERT:   False,
-                const.BUTTON_PLACEMENT:         "adjacent",
-                const.CODE:                     True,
-                const.UNORDERED_LIST:           True,
-                const.ORDERED_LIST:             True,
-                const.STRIKETHROUGH:            True,
-                const.PRE:                      True,
-                const.HORIZONTAL_RULE:          True,
-                const.INDENT:                   True,
-                const.OUTDENT:                  True,
-                const.DEFINITION_LIST:          True,
-                const.TABLE:                    True,
-                const.KEYBOARD:                 True,
-                const.HYPERLINK:                True,
-                const.BACKGROUND_COLOR:         True,
-                const.BLOCKQUOTE:               True,
-                const.TEXT_ALLIGN:              True,
-                const.HEADING:                  True,
-                const.ABBREVIATION:             True,
-                const.MARKDOWN:                 True
+                const.CODE_CLASS:                   const.CODE_AND_PRE_CLASS,
+                const.LAST_BG_COLOR:                "#00f",
+                const.FIXED_OL_TYPE:                "",
+                const.MARKDOWN_SYNTAX_STYLE:        "tango",
+                const.MARKDOWN_CODE_DIRECTION:      "left",
+                const.MARKDOWN_LINE_NUMS:           False,
+                const.MARKDOWN_ALWAYS_REVERT:       False,
+                const.MARKDOWN_OVERRIDE_EDITING:    False,
+                const.BUTTON_PLACEMENT:             "adjacent",
+                const.CODE:                         True,
+                const.UNORDERED_LIST:               True,
+                const.ORDERED_LIST:                 True,
+                const.STRIKETHROUGH:                True,
+                const.PRE:                          True,
+                const.HORIZONTAL_RULE:              True,
+                const.INDENT:                       True,
+                const.OUTDENT:                      True,
+                const.DEFINITION_LIST:              True,
+                const.TABLE:                        True,
+                const.KEYBOARD:                     True,
+                const.HYPERLINK:                    True,
+                const.BACKGROUND_COLOR:             True,
+                const.BLOCKQUOTE:                   True,
+                const.TEXT_ALLIGN:                  True,
+                const.HEADING:                      True,
+                const.ABBREVIATION:                 True,
+                const.MARKDOWN:                     True
         }
 
         return _default_conf
@@ -140,7 +141,7 @@ class PrefHelper(object):
                 const.TEXT_ALLIGN_CENTERED:         u"ctrl+shift+alt+b",
                 const.HEADING:                      u"ctrl+alt+1",
                 const.ABBREVIATION:                 u"shift+alt+a",
-                const.MARKDOWN:                     u"ctrl+shift+d"
+                const.MARKDOWN:                     u"ctrl+shift+0"
         }
         # Mac OS keybindings are the same as Linux/Windows bindings,
         # except for the following
@@ -159,7 +160,6 @@ class PrefHelper(object):
         """
         Return the addon folder used by Anki.
         """
-
         return main_window.pm.addonFolder()
 
     @staticmethod
@@ -167,7 +167,6 @@ class PrefHelper(object):
         """
         Save the preferences to disk, encoded.
         """
-
         encoded_prefs = base64.b64encode(json.dumps(prefs))
         with codecs.open(PrefHelper.get_preference_path(), "w", encoding="utf8") as f:
             f.write(encoded_prefs)
@@ -235,49 +234,18 @@ class PrefHelper(object):
         keybindings file. Override any changes made to an existing file.
         """
 
-        contents = u"""\
-// This file contains the keybindings that are used for Supplementary Buttons
-// for Anki. Here you can assign new shortcuts. Please keep in mind that there
-// is no check for duplicate keybindings. This means that when a keybinding is
-// already taken by either your OS, Anki, this addon, or some other running
-// program, the result is undefined.
-//
-// This file needs to contain valid JSON. Basically this means that
-// the key-value pairs should be enclosed in double quotes:
-// "key": "value"
-// The opening and closing braces { and } are mandatory. Each key-value pair
-// should contain a colon : and should end with a comma, except for the last
-// pair.
-//
-// Invalid JSON cannot be parsed and will result in the use of the default
-// keybindings. If you find that your new keybindings don't work (i.e. they
-// don't show up in Anki, despite you changing this file), please use
-// a JSON validator to check for faulty JSON.
-//
-// Modifier keys that can be used include: the function keys (F1 through F12),
-// Ctrl, Alt, Shift, ASCII alphanumeric characters, and ASCII punctuation
-// characters. For Mac OS X, be advised that Ctrl maps to the Cmd key (or
-// "Apple key"), NOT to Ctrl. If you want to use the Ctrl modifier on Mac OS X,
-// use Meta instead. So, Ctrl+Shift+[ on Linux or Windows maps to Meta+Shift+[
-// on Mac OS X. Ctrl+Shift+[ on Mac OS X will require you to type Cmd+Shift+[
-// in Anki. Please make sure you understand this before opening bug reports.
-//
-// The use of an invalid key sequence will silently revert the sequence to the
-// default setting. For example, invalid sequences are:
-// * only modifier keys: Ctrl+Shift
-// * empty sequence
-// * non-existing modifier keys: Ctrl+Iota+j
-//
-// The order or case of the keys is unimportant. Ctrl+Alt+p is the same as
-// ALT+CTRL+P or even p+Ctrl+Alt.
-//
-// If you want to revert your changes to the default keybindings provided by
-// Supplementary Buttons for Anki, please remove this JSON file in your addon
-// folder.
-{"""
+        config_path = os.path.join(PrefHelper.get_addons_folder(),
+                                   const.FOLDER_NAME,
+                                   const.CONFIG_FILENAME)
+        c = utility.get_config_parser(config_path)
+
+        contents = c.get(const.CONFIG_KEYBINDINGS, "help_text")
+        contents += u"\n\n{\n"
+
         for key, value in sorted(PrefHelper.get_default_keybindings().iteritems()):
-            contents += u"\"{}\": \"{}\",\n".format(key, value)
-        contents += u"\"_version\": \"{}\"\n".format(const.VERSION)
+            contents += u"    \"{}\": \"{}\",\n".format(key, value)
+
+        contents += u"    \"_version\": \"{}\"\n".format(const.VERSION)
         contents += u"}"
 
         try:

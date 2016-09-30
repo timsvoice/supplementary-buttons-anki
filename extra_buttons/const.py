@@ -28,7 +28,7 @@ import time
 ##################################################
 
 PROGRAM_NAME  = "Supplementary Buttons for Anki"
-VERSION       = "0.8.6.5"
+VERSION       = "0.8.7.0"
 YEAR_START    = 2014
 YEAR_LAST     = time.strftime("%Y")
 ANKIWEB_URL   = "https://ankiweb.net/shared/info/162313389"
@@ -93,6 +93,7 @@ MARKDOWN_SYNTAX_STYLE         = "markdown_syntax_style"
 MARKDOWN_LINE_NUMS            = "markdown_line_nums"
 MARKDOWN_CODE_DIRECTION       = "markdown_code_direction"
 MARKDOWN_ALWAYS_REVERT        = "markdown_always_revert"
+MARKDOWN_OVERRIDE_EDITING     = "markdown_override_editing"
 BUTTON_PLACEMENT              = "button_placement"
 
 # constants for key sequence
@@ -124,3 +125,13 @@ MAX_BYTES_PREFS               = 32768
 IS_LINK_OR_IMG_REGEX = re.compile(r"!?\[[^\]]*\]\(.*?(?<!\\)\)")
 # to unescape image data
 HTML_PARSER                   = HTMLParser.HTMLParser()
+
+# config file
+CONFIG_FILENAME               = "config.ini"
+CONFIG_LABELS                 = "Labels"
+CONFIG_TOOLTIPS               = "ToolTips"
+CONFIG_WINDOW_TITLES          = "WindowTitles"
+CONFIG_MENU_NAMES             = "MenuNames"
+CONFIG_ABOUT                  = "About"
+CONFIG_DIALOG_SIZES           = "DialogSizes"
+CONFIG_KEYBINDINGS            = "Keybindings"

@@ -26,6 +26,7 @@ import BeautifulSoup
 import re
 import string
 import time
+import ConfigParser
 
 from PyQt4 import QtGui
 from anki.utils import intTime, json, isMac
@@ -741,3 +742,22 @@ def downArrow():
         return u"▼"
     # windows 10 is lacking the smaller arrow on English installs
     return u"▾"
+
+
+def get_config_parser(path):
+    """
+    Return a RawConfigParser for the specified path.
+    """
+    config = ConfigParser.ConfigParser()
+    ret = config.read(path)
+    if not ret:
+        raise Exception("Could not read config file {!r}".format(path))
+    return config
+
+
+def set_tool_tip(elem, tip):
+    """
+    Set a "rich-text" tool tip for `elem`, as that will trigger automatic
+    word-wrap in Qt.
+    """
+    elem.setToolTip("<font>" + tip + "</font>")

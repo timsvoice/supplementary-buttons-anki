@@ -17,8 +17,13 @@
 # You should have received a copy of the GNU General Public License along
 # with Supplementary Buttons for Anki. If not, see http://www.gnu.org/licenses/.
 
+import os
+
 from PyQt4 import QtGui, QtCore
 import preferences
+from prefhelper import PrefHelper
+import const
+import utility
 
 
 class OrderedList(QtGui.QDialog):
@@ -28,6 +33,10 @@ class OrderedList(QtGui.QDialog):
     def __init__(self, other, parent_window, fixed=False):
         super(OrderedList, self).__init__(parent_window)
         self.editor_instance = other
+        config_path = os.path.join(PrefHelper.get_addons_folder(),
+                                   const.FOLDER_NAME,
+                                   const.CONFIG_FILENAME)
+        self.c = utility.get_config_parser(config_path)
 
         if not fixed:
             self.show_dialog_window()
@@ -36,20 +45,13 @@ class OrderedList(QtGui.QDialog):
                     preferences.PREFS["fixed_ol_type"][0], 1)
 
     def show_dialog_window(self):
-        self.setWindowTitle("Choose format for ordered list")
+        self.setWindowTitle(self.c.get(const.CONFIG_WINDOW_TITLES,
+                                       "ordered_list"))
 
-        stylesheet = """
-        QGroupBox { border: 1px inset lightgrey;
-                            border-radius: 5px;
-                            margin-top: 10px;
-                            font-weight: bold; }
-        QGroupBox::title {  subcontrol-origin: margin;
-                            subcontrol-position: top;
-                            padding:0 3px 0 3px; }
-        """
-
-        groupbox = QtGui.QGroupBox("Type", self)
-        groupbox.setStyleSheet(stylesheet)
+        groupbox = QtGui.QGroupBox(
+                self.c.get(const.CONFIG_LABELS, "ordered_list_type_label"),
+                self)
+        groupbox.setStyleSheet(const.QGROUPBOX_STYLE)
 
         # stylesheet for the radio buttons
         self.setStyleSheet("QRadioButton { font-weight: bold; }")
@@ -82,7 +84,9 @@ class OrderedList(QtGui.QDialog):
 
         groupbox.setLayout(radio_vbox)
 
-        start_label = QtGui.QLabel("<b>Start:</b>", self)
+        start_label = QtGui.QLabel(
+                self.c.get(const.CONFIG_LABELS, "ordered_list_start_label"),
+                self)
 
         spinbox = QtGui.QSpinBox(self)
         spinbox.setMinimum(1)

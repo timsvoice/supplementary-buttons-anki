@@ -27,6 +27,7 @@ import re
 import string
 import time
 import ConfigParser
+import os
 
 from PyQt4 import QtGui
 from anki.utils import intTime, json, isMac
@@ -36,6 +37,7 @@ from html2text import html2text
 from html2text_overrides import escape_md_section_override
 import const
 import preferences
+from prefhelper import PrefHelper
 
 import markdown
 from markdown.extensions import Extension
@@ -284,8 +286,6 @@ def replace_link_img_matches(regex, new, s):
             skip = False
             start_match, end_match = match.span()
             for (start_code, end_code) in positions_combined:
-                print "match.span():\t\t", match.span()
-                print "start_code, end_code:\t", start_code, end_code
                 if start_match >= start_code and end_match <= end_code:
                     skip = True
                     break
@@ -744,10 +744,14 @@ def downArrow():
     return u"▾"
 
 
-def get_config_parser(path):
+def get_config_parser(path=None):
     """
     Return a RawConfigParser for the specified path.
     """
+    if path is None:
+        path = os.path.join(PrefHelper.get_addons_folder(),
+                            const.FOLDER_NAME,
+                            const.CONFIG_FILENAME)
     config = ConfigParser.ConfigParser()
     ret = config.read(path)
     if not ret:

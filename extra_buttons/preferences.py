@@ -29,5 +29,5 @@ class Preferences(object):
     def init():
         global PREFS
         global KEYS
-        PREFS = PrefHelper.get_current_preferences()
+        PREFS = PrefHelper.load_preferences_from_disk()
         KEYS = PrefHelper.get_current_keybindings()

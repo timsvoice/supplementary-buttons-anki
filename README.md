@@ -1,7 +1,7 @@
 # Supplementary Buttons for Anki
 
 
-## Formatting buttons 
+## Formatting buttons
 
 This add-on adds the following supplementary formatting buttons to Anki:
 
@@ -160,11 +160,19 @@ This add-on adds the following supplementary formatting buttons to Anki:
 <!-- end formatting buttons -->
 
 
-## Markdown 
+## Markdown
 
 You can use Markdown to style your notes. Markdown is a text-to-HTML
-conversion tool, that lets you quicky style your notes. If you don't know
+conversion tool that lets you quicky style your notes. If you don't know
 Markdown yet, have a look at [this tutorial](http://markdowntutorial.com/).
+
+##### Enable Markdown
+
+(Markdown is disabled by default, because some people want a simpler addon. To
+enable it, go to settings and click the checkbox next to "Markdown". Restart
+Anki to complete the process.)
+
+##### Using Markdown
 
 When you click the Markdown button, your Markdown syntax will be translated
 into HTML and displayed. You are now in _Markdown mode_. Markdown mode is
@@ -173,6 +181,10 @@ field you are editing. In Markdown mode, you cannot use any of the formatting
 buttons you would normally have access to. This is done to prevent any
 accidental editing of the displayed result. If you want to make changes to the
 card, first toggle the Markdown button again and go back to normal mode.
+
+However, if you absolutely need to edit the card in markdown mode, you can
+choose to keep the buttons enabled from the options menu, by ticking the
+checkbox _Allow editing of rendered Markdown_.
 
 When you do add text to your card or alter the HTML directly in Markdown mode,
 a dialog box will appear asking whether you want to revert to your previous
@@ -186,11 +198,14 @@ mode, you can check the _Always revert back automatically to old Markdown_
 checkbox in the options. Doing this will never show you the warning dialog box
 and will always discard any changes made in Markdown mode.
 
+### Extra Markdown syntax
+
 This addons supports some Markdown syntax not found in
 [John Gruber's original
 Markdown](https://daringfireball.net/projects/markdown/):
 
-#### Code blocks 
+#### Code blocks
+
 Code blocks can be created by indenting four spaces with a white line before
 and after the code block. The syntax can be specified either by:
 
@@ -208,7 +223,7 @@ More (technical) details on code blocks (e.g. highlighting of lines) can be
 found on the
 [Python Markdown project](https://pythonhosted.org/Markdown/extensions/code_hilite.html).
 
-#### Definition lists 
+#### Definition lists
 
 A definition list can be created as follows:
 
@@ -221,7 +236,7 @@ A definition list can be created as follows:
 
 Make sure there is a white line between the different definitions.
 
-#### Footnotes 
+#### Footnotes
 
 
     Footnotes[^1] have a label[^@#$%] and the footnote's content.
@@ -245,7 +260,7 @@ More (technical) details on footnotes (e.g. multiple blocks of content) can be
 found on the
 [Python Markdown project](https://pythonhosted.org/Markdown/extensions/footnotes.html).
 
-#### Abbreviations 
+#### Abbreviations
 
 The Markdown syntax:
 
@@ -260,12 +275,12 @@ will be rendered as:
     <p>The <abbr title="Hyper Text Markup Language">HTML</abbr> specification
     is maintained by the <abbr title="World Wide Web Consortium">W3C</abbr>.</p>
 
-#### Tables 
+#### Tables
 
 Tables have the same syntax as described above for the table button. Tables
 can be styled with CSS in your stylesheet.
 
-#### Attributes 
+#### Attributes
 
 An example attribute list might look like this:
 
@@ -300,7 +315,7 @@ More (technical) details on attributes (e.g. block-level and inline
 attributes) can be found on the [Python Markdown
 project](https://pythonhosted.org/Markdown/extensions/attr_list.html).
 
-## Custom user-defined keybindings 
+## Custom user-defined keybindings
 You can change the default keybindings by editing the `keybinding.json` file in
 your `Anki/addons/extra_buttons` folder.  Please keep in mind that there is no
 check for duplicate keybindings. This means that when a keybinding is already
@@ -344,11 +359,11 @@ If you want to revert your changes to the default keybindings provided by
 Supplementary Buttons for Anki, please remove the keybindings JSON file in your
 addon folder.
 
-## Disabling unused buttons 
+## Disabling unused buttons
 The buttons can be enabled or disabled individually in *Tools > Supplementary
 buttons add-on (options)*, so feel free to disable the buttons you don't use.
 
-## Installation 
+## Installation
 The preferred way to install is using the
 [Anki add-on site](https://ankiweb.net/shared/info/162313389) way by copying the
 addon code (162313389) into Anki (*Tools > Add-ons > Browse & Install...*).

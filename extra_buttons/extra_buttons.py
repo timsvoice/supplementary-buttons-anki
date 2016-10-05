@@ -620,8 +620,11 @@ def on_focus_gained(self, note, field):
 def init_hook(self, mw, widget, parentWindow, addMode=False):
     addHook("editFocusGained", self.on_focus_gained)
 
-editor.Editor.on_focus_gained = on_focus_gained
-editor.Editor.__init__ = wrap(editor.Editor.__init__, init_hook)
+Preferences.init()
+
+if preferences.PREFS.get(const.MARKDOWN):
+    editor.Editor.on_focus_gained = on_focus_gained
+    editor.Editor.__init__ = wrap(editor.Editor.__init__, init_hook)
 
 editor.Editor.create_button = create_button
 editor.Editor.toggleMarkdown = toggleMarkdown
@@ -653,8 +656,6 @@ editor.Editor.toggleOutdent = toggleOutdent
 editor.Editor.toggleDefList = toggleDefList
 editor.Editor.toggleTable = toggleTable
 editor.Editor.setupButtons = wrap(editor.Editor.setupButtons, setup_buttons)
-
-Preferences.init()
 
 mw.ExtraButtons_Options = ExtraButtons_Options(mw, preferences.PREFS)
 mw.ExtraButtons_Options.setup_extra_buttons_options()

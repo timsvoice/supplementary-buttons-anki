@@ -28,7 +28,7 @@ import time
 ##################################################
 
 PROGRAM_NAME  = "Supplementary Buttons for Anki"
-VERSION       = "0.8.7.0"
+VERSION       = "0.8.8.0"
 YEAR_START    = 2014
 YEAR_LAST     = time.strftime("%Y")
 ANKIWEB_URL   = "https://ankiweb.net/shared/info/162313389"
@@ -135,3 +135,26 @@ CONFIG_MENU_NAMES             = "MenuNames"
 CONFIG_ABOUT                  = "About"
 CONFIG_DIALOG_SIZES           = "DialogSizes"
 CONFIG_KEYBINDINGS            = "Keybindings"
+CONFIG_WARNINGS               = "Warnings"
+
+# stylesheet for QGroupBox
+QGROUPBOX_STYLE = """
+QGroupBox { border: 1px inset lightgrey;
+                    border-radius: 5px;
+                    margin-top: 10px;
+                    font-weight: bold; }
+QGroupBox::title {  subcontrol-origin: margin;
+                    subcontrol-position: top;
+                    padding:0 3px 0 3px; }
+"""
+
+HBOX                          = "hbox"
+VBOX                          = "vbox"
+WIDGET                        = "widget"
+LAYOUT                        = "layout"
+
+# Markdown code directions
+LEFT                          = "left"
+CENTER                        = "center"
+RIGHT                         = "right"
+CODE_DIRECTIONS               = (LEFT, CENTER, RIGHT)

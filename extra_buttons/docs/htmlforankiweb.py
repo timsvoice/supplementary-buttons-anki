@@ -9,6 +9,7 @@ import string
 import inspect
 from _version import __version__
 
+
 class HTMLForAnkiWeb(object):
     def __init__(self):
         self.template_dict = dict()

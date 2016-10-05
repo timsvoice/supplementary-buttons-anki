@@ -109,7 +109,7 @@ class PrefHelper(object):
                 const.TEXT_ALLIGN:                  True,
                 const.HEADING:                      True,
                 const.ABBREVIATION:                 True,
-                const.MARKDOWN:                     True
+                const.MARKDOWN:                     False
         }
 
         return _default_conf
@@ -165,14 +165,38 @@ class PrefHelper(object):
     @staticmethod
     def save_prefs(prefs):
         """
-        Save the preferences to disk, encoded.
+        Save the preferences to disk, base64 encoded.
         """
         encoded_prefs = base64.b64encode(json.dumps(prefs))
         with codecs.open(PrefHelper.get_preference_path(), "w", encoding="utf8") as f:
             f.write(encoded_prefs)
 
+    # @staticmethod
+    # def get_current_preferences():
+    #     prefs = None
+    #     try:
+    #         with codecs.open(PrefHelper.get_preference_path(), encoding="utf8") as f:
+    #             encoded_prefs = f.read(const.MAX_BYTES_PREFS)
+    #             decoded_prefs = base64.b64decode(encoded_prefs)
+    #             prefs = json.loads(decoded_prefs)
+    #     except:
+    #         # file does not exist or is corrupted: fall back to default
+    #         with codecs.open(PrefHelper.get_preference_path(), "w", encoding="utf8") as f:
+    #             prefs = PrefHelper.get_default_preferences()
+    #             json.dump(prefs, f)
+    #     else:
+    #         prefs = PrefHelper.normalize_user_prefs(
+    #                 PrefHelper.get_default_preferences(), prefs)
+    #         PrefHelper.save_prefs(prefs)
+
+    #     return prefs
+
     @staticmethod
-    def get_current_preferences():
+    def load_preferences_from_disk():
+        """
+        Load the current preferences from disk. If no preferences file is
+        found, or if it is corrupted, return the default preferences.
+        """
         prefs = None
         try:
             with codecs.open(PrefHelper.get_preference_path(), encoding="utf8") as f:
@@ -180,16 +204,23 @@ class PrefHelper(object):
                 decoded_prefs = base64.b64decode(encoded_prefs)
                 prefs = json.loads(decoded_prefs)
         except:
-            # file does not exist or is corrupted: fall back to default
-            with codecs.open(PrefHelper.get_preference_path(), "w", encoding="utf8") as f:
-                prefs = PrefHelper.get_default_preferences()
-                json.dump(prefs, f)
+            prefs = PrefHelper.get_default_preferences()
         else:
             prefs = PrefHelper.normalize_user_prefs(
-                    PrefHelper.get_default_preferences(), prefs)
-            PrefHelper.save_prefs(prefs)
+                        PrefHelper.get_default_preferences(), prefs)
 
         return prefs
+
+    @staticmethod
+    def are_prefs_changed(current, new):
+        """
+        Return `True` if `current` and `new` contain different values for the
+        same key, `False` if all values for the same keys are equal.
+        """
+        for k, v in current.iteritems():
+            if current.get(k) != new.get(k):
+                return True
+        return False
 
     @staticmethod
     def get_current_keybindings():

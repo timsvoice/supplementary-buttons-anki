@@ -80,18 +80,8 @@ class Heading(object):
         text_hbox.addWidget(text_label)
         text_hbox.addWidget(text_line_edit)
 
-        stylesheet = """
-        QGroupBox { border: 1px inset lightgrey;
-                            border-radius: 5px;
-                            margin-top: 10px;
-                            font-weight: bold; }
-        QGroupBox::title {  subcontrol-origin: margin;
-                            subcontrol-position: top;
-                            padding:0 3px 0 3px; }
-        """
-
         groupbox = QtGui.QGroupBox("Choose a size", dialog)
-        groupbox.setStyleSheet(stylesheet)
+        groupbox.setStyleSheet(const.QGROUPBOX_STYLE)
 
         radio_button1 = QtGui.QRadioButton("Biggest", dialog)
         radio_button1.setChecked(True)

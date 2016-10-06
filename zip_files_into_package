@@ -5,13 +5,15 @@ set -o nounset
 
 set -xv
 
-if [ -d extra_buttons ]; then
+FOLDER_NAME=power_format_pack
+
+if [ -d "$FOLDER_NAME" ]; then
     case "$PYTHONPATH" in
-        *extra_buttons*)
+        *"$FOLDER_NAME"*)
             echo "PYTHONPATH already contains the needed path..."
             ;;
         *)
-            extra_path="$(pwd)"/extra_buttons
+            extra_path="$(pwd)"/"$FOLDER_NAME"
             export PYTHONPATH="$PYTHONPATH:$extra_path"
             echo "Added '$extra_path' to PYTHONPATH..."
             ;;
@@ -39,37 +41,37 @@ fi
 # remove asserts from files
 while read -r file; do
     sed -i.bak -r 's/assert isinstance/# assert isinstance/' "$file"
-done < <(grep -l -F "assert isinstance" extra_buttons/*.py --no-messages)
+done < <(grep -l -F "assert isinstance" "$FOLDER_NAME"/*.py --no-messages)
 
 # set ignore UserWarnings
 sed -i.bak -r '
 s/^# *warnings/warnings/
 s/^# *import +warnings/import warnings/
-' extra_buttons/extra_buttons.py
+' "$FOLDER_NAME"/extra_buttons.py
 
-grep -P "^import\s+warnings$" extra_buttons/extra_buttons.py
+grep -P "^import\s+warnings$" "$FOLDER_NAME"/extra_buttons.py
 check_return_value $?
-grep -P "^warnings\.simplefilter" extra_buttons/extra_buttons.py
+grep -P "^warnings\.simplefilter" "$FOLDER_NAME"/extra_buttons.py
 check_return_value $?
 
-zip -r --exclude=*.pyc* --exclude=*__pycache__* ~/Desktop/supplementary_buttons_anki_$(date +%s).zip \
-    "Supplementary Buttons Anki.py" \
-    extra_buttons/__init__.py \
-    extra_buttons/*.py \
-    extra_buttons/anki_modules/* \
-    extra_buttons/docs/__init__.py \
-    extra_buttons/docs/_version.py \
-    extra_buttons/docs/doc_start.html \
-    extra_buttons/docs/github-markdown.css \
-    extra_buttons/heading.py \
-    extra_buttons/html2text/* \
-    extra_buttons/html2text_overrides.py \
-    extra_buttons/icons/* \
-    extra_buttons/markdown/* \
-    extra_buttons/pygments/* \
-    extra_buttons/python_modules/* \
+zip -r --exclude=*.pyc* --exclude=*__pycache__* ~/Desktop/power_format_pack_"$(date +%s)".zip \
+    "Power Format Pack.py" \
+    "$FOLDER_NAME"/__init__.py \
+    "$FOLDER_NAME"/*.py \
+    "$FOLDER_NAME"/anki_modules/* \
+    "$FOLDER_NAME"/docs/__init__.py \
+    "$FOLDER_NAME"/docs/_version.py \
+    "$FOLDER_NAME"/docs/doc_start.html \
+    "$FOLDER_NAME"/docs/github-markdown.css \
+    "$FOLDER_NAME"/heading.py \
+    "$FOLDER_NAME"/html2text/* \
+    "$FOLDER_NAME"/html2text_overrides.py \
+    "$FOLDER_NAME"/icons/* \
+    "$FOLDER_NAME"/markdown/* \
+    "$FOLDER_NAME"/pygments/* \
+    "$FOLDER_NAME"/python_modules/* \
 
 # reinsert asserts and warnings comments
-for file in extra_buttons/*.bak; do
+for file in "$FOLDER_NAME"/*.bak; do
     mv -v "$file" "${file%.*}"
 done

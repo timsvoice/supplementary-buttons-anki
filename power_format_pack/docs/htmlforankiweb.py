@@ -129,7 +129,7 @@ class HTMLForAnkiWeb(object):
         template = string.Template("""\
 <b>IMPORTANT</b>: This add-on gets updated quite frequently, so before posting an error or giving it one star, please <b>update</b> the add-on. If, after updating, you still encounter a bug, <b>kindly post a bug report on <a href="https://github.com/Neftas/supplementary-buttons-anki/issues" rel="nofollow">GitHub</a></b>. I can't reply to your comments here, so if you want the issue fixed, you should really consider posting to GitHub.
 
-<b>UPDATING</b> is easy. First, remove the add-on from Anki (<i>Tools &gt; Add-ons &gt; Supplementary buttons Anki &gt; Delete...</i>), then install it again by using the number at the bottom of this page.
+<b>UPDATING</b> is easy. First, remove the add-on from Anki (<i>Tools &gt; Add-ons &gt; Power Format Pack Anki &gt; Delete...</i>), then install it again by using the number at the bottom of this page.
 
 <b>New in version ${version}:</b>
 <ul>$new_features</ul>

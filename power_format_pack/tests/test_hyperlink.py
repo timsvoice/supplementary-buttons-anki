@@ -6,7 +6,7 @@ import sys
 if "/usr/share/anki/" not in sys.path:
     sys.path.append("/usr/share/anki/")
 from aqt.editor import Editor
-from extra_buttons.hyperlink import Hyperlink
+from power_format_pack.hyperlink import Hyperlink
 
 
 class HyperlinkTester(unittest.TestCase):

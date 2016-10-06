@@ -1,4 +1,4 @@
-# Supplementary Buttons for Anki
+# Power Format Pack
 
 
 ## Formatting buttons
@@ -15,7 +15,7 @@ This add-on adds the following supplementary formatting buttons to Anki:
             padding-right: 5px;
         }
 
-    In the options *Tools &gt; Supplementary buttons add-on (options) &gt; Alter
+    In the options *Tools &gt; Power Format Pack add-on (options) &gt; Alter
     &lt;code&gt; CSS...* we can specify the class name, so that our `<code>`
     elements will be automatically transformed to `<code class="c">`.
 
@@ -50,7 +50,7 @@ This add-on adds the following supplementary formatting buttons to Anki:
     a `<pre>` block element around the selected element. This works the same way
     the code button works. You can specify the CSS class you want to use in
     combination with `&lt;pre&gt;` by going to *Tools &gt;
-    Supplementary buttons add-on (options) &gt; Alter &lt;code&gt; CSS...*
+    Power Format Pack add-on (options) &gt; Alter &lt;code&gt; CSS...*
 
 * a **horizontal rule** button (default <kbd>Ctrl</kbd> + <kbd>H</kbd>) that
     inserts a horizontal rule after the current position of the cursor
@@ -168,9 +168,9 @@ Markdown yet, have a look at [this tutorial](http://markdowntutorial.com/).
 
 ##### Enable Markdown
 
-(Markdown is disabled by default, because some people want a simpler addon. To
-enable it, go to settings and click the checkbox next to "Markdown". Restart
-Anki to complete the process.)
+Markdown is disabled by default, to keep this addon as modularised as
+possible. To enable it, go to settings and tick the checkbox next to
+"Markdown". Restart Anki to complete the process.
 
 ##### Using Markdown
 
@@ -182,7 +182,7 @@ buttons you would normally have access to. This is done to prevent any
 accidental editing of the displayed result. If you want to make changes to the
 card, first toggle the Markdown button again and go back to normal mode.
 
-However, if you absolutely need to edit the card in markdown mode, you can
+However, if you absolutely need to edit the card in Markdown mode, you can
 choose to keep the buttons enabled from the options menu, by ticking the
 checkbox _Allow editing of rendered Markdown_.
 
@@ -316,11 +316,11 @@ attributes) can be found on the [Python Markdown
 project](https://pythonhosted.org/Markdown/extensions/attr_list.html).
 
 ## Custom user-defined keybindings
-You can change the default keybindings by editing the `keybinding.json` file in
-your `Anki/addons/extra_buttons` folder.  Please keep in mind that there is no
-check for duplicate keybindings. This means that when a keybinding is already
-taken by either your OS, Anki, this addon, or some other running program, the
-result is undefined.
+You can change the default keybindings by editing the `keybinding.json` file
+in your `Anki/addons/power_format_pack` folder. Please keep in mind that
+there is no check for duplicate keybindings. This means that when a keybinding
+is already taken by either your OS, Anki, this addon, or some other running
+program, the result is undefined.
 
 This file needs to contain valid JSON. Basically this means that the key-value
 pairs should be enclosed in double quotes:
@@ -356,12 +356,12 @@ The order or case of the string sequence is unimportant. `Ctrl+Alt+p` is the
 same as `ALT+CTRL+P` or even `p+Ctrl+Alt`.
 
 If you want to revert your changes to the default keybindings provided by
-Supplementary Buttons for Anki, please remove the keybindings JSON file in your
+Power Format Pack, please remove the keybindings JSON file in your
 addon folder.
 
 ## Disabling unused buttons
-The buttons can be enabled or disabled individually in *Tools > Supplementary
-buttons add-on (options)*, so feel free to disable the buttons you don't use.
+The buttons can be enabled or disabled individually in *Tools > Power Format
+Pack add-on (options)*, so feel free to disable the buttons you don't use.
 
 ## Installation
 The preferred way to install is using the

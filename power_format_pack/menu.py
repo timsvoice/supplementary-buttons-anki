@@ -2,20 +2,20 @@
 #
 # Copyright 2014-2016 Stefan van den Akker <srvandenakker.dev@gmail.com>
 #
-# This file is part of Supplementary Buttons for Anki.
+# This file is part of Power Format Pack.
 #
-# Supplementary Buttons for Anki is free software: you can redistribute it
+# Power Format Pack is free software: you can redistribute it
 # and/or modify it under the terms of the GNU General Public License as
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 #
-# Supplementary Buttons for Anki is distributed in the hope that it will be
+# Power Format Pack is distributed in the hope that it will be
 # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
 # Public License for more details.
 #
 # You should have received a copy of the GNU General Public License along
-# with Supplementary Buttons for Anki. If not, see http://www.gnu.org/licenses/.
+# with Power Format Pack. If not, see http://www.gnu.org/licenses/.
 
 from PyQt4 import QtGui, QtCore, QtWebKit
 import os
@@ -94,7 +94,7 @@ class ExtraButtons_Options(QtGui.QMenu):
     def create_radiobutton(self, name):
         return QtGui.QRadioButton(name)
 
-    def setup_extra_buttons_options(self):
+    def setup_power_format_pack_options(self):
 
         sub_menu_title = self.c.get(const.CONFIG_MENU_NAMES, "sub_menu")
         sub_menu = self.main_window.form.menuTools.addMenu(sub_menu_title)

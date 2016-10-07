@@ -95,6 +95,7 @@ MARKDOWN_CODE_DIRECTION       = "markdown_code_direction"
 MARKDOWN_ALWAYS_REVERT        = "markdown_always_revert"
 MARKDOWN_OVERRIDE_EDITING     = "markdown_override_editing"
 BUTTON_PLACEMENT              = "button_placement"
+STYLE_TABLE                   = "style_table"
 
 # constants for key sequence
 KEY_MODIFIERS                 = ("ctrl", "alt", "shift")
@@ -136,10 +137,12 @@ CONFIG_ABOUT                  = "About"
 CONFIG_DIALOG_SIZES           = "DialogSizes"
 CONFIG_KEYBINDINGS            = "Keybindings"
 CONFIG_WARNINGS               = "Warnings"
+CONFIG_QT                     = "Qt"
+CONFIG_FORMAT_SETTINGS        = "FormatSettings"
 
 # stylesheet for QGroupBox
 QGROUPBOX_STYLE = """
-QGroupBox { border: 1px inset lightgrey;
+QGroupBox { border: 1px solid lightgrey;
                     border-radius: 5px;
                     margin-top: 10px;
                     font-weight: bold; }

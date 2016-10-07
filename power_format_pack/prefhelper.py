@@ -102,6 +102,7 @@ class PrefHelper(object):
                 const.OUTDENT:                      True,
                 const.DEFINITION_LIST:              True,
                 const.TABLE:                        True,
+                const.STYLE_TABLE:                  True,
                 const.KEYBOARD:                     True,
                 const.HYPERLINK:                    True,
                 const.BACKGROUND_COLOR:             True,

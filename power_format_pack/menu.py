@@ -212,8 +212,8 @@ class ExtraButtons_Options(QtGui.QMenu):
                              "ordered_list_type_option_label"),
                              self)
 
-        cb.setToolTip(self.c.get(const.CONFIG_TOOLTIPS,
-                                 "ordered_list_type_tooltip"))
+        utility.set_tool_tip(cb, self.c.get(const.CONFIG_TOOLTIPS,
+                                            "ordered_list_type_tooltip"))
 
         # const.FIXED_OL_TYPE is empty string when False, otherwise len > 0
         cb.setChecked(bool(preferences.PREFS.get(const.FIXED_OL_TYPE)))
@@ -362,6 +362,8 @@ class ExtraButtons_Options(QtGui.QMenu):
         # override disabled buttons in rendered Markdown
         md_vbox.addLayout(self.override_disabled_buttons_rendered_markdown())
 
+        md_vbox.setSpacing(self.c.getint(const.CONFIG_QT, "spacing_buttons"))
+
         md_groupbox.setLayout(md_vbox)
 
         return md_groupbox
@@ -378,7 +380,8 @@ class ExtraButtons_Options(QtGui.QMenu):
                                                 const.MARKDOWN_CODE_DIRECTION,
                                                 const.BUTTON_PLACEMENT,
                                                 const.MARKDOWN_OVERRIDE_EDITING,
-                                                const.MARKDOWN
+                                                const.MARKDOWN,
+                                                const.STYLE_TABLE
                                             )]
         num_items = len(l) / 2.0
         num_items = num_items + 0.5 if (num_items % 1.0 > 0.0) else num_items
@@ -428,10 +431,28 @@ class ExtraButtons_Options(QtGui.QMenu):
 
         return hbox
 
-    def show_option_dialog(self):
-        option_dialog = QtGui.QDialog(self.main_window)
-        option_dialog.setWindowTitle(self.c.get(const.CONFIG_WINDOW_TITLES,
-                                                "option_dialog"))
+    def init_table_styling_option(self):
+        cb = self.create_checkbox(const.STYLE_TABLE,
+                                  None,
+                                  self.c.get(const.CONFIG_LABELS,
+                                             "table_styling_label"))
+        utility.set_tool_tip(cb, self.c.get(const.CONFIG_TOOLTIPS,
+                                            "table_styling_tooltip"))
+
+        return self.put_elems_in_box((cb,), const.HBOX, const.WIDGET)
+
+    def create_general_tab(self):
+
+        general_tab = QtGui.QWidget()
+        # palette = QtGui.QPalette()
+        # palette.setColor(QtGui.QPalette.Window, QtCore.Qt.lightGray)
+        # buttons_qwidget.setAutoFillBackground(True)
+        # buttons_qwidget.setPalette(palette)
+
+        buttons_groupbox = QtGui.QGroupBox(
+                self.c.get(const.CONFIG_LABELS, "buttons_groupbox"),
+                self)
+        buttons_groupbox.setStyleSheet(const.QGROUPBOX_STYLE)
 
         button_grid = self.init_button_options()
 
@@ -439,30 +460,64 @@ class ExtraButtons_Options(QtGui.QMenu):
 
         fixed_ol_option_hbox = self.init_fixed_ol_options()
 
-        markdown_qgroupbox = self.init_markdown_option()
-
         button_placement_hbox = self.init_button_placement_option()
+
+        table_styling_hbox = self.init_table_styling_option()
+
+        buttons_vbox = QtGui.QVBoxLayout()
+        buttons_vbox.addLayout(button_grid)
+        buttons_vbox.addWidget(utility.create_horizontal_rule())
+        buttons_vbox.addLayout(button_placement_hbox)
+        buttons_vbox.addWidget(utility.create_horizontal_rule())
+        buttons_vbox.addLayout(code_css_class_hbox)
+        buttons_vbox.addWidget(utility.create_horizontal_rule())
+        buttons_vbox.addLayout(fixed_ol_option_hbox)
+        buttons_vbox.addWidget(utility.create_horizontal_rule())
+        buttons_vbox.addLayout(table_styling_hbox)
+
+        buttons_groupbox.setLayout(buttons_vbox)
+
+        general_vbox = self.put_elems_in_box(
+                (buttons_groupbox,), const.VBOX, const.WIDGET)
+
+        general_tab.setLayout(general_vbox)
+
+        return general_tab
+
+    def create_markdown_tab(self):
+        markdown_tab = QtGui.QWidget()
+
+        markdown_qgroupbox = self.init_markdown_option()
+        markdown_vbox = self.put_elems_in_box(
+                (markdown_qgroupbox,), const.VBOX, const.WIDGET)
+        markdown_vbox.addStretch(1)
+
+        markdown_tab.setLayout(markdown_vbox)
+
+        return markdown_tab
+
+    def show_option_dialog(self):
+        option_dialog = QtGui.QDialog(self.main_window)
+        option_dialog.setWindowTitle(self.c.get(const.CONFIG_WINDOW_TITLES,
+                                                "option_dialog"))
+
+        tab_widget = QtGui.QTabWidget(self)
+
+        general_tab = self.create_general_tab()
+        tab_widget.addTab(general_tab, "General")
+
+        markdown_tab = self.create_markdown_tab()
+        tab_widget.addTab(markdown_tab, "Markdown")
 
         button_box = QtGui.QDialogButtonBox(
                 QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel)
         button_box.accepted.connect(option_dialog.accept)
         button_box.rejected.connect(option_dialog.reject)
 
-        vbox = QtGui.QVBoxLayout()
-        vbox.addLayout(button_grid)
-        vbox.addWidget(utility.create_horizontal_rule())
-        vbox.addLayout(button_placement_hbox)
-        vbox.addWidget(utility.create_horizontal_rule())
-        vbox.addLayout(code_css_class_hbox)
-        vbox.addWidget(utility.create_horizontal_rule())
-        vbox.addLayout(fixed_ol_option_hbox)
-        vbox.addWidget(markdown_qgroupbox)
-        vbox.addWidget(button_box)
-
-        # some extra space between fix ordered list type and Markdown toggle
-        vbox.insertSpacing(7, 5)
-
-        option_dialog.setLayout(vbox)
+        dialog_vbox = QtGui.QVBoxLayout()
+        dialog_vbox.addWidget(tab_widget)
+        dialog_vbox.addWidget(button_box)
+        option_dialog.setLayout(dialog_vbox)
 
         if option_dialog.exec_() == QtGui.QDialog.Accepted:
             PrefHelper.save_prefs(preferences.PREFS)

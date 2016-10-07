@@ -21,16 +21,34 @@ import json
 
 from PyQt4 import QtGui, QtCore
 import utility
+import const
+import preferences
 
 
 class Table(object):
     """
     Create a table.
     """
+
     def __init__(self, other, parent_window, selected_text):
         self.editor_instance    = other
         self.parent_window      = parent_window
         self.selected_text      = selected_text
+        self.c                  = utility.get_config_parser()
+        self.p                  = preferences.PREFS
+
+        if self.p.get(const.STYLE_TABLE):
+            self.TABLE_STYLING = \
+                u"style='font-size: 1em; width: 100%; border-collapse: collapse;'"
+            self.HEAD_STYLING = \
+                u"align=\"{0}\" style=\"width: {1}%; padding: 5px;" \
+                + u"border-bottom: 2px solid #00B3FF\""
+            self.BODY_STYLING = \
+                u"style='text-align: {0}; padding: 5px;" \
+                + u"border-bottom: 1px solid #B0B0B0'"
+        else:
+            self.TABLE_STYLING = self.HEAD_STYLING = self.BODY_STYLING = u""
+
         self.setup()
 
     def setup(self):
@@ -47,23 +65,29 @@ class Table(object):
                 return None
 
         dialog = QtGui.QDialog(self.parent_window)
-        dialog.setWindowTitle("Enter columns and rows")
+        dialog.setWindowTitle(self.c.get(const.CONFIG_WINDOW_TITLES,
+                                         "table"))
 
         form = QtGui.QFormLayout()
-        form.addRow(QtGui.QLabel("Enter the number of columns and rows"))
+        form.addRow(QtGui.QLabel(self.c.get(const.CONFIG_LABELS,
+                                            "table_num_cols_rows_label")))
 
         columnSpinBox = QtGui.QSpinBox(dialog)
         columnSpinBox.setMinimum(1)
-        columnSpinBox.setMaximum(10)
+        columnSpinBox.setMaximum(self.c.getint(const.CONFIG_FORMAT_SETTINGS,
+                                               "table_max_cols"))
         columnSpinBox.setValue(2)
-        columnLabel = QtGui.QLabel("Number of columns:")
+        columnLabel = QtGui.QLabel(self.c.get(const.CONFIG_LABELS,
+                                              "table_col_label"))
         form.addRow(columnLabel, columnSpinBox)
 
         rowSpinBox = QtGui.QSpinBox(dialog)
         rowSpinBox.setMinimum(1)
-        rowSpinBox.setMaximum(20)
+        rowSpinBox.setMaximum(self.c.getint(const.CONFIG_FORMAT_SETTINGS,
+                                            "table_max_rows"))
         rowSpinBox.setValue(3)
-        rowLabel = QtGui.QLabel("Number of rows:")
+        rowLabel = QtGui.QLabel(self.c.get(const.CONFIG_LABELS,
+                                           "table_row_label"))
         form.addRow(rowLabel, rowSpinBox)
 
         buttonBox = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok |
@@ -89,23 +113,21 @@ class Table(object):
             # set width of each column equal
             width = 100 / num_columns
 
-            header_html = \
-                u"<th align=\"left\" style=\"width: {0}%; padding: 5px;" \
-                + u"border-bottom: 2px solid #00B3FF\">header{1}</th>"
+            header_html = u"<th {0}>header{1}</th>"
             header_column = "".join(header_html.format(
-                    width, next(num_header)) for _ in xrange(num_columns))
-            body_html = \
-                u"<td style=\"padding: 5px; border-bottom:" \
-                + u"1px solid #B0B0B0\">data{}</td>"
-            body_column = "".join(
-                body_html.format(next(num_data)) for _ in xrange(num_columns))
+                self.HEAD_STYLING.format("left", width), next(num_header))
+                for _ in xrange(num_columns))
+            body_html = u"<td {0}>data{1}</td>"
+            body_column = "".join(body_html.format(
+                self.BODY_STYLING.format(width), next(num_data))
+                for _ in xrange(num_columns))
             body_row = "<tr>{}</tr>".format(body_column) * num_rows
 
             html = u"""
-            <table style="width: 100%; border-collapse: collapse;">
-                <thead><tr>{0}</tr></thead>
-                <tbody>{1}</tbody>
-            </table>""".format(header_column, body_row)
+            <table {0}>
+                <thead><tr>{1}</tr></thead>
+                <tbody>{2}</tbody>
+            </table>""".format(self.TABLE_STYLING, header_column, body_row)
 
             self.editor_instance.web.eval(
                     "document.execCommand('insertHTML', false, %s);"
@@ -161,53 +183,50 @@ class Table(object):
 
         # create a table
         head_row = u""
-        head_html = \
-            u"<th align=\"{0}\" style=\"width: {1}%; padding: 5px;" \
-            + u"border-bottom: 2px solid #00B3FF\">{2}</th>"
+        head_html = u"<th {0}>{1}</th>"
         for elem, alignment in zip(second[0], alignments):
-            head_row += (head_html.format(alignment, width, elem))
+            head_row += head_html.format(
+                    self.HEAD_STYLING.format(alignment, width), elem)
         extra_cols = u""
         if len(second[0]) < max_num_cols:
             diff = len(second[0]) - max_num_cols
-            assert diff < 0, "Difference between len(second[0]) and max_num_cols is positive"
-            extra_html = \
-                u"<th align=\"{0}\" style=\"width: {1}%; padding: 5px;" \
-                + u"border-bottom: 2px solid #00B3FF\"></th>"
+            assert diff < 0, \
+                "Difference between len(second[0]) and max_num_cols is positive"
             for alignment in alignments[diff:]:
-                extra_cols += (extra_html.format(alignment, width))
+                extra_cols += head_html.format(
+                        self.HEAD_STYLING.format(alignment, width), u"")
         head_row += extra_cols
 
         body_rows = u""
         for row in second[start:]:
             body_rows += u"<tr>"
-            body_html = \
-                u"<td style=\"text-align: {0}; padding: 5px; border-bottom:" \
-                + u"1px solid #B0B0B0\">{1}</td>"
+            body_html = u"<td {0}>{1}</td>"
             for elem, alignment in zip(row, alignments):
-                body_rows += (body_html.format(alignment, elem))
+                body_rows += body_html.format(
+                        self.BODY_STYLING.format(alignment), elem)
             # if particular row is not up to par with number of cols
             extra_cols = ""
             if len(row) < max_num_cols:
                 diff = len(row) - max_num_cols
-                assert diff < 0, "Difference between len(row) and max_num_cols is positive"
-                extra_html = \
-                    u"<td style=\"text-align: {0}; padding: 5px;" \
-                    + u"border-bottom: 1px solid #B0B0B0\"></td>"
+                assert diff < 0, \
+                    "Difference between len(row) and max_num_cols is positive"
+                # use the correct alignment for the last few rows
                 for alignment in alignments[diff:]:
-                    extra_cols += (extra_html.format(alignment))
-            body_rows += extra_cols + "</tr>"
+                    extra_cols += body_html.format(
+                            self.BODY_STYLING.format(alignment), u"")
+            body_rows += extra_cols + u"</tr>"
 
         html = u"""
-        <table style="width: 100%; border-collapse: collapse;">
+        <table {0}>
             <thead>
                 <tr>
-                    {0}
+                    {1}
                 </tr>
             </thead>
             <tbody>
-                {1}
+                {2}
             </tbody>
-        </table>""".format(head_row, body_rows)
+        </table>""".format(self.TABLE_STYLING, head_row, body_rows)
 
         self.editor_instance.web.eval(
                 "document.execCommand('insertHTML', false, %s);"

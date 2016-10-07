@@ -6,8 +6,8 @@ import json
 import sys
 if "/usr/share/anki/" not in sys.path:
     sys.path.append("/usr/share/anki/")
-from extra_buttons import utility
-from extra_buttons.prefhelper import PrefHelper
+from power_format_pack import utility
+from power_format_pack.prefhelper import PrefHelper
 
 
 class UtilityTester(unittest.TestCase):

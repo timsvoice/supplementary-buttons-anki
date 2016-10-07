@@ -6,7 +6,7 @@
 </head>
 <body class="markdown-body">
 
-<p style="font-size: 36px; font-weight: bold">Supplementary Buttons for Anki</p>
+<p style="font-size: 36px; font-weight: bold">Power Format Pack</p>
 <div class="toc">
 <ul>
 <li><a href="#formatting-buttons">Formatting buttons</a></li>
@@ -36,9 +36,10 @@
     padding-right: 5px;
 }
 </code></pre>
-<p>In the options <em>Tools &gt; Supplementary buttons add-on (options) &gt; Alter
-&lt;code&gt; CSS...</em> we can specify the class name, so that our <code>&lt;code&gt;</code>
-elements will be automatically transformed to <code>&lt;code class="c"&gt;</code>.</p>
+<p>In the options <em>Tools &gt; Power Format Pack add-on (options) &gt; CSS
+class for &lt;code&gt; and &lt;pre&gt; code blocks</em> we can specify the
+class name, so that our <code>&lt;code&gt;</code> elements will be
+automatically transformed to <code>&lt;code class="c"&gt;</code>.</p>
 </li>
 <li>
 <p class="formatting-button" id="unordered-list-button">an <strong>unordered list</strong> button (default <kbd>Ctrl</kbd> + <kbd>[</kbd>):</p>
@@ -83,7 +84,7 @@ elements will be automatically transformed to <code>&lt;code class="c"&gt;</code
     a <code>&lt;pre&gt;</code> block element around the selected element. This works the same way
     the code button works. You can specify the CSS class you want to use in
     combination with <code>&amp;lt;pre&amp;gt;</code> by going to <em>Tools &gt;
-    Supplementary buttons add-on (options) &gt; Alter &lt;code&gt; CSS...</em></p>
+    Power Format Pack add-on (options) &gt; Alter &lt;code&gt; CSS...</em></p>
 </li>
 <li>
 <p class="formatting-button" id="horizontal-rule-button">a <strong>horizontal rule</strong> button (default <kbd>Ctrl</kbd> + <kbd>H</kbd>) that
@@ -126,27 +127,31 @@ a border.</p>
 <p>Alternatively, if you do not select any text, upon clicking the
 <kbd>Create a table</kbd> button you will be presented with a dialog
 window asking you to specify the number of rows and columns.</p>
+<p>
+In the option menu, you can select whether you want your tables to be
+styled by the add-on (default) or if you prefer to use your own style sheet.
+</p>
 </li>
 <li>
 <p class="formatting-button" id="keyboard-button">a <strong>keyboard key</strong> button (default <kbd>Ctrl</kbd> + <kbd>Shift</kbd> +
-    <kbd>K</kbd>):</p>
+<kbd>K</kbd>):</p>
 <p>This will create a keyboard key, for example <kbd>Esc</kbd>. By itself,
 the text that is wrapped in <code>&lt;kbd&gt;</code> will not look any different from the
 rest of the text. You have to style it first by going to the <em>Styling</em>
 section of <em>Cards</em> and add CSS to your liking. For example:</p>
 <pre><code>kbd {
-    box-shadow: inset 0px 1px 0px 0px #ffffff;
-    background: -webkit-gradient(linear, left top, left bottom, color-stop(0.05, #f9f9f9), color-stop(1, #e9e9e9) );
-    background-color: #f9f9f9;
-    border-radius: 5px;
-    border: 1px solid #dcdcdc;
-    display: inline-block;
-    font-size: 0.8em;
-    height: 30px;
-    line-height: 30px;
-    padding: 0px 10px;
-    text-align: center;
-    text-shadow: 1px 1px 0px #ffffff;
+box-shadow: inset 0px 1px 0px 0px #ffffff;
+background: -webkit-gradient(linear, left top, left bottom, color-stop(0.05, #f9f9f9), color-stop(1, #e9e9e9) );
+background-color: #f9f9f9;
+border-radius: 5px;
+border: 1px solid #dcdcdc;
+display: inline-block;
+font-size: 0.8em;
+height: 30px;
+line-height: 30px;
+padding: 0px 10px;
+text-align: center;
+text-shadow: 1px 1px 0px #ffffff;
 }
 </code></pre>
 </li>
@@ -194,6 +199,11 @@ can create your own heading.</p>
 <p>You can use Markdown to style your notes. Markdown is a text-to-HTML
 conversion tool, that lets you quicky style your notes. If you don't know
 Markdown yet, have a look at <a href="http://markdowntutorial.com/">this tutorial</a>.</p>
+<h5>Enable Markdown</h5>
+<p>Markdown is disabled by default, to keep this addon as modularised as
+possible. To enable it, go to settings and tick the checkbox next to
+"Markdown". Restart Anki to complete the process.</p>
+<h5>Using Markdown</h5>
 <p>When you click the Markdown button, your Markdown syntax will be translated
 into HTML and displayed. You are now in <em>Markdown mode</em>. Markdown mode is
 indicated by the changed background color and the warning message under the
@@ -201,6 +211,9 @@ field you are editing. In Markdown mode, you cannot use any of the formatting
 buttons you would normally have access to. This is done to prevent any
 accidental editing of the displayed result. If you want to make changes to the
 card, first toggle the Markdown button again and go back to normal mode.</p>
+<p>However, if you absolutely need to edit the card in Markdown mode, you can
+choose to keep the buttons enabled from the options menu, by ticking the
+checkbox <em>Allow editing of rendered Markdown</em>.</p>
 <p>When you do add text to your card or alter the HTML directly in Markdown mode,
 a dialog box will appear asking whether you want to revert to your previous
 Markdown syntax, or try to incorperate the changes in your card. Be advised,
@@ -211,6 +224,15 @@ blocks).</p>
 mode, you can check the <em>Always revert back automatically to old Markdown</em>
 checkbox in the options. Doing this will never show you the warning dialog box
 and will always discard any changes made in Markdown mode.</p>
+
+<h5>How the Markdown button differs from the other buttons in this add-on</h5>
+
+<p>I recommend you use either Markdown or the rich formatting buttons, but not
+both at the same time. Markdown was designed to be a fast and simple way to
+quickly write relatively simple formatted text. As such, it won't know what to
+do with complex cards that use formatting unknown to the Markdown
+specification. So when clicking the Markdown button, it _will_ "erase"
+formatting that it does not know how to handle. You were warned.</p>
 <p>This addons supports some Markdown syntax not found in
 <a href="https://daringfireball.net/projects/markdown/">John Gruber's original
 Markdown</a>:</p>
@@ -300,7 +322,7 @@ attributes) can be found on the <a href="https://pythonhosted.org/Markdown/exten
 project</a>.</p>
 <h2 class="heading" id="custom-user-defined-keybindings">Custom user-defined keybindings</h2>
 <p>You can change the default keybindings by editing the <code>keybinding.json</code> file in
-your <code>Anki/addons/extra_buttons</code> folder.  Please keep in mind that there is no
+your <code>Anki/addons/power_format_pack</code> folder.  Please keep in mind that there is no
 check for duplicate keybindings. This means that when a keybinding is already
 taken by either your OS, Anki, this addon, or some other running program, the
 result is undefined.</p>
@@ -333,11 +355,10 @@ default setting. For example, invalid sequences are:</p>
 <p>The order or case of the string sequence is unimportant. <code>Ctrl+Alt+p</code> is the
 same as <code>ALT+CTRL+P</code> or even <code>p+Ctrl+Alt</code>.</p>
 <p>If you want to revert your changes to the default keybindings provided by
-Supplementary Buttons for Anki, please remove the keybindings JSON file in your
+Power Format Pack, please remove the keybindings JSON file in your
 addon folder.</p>
 <h2 class="heading" id="disabling-unused-buttons">Disabling unused buttons</h2>
-<p id="disabling-unused-buttons-content">The buttons can be enabled or disabled individually in <em>Tools &gt; Supplementary
-buttons add-on (options)</em>, so feel free to disable the buttons you don't use.</p>
+<p id="disabling-unused-buttons-content">The buttons can be enabled or disabled individually in <em>Tools &gt; Power Format Pack add-on (options)</em>, so feel free to disable the buttons you don't use.</p>
 <h2 class="heading" id="installation">Installation</h2>
 <p id="installation-content">The preferred way to install is using the
 <a href="https://ankiweb.net/shared/info/162313389">Anki add-on site</a> way by copying the

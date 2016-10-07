@@ -5,6 +5,8 @@ set -o nounset
 
 set -xv
 
+FOLDER_NAME=power_format_pack
+
 quit() {
     echo "Need an argument. Exiting..."
     exit 1
@@ -41,7 +43,7 @@ remove_backup_file() {
     fi
 }
 
-FILES=(extra_buttons/const.py extra_buttons/docs/_version.py)
+FILES=("$FOLDER_NAME"/const.py "$FOLDER_NAME"/docs/_version.py)
 
 for file in "${FILES[@]}"; do
     remove_backup_file "$file"
@@ -49,7 +51,7 @@ for file in "${FILES[@]}"; do
 done
 
 # .ini files
-for file in extra_buttons/*.ini; do
+for file in "$FOLDER_NAME"/*.ini; do
     remove_backup_file "$file"
     sed -r -i.bak -e 's/^(version=)[0-9.]+/\1'"${NEW_VERSION}"'/I'          \
                   -e 's/^(time=).*$/\1'"$(date -Iminutes)"'/I'              \

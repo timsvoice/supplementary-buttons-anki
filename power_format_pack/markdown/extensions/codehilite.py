@@ -42,10 +42,10 @@ try:
         try:
             if package.endswith(u"addons"):
                 if isWin:
-                    path = os.path.join(package, u"extra_buttons")
+                    path = os.path.join(package, u"power_format_pack")
                     sys.path.insert(0, path.encode(sys.getfilesystemencoding()))
                 else:
-                    sys.path.insert(0, os.path.join(package, u"extra_buttons"))
+                    sys.path.insert(0, os.path.join(package, u"power_format_pack"))
                 break
         except (UnicodeDecodeError, UnicodeEncodeError) as e:
             print e  # TODO: log error

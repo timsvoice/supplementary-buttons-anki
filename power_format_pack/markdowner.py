@@ -2,20 +2,20 @@
 #
 # Copyright 2014-2016 Stefan van den Akker <srvandenakker.dev@gmail.com>
 #
-# This file is part of Supplementary Buttons for Anki.
+# This file is part of Power Format Pack.
 #
-# Supplementary Buttons for Anki is free software: you can redistribute it
+# Power Format Pack is free software: you can redistribute it
 # and/or modify it under the terms of the GNU General Public License as
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 #
-# Supplementary Buttons for Anki is distributed in the hope that it will be
+# Power Format Pack is distributed in the hope that it will be
 # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
 # Public License for more details.
 #
 # You should have received a copy of the GNU General Public License along
-# with Supplementary Buttons for Anki. If not, see http://www.gnu.org/licenses/.
+# with Power Format Pack. If not, see http://www.gnu.org/licenses/.
 
 import re
 
@@ -41,6 +41,7 @@ class Markdowner(object):
                  current_field, selected_html):
         assert isinstance(html, unicode), "Input `html` is not Unicode"
         assert isinstance(selected_html, unicode), "Input `selected_html` is not Unicode"
+        self.c                              = utility.get_config_parser()
         self.editor_instance                = other
         self.parent_window                  = parent_window
         self.col                            = mw.col
@@ -148,13 +149,16 @@ class Markdowner(object):
             document.getElementById('f%s').innerHTML = %s;
         """ % (field, json.dumps(unicode(markup))))
 
-    @staticmethod
-    def warn_about_changes(editor_instance, field, color):
+    def warn_about_changes(self, editor_instance, field, color):
         """
         Disable the specified contenteditable field.
         """
-        warning_text = "WARNING: changes you make here will be lost when " + \
-                       "you toggle the Markdown button again."
+        if preferences.PREFS.get(const.MARKDOWN_OVERRIDE_EDITING):
+            warning_text = self.c.get(const.CONFIG_TOOLTIPS,
+                                      "md_warning_editing_enabled_tooltip")
+        else:
+            warning_text = self.c.get(const.CONFIG_TOOLTIPS,
+                                      "md_warning_editing_disabled_tooltip")
         editor_instance.web.eval("""
             if (document.getElementById('mdwarn%s') === null) {
                 var style_tag_list = document.getElementsByTagName('style');
@@ -250,15 +254,12 @@ class Markdowner(object):
         mess = QtGui.QMessageBox(self.parent_window)
         mess.setIcon(QtGui.QMessageBox.Warning)
         # TODO: think about putting the text of the dialog in property files
-        mess.setWindowTitle("Content of card changed!")
-        mess.setText("<b>The text of this field seems to have changed while "
-                "Markdown mode was disabled, or the original syntax cannot be "
-                "automatically restored.</b>")
-        mess.setInformativeText("Please choose whether to store "
-                "your current version of this field (overwriting the old "
-                "version), replace your current version with the stored "
-                "version, or cancel.\n\nWARNING: Overwriting may result "
-                "in the loss of some of your original Markdown syntax.")
+        mess.setWindowTitle(self.c.get(const.CONFIG_WINDOW_TITLES,
+                                       "md_overwrite_warning"))
+        mess.setText(self.c.get(const.CONFIG_WARNINGS,
+                                "md_overwrite_warning_text"))
+        mess.setInformativeText(self.c.get(const.CONFIG_WARNINGS,
+                                "md_overwrite_warning_additional_text"))
         replaceButton = QtGui.QPushButton("&Replace", mess)
         mess.addButton(replaceButton, QtGui.QMessageBox.ApplyRole)
         mess.addButton("&Overwrite", QtGui.QMessageBox.ApplyRole)
@@ -272,19 +273,18 @@ class Markdowner(object):
         centered or be at the mercy of the general alignment CSS of the card.
         Code blocks can be given a specific `code_direction`.
         """
-        # code blocks
+        # align text in code blocks to the left
         self.editor_instance.web.eval("""
-            // align text inside the code block
-            var elems = document.getElementsByClassName('codehilite');
-            for (var i = 0; i < elems.length; i++) {
-                elems[i].setAttribute('align', 'left');
-            }
-            // align the code block itself
-            var tables = document.getElementsByClassName('codehilitetable');
-            for (var j = 0; j < tables.length; j++) {
-                tables[j].setAttribute('align', '%s');
-            }
-        """ % preferences.PREFS.get(const.MARKDOWN_CODE_DIRECTION))
+            $('.codehilite').attr('align', 'left');
+        """)
+
+        # align the code block itself
+        if preferences.PREFS.get(const.MARKDOWN_CODE_DIRECTION) != const.LEFT:
+            self.editor_instance.web.eval("""
+                var table = '<table><tbody><tr><td></td></tr></tbody></table>';
+                $('.codehilite:not(.codehilitetable .codehilite)').wrap(table);
+                $('.codehilite').parents().filter('table').addClass('codehilitetable').attr('align', '%s');
+            """ % preferences.PREFS.get(const.MARKDOWN_CODE_DIRECTION))
 
         # footnotes
         self.editor_instance.web.eval("""
@@ -308,7 +308,8 @@ class Markdowner(object):
 
     def create_correct_md_for_def_list(self):
         """
-        Change the input `md` to make sure it will transform to the correct HTML.
+        Change the input `md` to make sure it will transform to the
+        correct HTML.
         """
         self.editor_instance.web.eval("""\
             var dds = document.getElementsByTagName('dd');

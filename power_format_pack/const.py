@@ -2,20 +2,20 @@
 #
 # Copyright 2014-2016 Stefan van den Akker <srvandenakker.dev@gmail.com>
 #
-# This file is part of Supplementary Buttons for Anki.
+# This file is part of Power Format Pack.
 #
-# Supplementary Buttons for Anki is free software: you can redistribute it
+# Power Format Pack is free software: you can redistribute it
 # and/or modify it under the terms of the GNU General Public License as
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 #
-# Supplementary Buttons for Anki is distributed in the hope that it will be
+# Power Format Pack is distributed in the hope that it will be
 # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
 # Public License for more details.
 #
 # You should have received a copy of the GNU General Public License along
-# with Supplementary Buttons for Anki. If not, see http://www.gnu.org/licenses/.
+# with Power Format Pack. If not, see http://www.gnu.org/licenses/.
 
 import HTMLParser
 import re
@@ -27,14 +27,14 @@ import time
 # Constants
 ##################################################
 
-PROGRAM_NAME  = "Supplementary Buttons for Anki"
-VERSION       = "0.8.6.5"
+PROGRAM_NAME  = "Power Format Pack"
+VERSION       = "0.8.8.0"
 YEAR_START    = 2014
 YEAR_LAST     = time.strftime("%Y")
 ANKIWEB_URL   = "https://ankiweb.net/shared/info/162313389"
 GITHUB_URL    = "https://github.com/Neftas/supplementary-buttons-anki"
 EMAIL         = "srvandenakker.dev@gmail.com"
-FOLDER_NAME   = "extra_buttons"
+FOLDER_NAME   = "power_format_pack"
 
 OPERATING_SYSTEMS = {
     "linux2": "Linux",
@@ -93,7 +93,9 @@ MARKDOWN_SYNTAX_STYLE         = "markdown_syntax_style"
 MARKDOWN_LINE_NUMS            = "markdown_line_nums"
 MARKDOWN_CODE_DIRECTION       = "markdown_code_direction"
 MARKDOWN_ALWAYS_REVERT        = "markdown_always_revert"
+MARKDOWN_OVERRIDE_EDITING     = "markdown_override_editing"
 BUTTON_PLACEMENT              = "button_placement"
+STYLE_TABLE                   = "style_table"
 
 # constants for key sequence
 KEY_MODIFIERS                 = ("ctrl", "alt", "shift")
@@ -124,3 +126,38 @@ MAX_BYTES_PREFS               = 32768
 IS_LINK_OR_IMG_REGEX = re.compile(r"!?\[[^\]]*\]\(.*?(?<!\\)\)")
 # to unescape image data
 HTML_PARSER                   = HTMLParser.HTMLParser()
+
+# config file
+CONFIG_FILENAME               = "config.ini"
+CONFIG_LABELS                 = "Labels"
+CONFIG_TOOLTIPS               = "ToolTips"
+CONFIG_WINDOW_TITLES          = "WindowTitles"
+CONFIG_MENU_NAMES             = "MenuNames"
+CONFIG_ABOUT                  = "About"
+CONFIG_DIALOG_SIZES           = "DialogSizes"
+CONFIG_KEYBINDINGS            = "Keybindings"
+CONFIG_WARNINGS               = "Warnings"
+CONFIG_QT                     = "Qt"
+CONFIG_FORMAT_SETTINGS        = "FormatSettings"
+
+# stylesheet for QGroupBox
+QGROUPBOX_STYLE = """
+QGroupBox { border: 1px solid lightgrey;
+                    border-radius: 5px;
+                    margin-top: 10px;
+                    font-weight: bold; }
+QGroupBox::title {  subcontrol-origin: margin;
+                    subcontrol-position: top;
+                    padding:0 3px 0 3px; }
+"""
+
+HBOX                          = "hbox"
+VBOX                          = "vbox"
+WIDGET                        = "widget"
+LAYOUT                        = "layout"
+
+# Markdown code directions
+LEFT                          = "left"
+CENTER                        = "center"
+RIGHT                         = "right"
+CODE_DIRECTIONS               = (LEFT, CENTER, RIGHT)

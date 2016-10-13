@@ -2,23 +2,28 @@
 #
 # Copyright 2014-2016 Stefan van den Akker <srvandenakker.dev@gmail.com>
 #
-# This file is part of Supplementary Buttons for Anki.
+# This file is part of Power Format Pack.
 #
-# Supplementary Buttons for Anki is free software: you can redistribute it
+# Power Format Pack is free software: you can redistribute it
 # and/or modify it under the terms of the GNU General Public License as
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 #
-# Supplementary Buttons for Anki is distributed in the hope that it will be
+# Power Format Pack is distributed in the hope that it will be
 # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
 # Public License for more details.
 #
 # You should have received a copy of the GNU General Public License along
-# with Supplementary Buttons for Anki. If not, see http://www.gnu.org/licenses/.
+# with Power Format Pack. If not, see http://www.gnu.org/licenses/.
+
+import os
 
 from PyQt4 import QtGui, QtCore
 import preferences
+from prefhelper import PrefHelper
+import const
+import utility
 
 
 class OrderedList(QtGui.QDialog):
@@ -28,6 +33,10 @@ class OrderedList(QtGui.QDialog):
     def __init__(self, other, parent_window, fixed=False):
         super(OrderedList, self).__init__(parent_window)
         self.editor_instance = other
+        config_path = os.path.join(PrefHelper.get_addons_folder(),
+                                   const.FOLDER_NAME,
+                                   const.CONFIG_FILENAME)
+        self.c = utility.get_config_parser(config_path)
 
         if not fixed:
             self.show_dialog_window()
@@ -36,20 +45,13 @@ class OrderedList(QtGui.QDialog):
                     preferences.PREFS["fixed_ol_type"][0], 1)
 
     def show_dialog_window(self):
-        self.setWindowTitle("Choose format for ordered list")
+        self.setWindowTitle(self.c.get(const.CONFIG_WINDOW_TITLES,
+                                       "ordered_list"))
 
-        stylesheet = """
-        QGroupBox { border: 1px inset lightgrey;
-                            border-radius: 5px;
-                            margin-top: 10px;
-                            font-weight: bold; }
-        QGroupBox::title {  subcontrol-origin: margin;
-                            subcontrol-position: top;
-                            padding:0 3px 0 3px; }
-        """
-
-        groupbox = QtGui.QGroupBox("Type", self)
-        groupbox.setStyleSheet(stylesheet)
+        groupbox = QtGui.QGroupBox(
+                self.c.get(const.CONFIG_LABELS, "ordered_list_type_label"),
+                self)
+        groupbox.setStyleSheet(const.QGROUPBOX_STYLE)
 
         # stylesheet for the radio buttons
         self.setStyleSheet("QRadioButton { font-weight: bold; }")
@@ -82,7 +84,9 @@ class OrderedList(QtGui.QDialog):
 
         groupbox.setLayout(radio_vbox)
 
-        start_label = QtGui.QLabel("<b>Start:</b>", self)
+        start_label = QtGui.QLabel(
+                self.c.get(const.CONFIG_LABELS, "ordered_list_start_label"),
+                self)
 
         spinbox = QtGui.QSpinBox(self)
         spinbox.setMinimum(1)

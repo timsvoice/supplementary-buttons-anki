@@ -2,20 +2,20 @@
 #
 # Copyright 2014-2016 Stefan van den Akker <srvandenakker.dev@gmail.com>
 #
-# This file is part of Supplementary Buttons for Anki.
+# This file is part of Power Format Pack.
 #
-# Supplementary Buttons for Anki is free software: you can redistribute it
+# Power Format Pack is free software: you can redistribute it
 # and/or modify it under the terms of the GNU General Public License as
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 #
-# Supplementary Buttons for Anki is distributed in the hope that it will be
+# Power Format Pack is distributed in the hope that it will be
 # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
 # Public License for more details.
 #
 # You should have received a copy of the GNU General Public License along
-# with Supplementary Buttons for Anki. If not, see http://www.gnu.org/licenses/.
+# with Power Format Pack. If not, see http://www.gnu.org/licenses/.
 
 """
 Utility module with helper functions that are needed throughout the addon.
@@ -26,6 +26,8 @@ import BeautifulSoup
 import re
 import string
 import time
+from power_format_pack.python_modules import ConfigParser
+import os
 
 from PyQt4 import QtGui
 from anki.utils import intTime, json, isMac
@@ -35,6 +37,7 @@ from html2text import html2text
 from html2text_overrides import escape_md_section_override
 import const
 import preferences
+from prefhelper import PrefHelper
 
 import markdown
 from markdown.extensions import Extension
@@ -283,8 +286,6 @@ def replace_link_img_matches(regex, new, s):
             skip = False
             start_match, end_match = match.span()
             for (start_code, end_code) in positions_combined:
-                print "match.span():\t\t", match.span()
-                print "start_code, end_code:\t", start_code, end_code
                 if start_match >= start_code and end_match <= end_code:
                     skip = True
                     break
@@ -741,3 +742,26 @@ def downArrow():
         return u"▼"
     # windows 10 is lacking the smaller arrow on English installs
     return u"▾"
+
+
+def get_config_parser(path=None):
+    """
+    Return a RawConfigParser for the specified path.
+    """
+    if path is None:
+        path = os.path.join(PrefHelper.get_addons_folder(),
+                            const.FOLDER_NAME,
+                            const.CONFIG_FILENAME)
+    config = ConfigParser.ConfigParser()
+    ret = config.read(path)
+    if not ret:
+        raise Exception("Could not read config file {!r}".format(path))
+    return config
+
+
+def set_tool_tip(elem, tip):
+    """
+    Set a "rich-text" tool tip for `elem`, as that will trigger automatic
+    word-wrap in Qt.
+    """
+    elem.setToolTip("<font>" + tip + "</font>")

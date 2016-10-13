@@ -2,20 +2,20 @@
 #
 # Copyright 2014-2016 Stefan van den Akker <srvandenakker.dev@gmail.com>
 #
-# This file is part of Supplementary Buttons for Anki.
+# This file is part of Power Format Pack.
 #
-# Supplementary Buttons for Anki is free software: you can redistribute it
+# Power Format Pack is free software: you can redistribute it
 # and/or modify it under the terms of the GNU General Public License as
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
 #
-# Supplementary Buttons for Anki is distributed in the hope that it will be
+# Power Format Pack is distributed in the hope that it will be
 # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
 # Public License for more details.
 #
 # You should have received a copy of the GNU General Public License along
-# with Supplementary Buttons for Anki. If not, see http://www.gnu.org/licenses/.
+# with Power Format Pack. If not, see http://www.gnu.org/licenses/.
 
 
 import time
@@ -242,7 +242,7 @@ def setup_buttons(self):
                                self.toggleMarkdown,
                                _(shortcut),
                                _("Toggle Markdown ({})".format(shortcut)),
-                               check=True)
+                               check=False)
 
     if button_placement_pref != "adjacent":
         self.supp_buttons_hbox.insertStretch(0, 1)
@@ -580,13 +580,14 @@ def on_focus_gained(self, note, field):
 
     tags = note.tags
 
-    if const.MARKDOWN_PREFS.get("disable_buttons"):
-        # disable all buttons except for the Markdown toggle
-        self.disableButtons()
-        markdown_button = self._buttons.get(const.MARKDOWN)
-        if markdown_button:
-            markdown_button.setChecked(True)
-            markdown_button.setEnabled(True)
+    if not preferences.PREFS.get(const.MARKDOWN_OVERRIDE_EDITING):
+        if const.MARKDOWN_PREFS.get("disable_buttons"):
+            # disable all buttons except for the Markdown toggle
+            self.disableButtons()
+            markdown_button = self._buttons.get(const.MARKDOWN)
+            if markdown_button:
+                # markdown_button.setChecked(True)
+                markdown_button.setEnabled(True)
 
     if const.MARKDOWN_PREFS.get("safe_block"):
         return
@@ -619,8 +620,11 @@ def on_focus_gained(self, note, field):
 def init_hook(self, mw, widget, parentWindow, addMode=False):
     addHook("editFocusGained", self.on_focus_gained)
 
-editor.Editor.on_focus_gained = on_focus_gained
-editor.Editor.__init__ = wrap(editor.Editor.__init__, init_hook)
+Preferences.init()
+
+if preferences.PREFS.get(const.MARKDOWN):
+    editor.Editor.on_focus_gained = on_focus_gained
+    editor.Editor.__init__ = wrap(editor.Editor.__init__, init_hook)
 
 editor.Editor.create_button = create_button
 editor.Editor.toggleMarkdown = toggleMarkdown
@@ -653,7 +657,5 @@ editor.Editor.toggleDefList = toggleDefList
 editor.Editor.toggleTable = toggleTable
 editor.Editor.setupButtons = wrap(editor.Editor.setupButtons, setup_buttons)
 
-Preferences.init()
-
 mw.ExtraButtons_Options = ExtraButtons_Options(mw, preferences.PREFS)
-mw.ExtraButtons_Options.setup_extra_buttons_options()
+mw.ExtraButtons_Options.setup_power_format_pack_options()

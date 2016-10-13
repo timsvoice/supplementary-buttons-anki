@@ -8,7 +8,7 @@ import time
 import sys
 if "/usr/share/anki/" not in sys.path:
     sys.path.append("/usr/share/anki/")
-from extra_buttons.markdowner import Markdowner
+from power_format_pack.markdowner import Markdowner
 
 
 class MarkdownerTester(unittest.TestCase):

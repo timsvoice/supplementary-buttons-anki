@@ -10,10 +10,11 @@
 
 # other files #
 ###############
-extra_buttons/docs/doc_start.html
-extra_buttons/keybindings_linux_windows.json
+power_format_pack/keybindings_linux_windows.json
 todo
+.noseids
 
 # preference file #
 ###################
-extra_buttons/.extra_buttons_prefs
+power_format_pack/.extra_buttons_prefs
+power_format_pack/keybindings_linux_windows

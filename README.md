@@ -1,11 +1,13 @@
-# Supplementary Buttons for Anki
+# Power Format Pack
 
-
-## Formatting buttons 
+## Formatting buttons
 
 This add-on adds the following supplementary formatting buttons to Anki:
 
-* a **code** button that will wrap selected text in a `<code>` (default: <kbd>Ctrl</kbd> + <kbd>,</kbd>). You can specify the CSS class you want to use in combination with `<code>`. For example, we have a CSS class named `c` defined in the *Styling* section of *Cards*:
+* a **code** button that will wrap selected text in a `<code>` (default:
+    <kbd>Ctrl</kbd> + <kbd>,</kbd>). You can specify the CSS class you want to
+    use in combination with `<code>`. For example, we have a CSS class named `c`
+    defined in the *Styling* section of *Cards*:
 
 
         .c {
@@ -15,9 +17,10 @@ This add-on adds the following supplementary formatting buttons to Anki:
             padding-right: 5px;
         }
 
-    In the options *Tools &gt; Supplementary buttons add-on (options) &gt; Alter
-    &lt;code&gt; CSS...* we can specify the class name, so that our `<code>`
-    elements will be automatically transformed to `<code class="c">`.
+    In the options *Tools &gt; Power Format Pack add-on (options) &gt; CSS
+    class for &lt;code&gt; and &lt;pre&gt; code blocks* we can specify the class
+    name, so that our `<code>` elements will be automatically transformed to
+    `<code class="c">`.
 
 * an **unordered list** button (default <kbd>Ctrl</kbd> + <kbd>[</kbd>):
 
@@ -46,11 +49,11 @@ This add-on adds the following supplementary formatting buttons to Anki:
 
     <del>strikethrough text example</del>
 
-* a **code block** button (default <kbd>Ctrl</kbd> + <kbd>.</kbd>) that creates
-    a `<pre>` block element around the selected element. This works the same way
-    the code button works. You can specify the CSS class you want to use in
-    combination with `&lt;pre&gt;` by going to *Tools &gt;
-    Supplementary buttons add-on (options) &gt; Alter &lt;code&gt; CSS...*
+* a **code block** button (default <kbd>Ctrl</kbd> + <kbd>.</kbd>) that
+    creates a `<pre>` block element around the selected element. This works the
+    same way the code button works. You can specify the CSS class you want to use
+    in combination with `&lt;pre&gt;` by going to *Tools &gt; Power Format Pack
+    add-on (options) &gt; CSS class for &lt;code&gt; and &lt;pre&gt; code blocks*
 
 * a **horizontal rule** button (default <kbd>Ctrl</kbd> + <kbd>H</kbd>) that
     inserts a horizontal rule after the current position of the cursor
@@ -96,6 +99,9 @@ This add-on adds the following supplementary formatting buttons to Anki:
     Alternatively, if you do not select any text, upon clicking the
     <kbd>Create a table</kbd> button you will be presented with a dialog
     window asking you to specify the number of rows and columns.
+
+    In the option menu, you can select whether you want your tables to be
+    styled by the add-on (default) or if you prefer to use your own style sheet.
 
 * a **keyboard key** button (default <kbd>Ctrl</kbd> + <kbd>Shift</kbd> +
     <kbd>K</kbd>):
@@ -160,11 +166,19 @@ This add-on adds the following supplementary formatting buttons to Anki:
 <!-- end formatting buttons -->
 
 
-## Markdown 
+## Markdown
 
 You can use Markdown to style your notes. Markdown is a text-to-HTML
-conversion tool, that lets you quicky style your notes. If you don't know
+conversion tool that lets you quicky style your notes. If you don't know
 Markdown yet, have a look at [this tutorial](http://markdowntutorial.com/).
+
+##### Enable Markdown
+
+Markdown is disabled by default, to keep this add-on as modularised as
+possible. To enable it, go to settings and tick the checkbox next to
+"Markdown". Restart Anki to complete the process.
+
+##### Using Markdown
 
 When you click the Markdown button, your Markdown syntax will be translated
 into HTML and displayed. You are now in _Markdown mode_. Markdown mode is
@@ -174,6 +188,10 @@ buttons you would normally have access to. This is done to prevent any
 accidental editing of the displayed result. If you want to make changes to the
 card, first toggle the Markdown button again and go back to normal mode.
 
+However, if you absolutely need to edit the card in Markdown mode, you can
+choose to keep the buttons enabled from the options menu, by ticking the
+checkbox _Allow editing of rendered Markdown_.
+
 When you do add text to your card or alter the HTML directly in Markdown mode,
 a dialog box will appear asking whether you want to revert to your previous
 Markdown syntax, or try to incorperate the changes in your card. Be advised,
@@ -182,15 +200,27 @@ especially if the original syntax was complex (footnotes, tables, code
 blocks).
 
 To make sure you always return to your original syntax when exiting Markdown
-mode, you can check the _Always revert back automatically to old Markdown_
+mode, you can check the _Always automatically revert back to saved Markdown_
 checkbox in the options. Doing this will never show you the warning dialog box
 and will always discard any changes made in Markdown mode.
+
+##### How the Markdown button differs from the other buttons in this add-on
+
+I recommend you use either Markdown or the rich formatting buttons, but not
+both at the same time. Markdown was designed to be a fast and simple way to
+quickly write relatively simple formatted text. As such, it won't know what to
+do with complex cards that use formatting unknown to the Markdown
+specification. So when clicking the Markdown button, it _will_ "erase"
+formatting that it does not know how to handle. You were warned.
+
+### Extra Markdown syntax
 
 This addons supports some Markdown syntax not found in
 [John Gruber's original
 Markdown](https://daringfireball.net/projects/markdown/):
 
-#### Code blocks 
+#### Code blocks
+
 Code blocks can be created by indenting four spaces with a white line before
 and after the code block. The syntax can be specified either by:
 
@@ -208,7 +238,7 @@ More (technical) details on code blocks (e.g. highlighting of lines) can be
 found on the
 [Python Markdown project](https://pythonhosted.org/Markdown/extensions/code_hilite.html).
 
-#### Definition lists 
+#### Definition lists
 
 A definition list can be created as follows:
 
@@ -221,7 +251,7 @@ A definition list can be created as follows:
 
 Make sure there is a white line between the different definitions.
 
-#### Footnotes 
+#### Footnotes
 
 
     Footnotes[^1] have a label[^@#$%] and the footnote's content.
@@ -245,7 +275,7 @@ More (technical) details on footnotes (e.g. multiple blocks of content) can be
 found on the
 [Python Markdown project](https://pythonhosted.org/Markdown/extensions/footnotes.html).
 
-#### Abbreviations 
+#### Abbreviations
 
 The Markdown syntax:
 
@@ -260,12 +290,12 @@ will be rendered as:
     <p>The <abbr title="Hyper Text Markup Language">HTML</abbr> specification
     is maintained by the <abbr title="World Wide Web Consortium">W3C</abbr>.</p>
 
-#### Tables 
+#### Tables
 
 Tables have the same syntax as described above for the table button. Tables
 can be styled with CSS in your stylesheet.
 
-#### Attributes 
+#### Attributes
 
 An example attribute list might look like this:
 
@@ -300,12 +330,12 @@ More (technical) details on attributes (e.g. block-level and inline
 attributes) can be found on the [Python Markdown
 project](https://pythonhosted.org/Markdown/extensions/attr_list.html).
 
-## Custom user-defined keybindings 
-You can change the default keybindings by editing the `keybinding.json` file in
-your `Anki/addons/extra_buttons` folder.  Please keep in mind that there is no
-check for duplicate keybindings. This means that when a keybinding is already
-taken by either your OS, Anki, this addon, or some other running program, the
-result is undefined.
+## Custom user-defined keybindings
+You can change the default keybindings by editing the `keybinding.json` file
+in your `Anki/addons/power_format_pack` folder. Please keep in mind that
+there is no check for duplicate keybindings. This means that when a keybinding
+is already taken by either your OS, Anki, this add-on, or some other running
+program, the result is undefined.
 
 This file needs to contain valid JSON. Basically this means that the key-value
 pairs should be enclosed in double quotes:
@@ -341,14 +371,14 @@ The order or case of the string sequence is unimportant. `Ctrl+Alt+p` is the
 same as `ALT+CTRL+P` or even `p+Ctrl+Alt`.
 
 If you want to revert your changes to the default keybindings provided by
-Supplementary Buttons for Anki, please remove the keybindings JSON file in your
-addon folder.
+Power Format Pack, please remove the keybindings JSON file in your
+add-on folder.
 
-## Disabling unused buttons 
-The buttons can be enabled or disabled individually in *Tools > Supplementary
-buttons add-on (options)*, so feel free to disable the buttons you don't use.
+## Disabling unused buttons
+The buttons can be enabled or disabled individually in *Tools > Power Format
+Pack add-on (options)*, so feel free to disable the buttons you don't use.
 
-## Installation 
+## Installation
 The preferred way to install is using the
 [Anki add-on site](https://ankiweb.net/shared/info/162313389) way by copying the
-addon code (162313389) into Anki (*Tools > Add-ons > Browse & Install...*).
+add-on code (162313389) into Anki (*Tools > Add-ons > Browse & Install...*).

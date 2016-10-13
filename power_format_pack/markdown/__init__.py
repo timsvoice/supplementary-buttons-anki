@@ -37,7 +37,7 @@ import codecs
 import sys
 import logging
 import warnings
-from extra_buttons.python_modules import importlib
+from power_format_pack.python_modules import importlib
 from . import util
 from .preprocessors import build_preprocessors
 from .blockprocessors import build_block_parser

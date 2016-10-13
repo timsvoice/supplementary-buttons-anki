@@ -26,7 +26,7 @@ import BeautifulSoup
 import re
 import string
 import time
-import ConfigParser
+from power_format_pack.python_modules import ConfigParser
 import os
 
 from PyQt4 import QtGui

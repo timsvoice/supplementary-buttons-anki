@@ -42,6 +42,7 @@ class Markdowner(object):
         assert isinstance(html, unicode), "Input `html` is not Unicode"
         assert isinstance(selected_html, unicode), "Input `selected_html` is not Unicode"
         self.c                              = utility.get_config_parser()
+        self.p                              = preferences.PREFS
         self.editor_instance                = other
         self.parent_window                  = parent_window
         self.col                            = mw.col
@@ -99,7 +100,7 @@ class Markdowner(object):
                 compare_md_escaped = utility.escape_html_chars(compare_md)
                 compare_md = compare_md_escaped
             if (utility.is_same_markdown(clean_md_escaped, compare_md) or
-                   preferences.PREFS.get(const.MARKDOWN_ALWAYS_REVERT)):
+                   self.p.get(const.MARKDOWN_ALWAYS_REVERT)):
                 self.revert_to_stored_markdown()
             else:
                 self.handle_conflict()
@@ -153,7 +154,7 @@ class Markdowner(object):
         """
         Disable the specified contenteditable field.
         """
-        if preferences.PREFS.get(const.MARKDOWN_OVERRIDE_EDITING):
+        if self.p.get(const.MARKDOWN_OVERRIDE_EDITING):
             warning_text = self.c.get(const.CONFIG_TOOLTIPS,
                                       "md_warning_editing_enabled_tooltip")
         else:
@@ -274,17 +275,18 @@ class Markdowner(object):
         Code blocks can be given a specific `code_direction`.
         """
         # align text in code blocks to the left
-        self.editor_instance.web.eval("""
-            $('.codehilite').attr('align', 'left');
-        """)
+        if not self.p.get(const.MARKDOWN_CLASSFUL_PYGMENTS):
+            self.editor_instance.web.eval("""
+                $('.codehilite').attr('align', 'left');
+            """)
 
         # align the code block itself
-        if preferences.PREFS.get(const.MARKDOWN_CODE_DIRECTION) != const.LEFT:
+        if self.p.get(const.MARKDOWN_CODE_DIRECTION) != const.LEFT:
             self.editor_instance.web.eval("""
                 var table = '<table><tbody><tr><td></td></tr></tbody></table>';
                 $('.codehilite:not(.codehilitetable .codehilite)').wrap(table);
                 $('.codehilite').parents().filter('table').addClass('codehilitetable').attr('align', '%s');
-            """ % preferences.PREFS.get(const.MARKDOWN_CODE_DIRECTION))
+            """ % self.p.get(const.MARKDOWN_CODE_DIRECTION))
 
         # footnotes
         self.editor_instance.web.eval("""

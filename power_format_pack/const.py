@@ -28,7 +28,7 @@ import time
 ##################################################
 
 PROGRAM_NAME  = "Power Format Pack"
-VERSION       = "0.8.8.0"
+VERSION       = "0.8.8.1"
 YEAR_START    = 2014
 YEAR_LAST     = time.strftime("%Y")
 ANKIWEB_URL   = "https://ankiweb.net/shared/info/162313389"

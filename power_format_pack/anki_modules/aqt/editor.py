@@ -89,3 +89,75 @@ def create_button(self, name, func, key=None, tip=None, size=True, text="",
         self.supp_buttons_hbox.addWidget(button)
 
     return button
+
+
+def _filterHTML(self, html, localize=False):
+    doc = BeautifulSoup(html)
+    # remove implicit regular font style from outermost element
+    if doc.span and doc.span.parent.name != u"th":
+        try:
+            attrs = doc.span['style'].split(";")
+        except (KeyError, TypeError):
+            attrs = []
+        if attrs:
+            new = []
+            for attr in attrs:
+                sattr = attr.strip()
+                if sattr and sattr not in ("font-style: normal", "font-weight: normal"):
+                    new.append(sattr)
+            doc.span['style'] = ";".join(new)
+        # filter out implicit formatting from webkit
+    for tag in doc("span", "Apple-style-span"):
+        preserve = ""
+        for item in tag['style'].split(";"):
+            try:
+                k, v = item.split(":")
+            except ValueError:
+                continue
+            if k.strip() == "color" and not v.strip() == "rgb(0, 0, 0)":
+                preserve += "color:%s;" % v
+            if k.strip() in ("font-weight", "font-style"):
+                preserve += item + ";"
+        if preserve:
+            # preserve colour attribute, delete implicit class
+            tag['style'] = preserve
+            del tag['class']
+        else:
+            # strip completely
+            tag.replaceWithChildren()
+    for tag in doc("font", "Apple-style-span"):
+        # strip all but colour attr from implicit font tags
+        if 'color' in dict(tag.attrs):
+            for attr in tag.attrs:
+                if attr != "color":
+                    del tag[attr]
+                # and apple class
+            del tag['class']
+        else:
+            # remove completely
+            tag.replaceWithChildren()
+        # now images
+    for tag in doc("img"):
+        # turn file:/// links into relative ones
+        try:
+            if tag['src'].lower().startswith("file://"):
+                tag['src'] = os.path.basename(tag['src'])
+            if localize and self.isURL(tag['src']):
+                # convert remote image links to local ones
+                fname = self.urlToFile(tag['src'])
+                if fname:
+                    tag['src'] = fname
+        except KeyError:
+            # for some bizarre reason, mnemosyne removes src elements
+            # from missing media
+            pass
+            # strip all other attributes, including implicit max-width
+        for attr, val in tag.attrs:
+            if attr != "src":
+                del tag[attr]
+        # strip superfluous elements
+    for elem in "html", "head", "body", "meta":
+        for tag in doc(elem):
+            tag.replaceWithChildren()
+    html = unicode(doc)
+    return html

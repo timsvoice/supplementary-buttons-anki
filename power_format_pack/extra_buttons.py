@@ -49,6 +49,7 @@ from heading import Heading
 # Overrides
 ##################################################
 editor.Editor.onHtmlEdit = myeditor.onHtmlEdit
+editor.Editor._filterHTML = myeditor._filterHTML
 
 
 # Buttons

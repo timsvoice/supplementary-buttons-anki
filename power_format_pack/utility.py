@@ -376,7 +376,7 @@ def convert_markdown_to_html(clean_md):
             AbbrExtension(),
             Nl2BrExtension(),
             CodeHiliteExtension(
-                noclasses=True,
+                noclasses=not preferences.PREFS.get(const.MARKDOWN_CLASSFUL_PYGMENTS),
                 pygments_style=preferences.PREFS.get(const.MARKDOWN_SYNTAX_STYLE),
                 linenums=preferences.PREFS.get(const.MARKDOWN_LINE_NUMS)),
             SaneListExtension()

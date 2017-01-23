@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2014-2016 Stefan van den Akker <srvandenakker.dev@gmail.com>
+# Copyright 2014-2017 Stefan van den Akker <neftas@protonmail.com>
 #
 # This file is part of Power Format Pack.
 #
@@ -254,18 +254,17 @@ class Markdowner(object):
         """
         mess = QtGui.QMessageBox(self.parent_window)
         mess.setIcon(QtGui.QMessageBox.Warning)
-        # TODO: think about putting the text of the dialog in property files
         mess.setWindowTitle(self.c.get(const.CONFIG_WINDOW_TITLES,
                                        "md_overwrite_warning"))
         mess.setText(self.c.get(const.CONFIG_WARNINGS,
                                 "md_overwrite_warning_text"))
         mess.setInformativeText(self.c.get(const.CONFIG_WARNINGS,
                                 "md_overwrite_warning_additional_text"))
-        replaceButton = QtGui.QPushButton("&Replace", mess)
-        mess.addButton(replaceButton, QtGui.QMessageBox.ApplyRole)
+        replace_button = QtGui.QPushButton("&Replace", mess)
+        mess.addButton(replace_button, QtGui.QMessageBox.ApplyRole)
         mess.addButton("&Overwrite", QtGui.QMessageBox.ApplyRole)
         mess.setStandardButtons(QtGui.QMessageBox.Cancel)
-        mess.setDefaultButton(replaceButton)
+        mess.setDefaultButton(replace_button)
         return mess.exec_()
 
     def align_elements(self):

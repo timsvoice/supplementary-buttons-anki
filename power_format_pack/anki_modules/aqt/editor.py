@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Copyright: Damien Elmes <anki@ichi2.net>
-# Changes: Stefan van den Akker <srvandenakker.dev@gmail.com>
+# Changes: Stefan van den Akker <neftas@protonmail.com>
 
 from aqt.qt import *
 from aqt.utils import openHelp

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2014-2016 Stefan van den Akker <srvandenakker.dev@gmail.com>
+# Copyright 2014-2017 Stefan van den Akker <neftas@protonmail.com>
 #
 # This file is part of Power Format Pack.
 #
@@ -33,7 +33,7 @@ YEAR_START    = 2014
 YEAR_LAST     = time.strftime("%Y")
 ANKIWEB_URL   = "https://ankiweb.net/shared/info/162313389"
 GITHUB_URL    = "https://github.com/Neftas/supplementary-buttons-anki"
-EMAIL         = "srvandenakker.dev@gmail.com"
+EMAIL         = "neftas@protonmail.com"
 FOLDER_NAME   = "power_format_pack"
 
 OPERATING_SYSTEMS = {

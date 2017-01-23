@@ -204,13 +204,13 @@ mode, you can check the _Always automatically revert back to saved Markdown_
 checkbox in the options. Doing this will never show you the warning dialog box
 and will always discard any changes made in Markdown mode.
 
-##### How the Markdown button differs from the other buttons in this add-on
+##### Don't use Markdown in combination with other formatting
 
 I recommend you use either Markdown or the rich formatting buttons, but not
 both at the same time. Markdown was designed to be a fast and simple way to
 quickly write relatively simple formatted text. As such, it won't know what to
 do with complex cards that use formatting unknown to the Markdown
-specification. So when clicking the Markdown button, it _will_ "erase"
+specification. So when clicking the Markdown button, it _will_ erase
 formatting that it does not know how to handle. You were warned.
 
 ### Extra Markdown syntax

@@ -3,7 +3,7 @@
 # -*- coding: utf-8 -*-
 #
 # Author: Aaron Swartz <me@aaronsw.com>
-# Changes: Stefan van den Akker <srvandenakker.dev@gmail.com>
+# Changes: Stefan van den Akker <neftas@protonmail.com>
 
 import re
 """html2text: Turn HTML into equivalent Markdown-structured text."""

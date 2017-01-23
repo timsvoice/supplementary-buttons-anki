@@ -87,7 +87,7 @@ class Markdowner(object):
         if not clean_md:
             return
         # check for changed Markdown between the stored data and the current text
-        if (self.has_data and self.isconverted == "True"):
+        if self.has_data and self.isconverted == "True":
             compare_md = utility.convert_markdown_to_html(self.md)
             compare_md = utility.put_colons_in_html_def_list(compare_md)
             compare_md = utility.convert_html_to_markdown(compare_md)

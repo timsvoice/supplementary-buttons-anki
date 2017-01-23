@@ -18,3 +18,7 @@ todo
 ###################
 power_format_pack/.extra_buttons_prefs
 power_format_pack/keybindings_linux_windows
+
+# PyCharm files #
+#################
+.idea

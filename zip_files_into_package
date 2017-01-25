@@ -7,14 +7,15 @@ set -xv
 
 FOLDER_NAME=power_format_pack
 
+# needed for unit tests with nosetests
 if [ -d "$FOLDER_NAME" ]; then
-    case "$PYTHONPATH" in
+    case "${PYTHONPATH:=:}" in
         *"$FOLDER_NAME"*)
             echo "PYTHONPATH already contains the needed path..."
             ;;
         *)
             extra_path="$(pwd)"/"$FOLDER_NAME"
-            export PYTHONPATH="$PYTHONPATH:$extra_path"
+            export PYTHONPATH="${PYTHONPATH}:$extra_path"
             echo "Added '$extra_path' to PYTHONPATH..."
             ;;
     esac
@@ -30,7 +31,7 @@ check_return_value() {
     fi
 }
 
-if [ -n "$override" ] && [ "$override" = "override" ]; then
+if [[ ${override:-unset} != unset ]]; then
     echo "Not running unit tests..."
 else
     # run tests before creating zip

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2014-2016 Stefan van den Akker <srvandenakker.dev@gmail.com>
+# Copyright 2014-2017 Stefan van den Akker <neftas@protonmail.com>
 #
 # This file is part of Power Format Pack.
 #
@@ -273,6 +273,7 @@ class ExtraButtons_Options(QtGui.QMenu):
         md_style_label = QtGui.QLabel(
                     self.c.get(const.CONFIG_LABELS, "md_style_label"), self)
         md_style_combo = QtGui.QComboBox(self)
+        md_style_combo.setEnabled(not const.MARKDOWN_CLASSFUL_PYGMENTS)
         md_style_combo.setMinimumWidth(const.MIN_COMBOBOX_WIDTH)
         md_style_files = os.listdir(os.path.join(PrefHelper.get_addons_folder(),
                                                  const.FOLDER_NAME,
@@ -311,6 +312,7 @@ class ExtraButtons_Options(QtGui.QMenu):
         code_align_label = QtGui.QLabel(self.c.get(const.CONFIG_LABELS,
                                                    "code_align_label"))
         code_align_combo = QtGui.QComboBox(self)
+        code_align_combo.setEnabled(not const.MARKDOWN_CLASSFUL_PYGMENTS)
         code_align_combo.setMinimumWidth(const.MIN_COMBOBOX_WIDTH)
         for direction in const.CODE_DIRECTIONS:
             code_align_combo.addItem(direction)
@@ -331,6 +333,16 @@ class ExtraButtons_Options(QtGui.QMenu):
 
         return hbox
 
+    def markdown_switch_between_classes_and_inline(self, *widgets):
+        cb = self.create_checkbox(const.MARKDOWN_CLASSFUL_PYGMENTS,
+                                  None,
+                                  self.c.get(const.CONFIG_LABELS,
+                                              "markdown_classful_pygments_label"),
+                                  lambda: self.switch_user_style_sheet_inline_on_off(
+                                      *widgets))
+
+        return self.put_elems_in_box((cb,), const.HBOX, const.WIDGET)
+
     def init_markdown_option(self):
         md_groupbox = QtGui.QGroupBox(
                 self.c.get(const.CONFIG_LABELS, "md_groupbox"),
@@ -347,10 +359,20 @@ class ExtraButtons_Options(QtGui.QMenu):
         md_vbox = QtGui.QVBoxLayout()
 
         # Markdown syntax highlighting
-        md_vbox.addLayout(self.markdown_syntax_styles_option())
+        markdown_syntax_styles_hbox = self.markdown_syntax_styles_option()
+        md_vbox.addLayout(markdown_syntax_styles_hbox)
+        markdown_syntax_styles_combo = markdown_syntax_styles_hbox.itemAt(2).widget()
 
         # Markdown code align
-        md_vbox.addLayout(self.markdown_code_align_option())
+        markdown_code_align_hbox = self.markdown_code_align_option()
+        md_vbox.addLayout(markdown_code_align_hbox)
+        markdown_code_align_combo = markdown_code_align_hbox.itemAt(2).widget()
+
+        # Markdown switch between user style sheet and inline styling
+        md_vbox.insertLayout(0, self.markdown_switch_between_classes_and_inline(
+                markdown_syntax_styles_combo, markdown_code_align_combo))
+
+        md_vbox.addWidget(utility.create_horizontal_rule())
 
         # line numbers Markdown code highlighting
         md_vbox.addLayout(self.markdown_linenums_option())
@@ -361,6 +383,7 @@ class ExtraButtons_Options(QtGui.QMenu):
 
         # override disabled buttons in rendered Markdown
         md_vbox.addLayout(self.override_disabled_buttons_rendered_markdown())
+
 
         md_vbox.setSpacing(self.c.getint(const.CONFIG_QT, "spacing_buttons"))
 
@@ -381,7 +404,8 @@ class ExtraButtons_Options(QtGui.QMenu):
                                                 const.BUTTON_PLACEMENT,
                                                 const.MARKDOWN_OVERRIDE_EDITING,
                                                 const.MARKDOWN,
-                                                const.STYLE_TABLE
+                                                const.STYLE_TABLE,
+                                                const.MARKDOWN_CLASSFUL_PYGMENTS
                                             )]
         num_items = len(l) / 2.0
         num_items = num_items + 0.5 if (num_items % 1.0 > 0.0) else num_items
@@ -440,6 +464,14 @@ class ExtraButtons_Options(QtGui.QMenu):
                                             "table_styling_tooltip"))
 
         return self.put_elems_in_box((cb,), const.HBOX, const.WIDGET)
+
+    def switch_user_style_sheet_inline_on_off(self, *widgets):
+        """
+        Switches widgets related to user style sheets on or off.
+        """
+        is_checked = self.sender().isChecked()
+        for widget in widgets:
+            widget.setEnabled(not is_checked)
 
     def create_general_tab(self):
 

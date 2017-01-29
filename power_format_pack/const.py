@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2014-2016 Stefan van den Akker <srvandenakker.dev@gmail.com>
+# Copyright 2014-2017 Stefan van den Akker <neftas@protonmail.com>
 #
 # This file is part of Power Format Pack.
 #
@@ -28,12 +28,12 @@ import time
 ##################################################
 
 PROGRAM_NAME  = "Power Format Pack"
-VERSION       = "0.8.8.1"
+VERSION       = "0.8.8.3"
 YEAR_START    = 2014
 YEAR_LAST     = time.strftime("%Y")
 ANKIWEB_URL   = "https://ankiweb.net/shared/info/162313389"
 GITHUB_URL    = "https://github.com/Neftas/supplementary-buttons-anki"
-EMAIL         = "srvandenakker.dev@gmail.com"
+EMAIL         = "neftas@protonmail.com"
 FOLDER_NAME   = "power_format_pack"
 
 OPERATING_SYSTEMS = {
@@ -94,6 +94,7 @@ MARKDOWN_LINE_NUMS            = "markdown_line_nums"
 MARKDOWN_CODE_DIRECTION       = "markdown_code_direction"
 MARKDOWN_ALWAYS_REVERT        = "markdown_always_revert"
 MARKDOWN_OVERRIDE_EDITING     = "markdown_override_editing"
+MARKDOWN_CLASSFUL_PYGMENTS    = "markdown_classful_pygments"
 BUTTON_PLACEMENT              = "button_placement"
 STYLE_TABLE                   = "style_table"
 
@@ -123,7 +124,7 @@ MARKDOWN_PREFS                = dict(disable_buttons=False,
 MAX_BYTES_PREFS               = 32768
 
 # check if image present in Markdown
-IS_LINK_OR_IMG_REGEX = re.compile(r"!?\[[^\]]*\]\(.*?(?<!\\)\)")
+IS_LINK_OR_IMG_REGEX = re.compile(r"!\[[^\]]*\](\(.*?(?<!\\)\))")
 # to unescape image data
 HTML_PARSER                   = HTMLParser.HTMLParser()
 

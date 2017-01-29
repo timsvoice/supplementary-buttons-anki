@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2014-2016 Stefan van den Akker <srvandenakker.dev@gmail.com>
+# Copyright 2014-2017 Stefan van den Akker <neftas@protonmail.com>
 #
 # This file is part of Power Format Pack.
 #
@@ -42,6 +42,7 @@ class Markdowner(object):
         assert isinstance(html, unicode), "Input `html` is not Unicode"
         assert isinstance(selected_html, unicode), "Input `selected_html` is not Unicode"
         self.c                              = utility.get_config_parser()
+        self.p                              = preferences.PREFS
         self.editor_instance                = other
         self.parent_window                  = parent_window
         self.col                            = mw.col
@@ -86,7 +87,7 @@ class Markdowner(object):
         if not clean_md:
             return
         # check for changed Markdown between the stored data and the current text
-        if (self.has_data and self.isconverted == "True"):
+        if self.has_data and self.isconverted == "True":
             compare_md = utility.convert_markdown_to_html(self.md)
             compare_md = utility.put_colons_in_html_def_list(compare_md)
             compare_md = utility.convert_html_to_markdown(compare_md)
@@ -99,7 +100,7 @@ class Markdowner(object):
                 compare_md_escaped = utility.escape_html_chars(compare_md)
                 compare_md = compare_md_escaped
             if (utility.is_same_markdown(clean_md_escaped, compare_md) or
-                   preferences.PREFS.get(const.MARKDOWN_ALWAYS_REVERT)):
+                   self.p.get(const.MARKDOWN_ALWAYS_REVERT)):
                 self.revert_to_stored_markdown()
             else:
                 self.handle_conflict()
@@ -153,7 +154,7 @@ class Markdowner(object):
         """
         Disable the specified contenteditable field.
         """
-        if preferences.PREFS.get(const.MARKDOWN_OVERRIDE_EDITING):
+        if self.p.get(const.MARKDOWN_OVERRIDE_EDITING):
             warning_text = self.c.get(const.CONFIG_TOOLTIPS,
                                       "md_warning_editing_enabled_tooltip")
         else:
@@ -253,18 +254,17 @@ class Markdowner(object):
         """
         mess = QtGui.QMessageBox(self.parent_window)
         mess.setIcon(QtGui.QMessageBox.Warning)
-        # TODO: think about putting the text of the dialog in property files
         mess.setWindowTitle(self.c.get(const.CONFIG_WINDOW_TITLES,
                                        "md_overwrite_warning"))
         mess.setText(self.c.get(const.CONFIG_WARNINGS,
                                 "md_overwrite_warning_text"))
         mess.setInformativeText(self.c.get(const.CONFIG_WARNINGS,
                                 "md_overwrite_warning_additional_text"))
-        replaceButton = QtGui.QPushButton("&Replace", mess)
-        mess.addButton(replaceButton, QtGui.QMessageBox.ApplyRole)
+        replace_button = QtGui.QPushButton("&Replace", mess)
+        mess.addButton(replace_button, QtGui.QMessageBox.ApplyRole)
         mess.addButton("&Overwrite", QtGui.QMessageBox.ApplyRole)
         mess.setStandardButtons(QtGui.QMessageBox.Cancel)
-        mess.setDefaultButton(replaceButton)
+        mess.setDefaultButton(replace_button)
         return mess.exec_()
 
     def align_elements(self):
@@ -274,17 +274,18 @@ class Markdowner(object):
         Code blocks can be given a specific `code_direction`.
         """
         # align text in code blocks to the left
-        self.editor_instance.web.eval("""
-            $('.codehilite').attr('align', 'left');
-        """)
+        if not self.p.get(const.MARKDOWN_CLASSFUL_PYGMENTS):
+            self.editor_instance.web.eval("""
+                $('.codehilite').attr('align', 'left');
+            """)
 
         # align the code block itself
-        if preferences.PREFS.get(const.MARKDOWN_CODE_DIRECTION) != const.LEFT:
+        if self.p.get(const.MARKDOWN_CODE_DIRECTION) != const.LEFT:
             self.editor_instance.web.eval("""
                 var table = '<table><tbody><tr><td></td></tr></tbody></table>';
                 $('.codehilite:not(.codehilitetable .codehilite)').wrap(table);
                 $('.codehilite').parents().filter('table').addClass('codehilitetable').attr('align', '%s');
-            """ % preferences.PREFS.get(const.MARKDOWN_CODE_DIRECTION))
+            """ % self.p.get(const.MARKDOWN_CODE_DIRECTION))
 
         # footnotes
         self.editor_instance.web.eval("""

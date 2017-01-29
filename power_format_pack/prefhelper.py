@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2014-2016 Stefan van den Akker <srvandenakker.dev@gmail.com>
+# Copyright 2014-2017 Stefan van den Akker <neftas@protonmail.com>
 #
 # This file is part of Power Format Pack.
 #
@@ -91,6 +91,7 @@ class PrefHelper(object):
                 const.MARKDOWN_LINE_NUMS:           False,
                 const.MARKDOWN_ALWAYS_REVERT:       False,
                 const.MARKDOWN_OVERRIDE_EDITING:    False,
+                const.MARKDOWN_CLASSFUL_PYGMENTS:   False,
                 const.BUTTON_PLACEMENT:             "adjacent",
                 const.CODE:                         True,
                 const.UNORDERED_LIST:               True,

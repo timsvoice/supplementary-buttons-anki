@@ -1,0 +1,23 @@
+#!/bin/bash
+
+set -o nounset
+set -o errexit
+
+FOLDER="power_format_pack"
+
+files=("$FOLDER"/config.ini
+       "$FOLDER"/const.py
+       "$FOLDER"/docs/_version.py)
+
+max=0
+for file in "${files[@]}"; do
+    if [[ ${#file} > $max ]]; then
+        max=${#file}
+    fi
+done
+let max+=10
+
+for file in "${files[@]}"; do
+    printf '%-*s' "$max" "$file"
+    sed -rn 's/^.*version.*\=\s*"?(([0-9]+\.){3}[0-9]+)"?/\1/pi' "$file"
+done

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2014-2016 Stefan van den Akker <srvandenakker.dev@gmail.com>
+# Copyright 2014-2017 Stefan van den Akker <neftas@protonmail.com>
 #
 # This file is part of Power Format Pack.
 #
@@ -22,25 +22,21 @@ Utility module with helper functions that are needed throughout the addon.
 """
 
 import base64
-import BeautifulSoup
+import os
 import re
 import string
 import time
-from power_format_pack.python_modules import ConfigParser
-import os
 
+import BeautifulSoup
 from PyQt4 import QtGui
 from anki.utils import intTime, json, isMac
 from aqt.utils import isWin
 
+import const
+import markdown
+import preferences
 from html2text import html2text
 from html2text_overrides import escape_md_section_override
-import const
-import preferences
-from prefhelper import PrefHelper
-
-import markdown
-from markdown.extensions import Extension
 from markdown.extensions.abbr import AbbrExtension
 from markdown.extensions.attr_list import AttrListExtension
 from markdown.extensions.codehilite import CodeHiliteExtension
@@ -51,6 +47,8 @@ from markdown.extensions.nl2br import Nl2BrExtension
 from markdown.extensions.sane_lists import SaneListExtension
 from markdown.extensions.smart_strong import SmartEmphasisExtension
 from markdown.extensions.tables import TableExtension
+from power_format_pack.python_modules import ConfigParser
+from prefhelper import PrefHelper
 
 
 def validate_key_sequence(sequence, platform=u""):
@@ -241,7 +239,7 @@ def filter_indices(positions1, positions3):
     Mark overlaps with code blocks in inline code blocks. `positions1` is
     a list of list with start and end points of inline code blocks
     [[0, 2], [5, 7]]. `positions3` is a list of lists with start and end
-    point of code blocks.  Modifies `position1` in place. Return `None`.
+    point of fenced code blocks. Modifies `position1` in place. Return `None`.
     """
     for pos3 in positions3:
         for pos1 in positions1:
@@ -262,12 +260,17 @@ def filter_indices(positions1, positions3):
 
 def replace_link_img_matches(regex, new, s):
     """
-    Escape characters in Markdown links and images that may break in
-    regular HTML.
+    Escape characters in Markdown image links that may break in regular HTML.
+
     >>> replace_link_img_matches(re.compile(ur"\s+"),
                                  u"&#32;",
                                  u"[](i .jpg)")
     u'[](i&#32;.jpg)'
+
+    >>> replace_link_img_matches(re.compile(ur"\s+"),
+                                 u"&#32;",
+                                 u"[this `was a` triump](i am making)")
+    u'[this `was a` triumph](i&#32;am&#32;making)'
     """
 
     assert isinstance(s, unicode), "Input `s` is not Unicode"
@@ -291,15 +294,17 @@ def replace_link_img_matches(regex, new, s):
                     break
 
             if not skip:
-                str_to_be_replaced = match.group(0)
+                str_to_be_replaced = match.group(1)
                 start = s.find(str_to_be_replaced)
-                end   = start + len(str_to_be_replaced)
+                end = start + len(str_to_be_replaced)
                 replacement = re.sub(regex, new, str_to_be_replaced)
                 # put string back in original string
                 str_start = s[:start]
                 str_end = s[end:]
                 s = str_start + replacement + str_end
+
     assert isinstance(s, unicode), "Result `s` is not Unicode"
+
     return s
 
 
@@ -376,7 +381,7 @@ def convert_markdown_to_html(clean_md):
             AbbrExtension(),
             Nl2BrExtension(),
             CodeHiliteExtension(
-                noclasses=True,
+                noclasses=not preferences.PREFS.get(const.MARKDOWN_CLASSFUL_PYGMENTS),
                 pygments_style=preferences.PREFS.get(const.MARKDOWN_SYNTAX_STYLE),
                 linenums=preferences.PREFS.get(const.MARKDOWN_LINE_NUMS)),
             SaneListExtension()

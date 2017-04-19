@@ -17,13 +17,13 @@
 # You should have received a copy of the GNU General Public License along
 # with Power Format Pack. If not, see http://www.gnu.org/licenses/.
 
-from PyQt4 import QtGui, QtCore, QtWebKit
 import os
 import utility
 import const
 import preferences
 from prefhelper import PrefHelper
 
+from PyQt4 import QtGui, QtCore, QtWebKit
 
 class ExtraButtons_Options(QtGui.QMenu):
     """
@@ -36,7 +36,8 @@ class ExtraButtons_Options(QtGui.QMenu):
         self.radio_buttons = list()
         self.c = utility.get_config_parser()
 
-    def button_switch(self, state, name, callback=None):
+    @staticmethod
+    def button_switch(state, name, callback=None):
         """
         Puts a button either on or off. Reverses current state.
         """
@@ -48,19 +49,27 @@ class ExtraButtons_Options(QtGui.QMenu):
         if callback is not None:
             callback()
 
-    def prettify_option_name(self, s):
+    @staticmethod
+    def prettify_option_name(s):
         """
         Replace the underscore in the option name with a space and capitalize
         the resulting string.
+        
+        >>> ExtraButtons_Options.prettify_option_name(u"this_is_text")
+        u'This is text'
         """
-        return s.replace("_", " ").capitalize()
+        return s.replace(u"_", u" ").capitalize()
 
-    def deprettify_option_name(self, s):
+    @staticmethod
+    def deprettify_option_name(s):
         """
         Replace the space in the option name with an underscore and make the
         resultant string lowercase.
+        
+        >>> ExtraButtons_Options.deprettify_option_name(u"This is text")
+        u'this_is_text'
         """
-        return s.replace(" ", "_").lower()
+        return s.replace(u" ", u"_").lower()
 
     def show_markdown_dialog(self):
         mess = QtGui.QMessageBox(self.main_window)
@@ -91,7 +100,8 @@ class ExtraButtons_Options(QtGui.QMenu):
                 lambda: self.button_switch(checkbox.isChecked(), name, callback))
         return checkbox
 
-    def create_radiobutton(self, name):
+    @staticmethod
+    def create_radiobutton(name):
         return QtGui.QRadioButton(name)
 
     def setup_power_format_pack_options(self):
@@ -200,6 +210,9 @@ class ExtraButtons_Options(QtGui.QMenu):
                                              "edit_rendered_markdown_label"))
         utility.set_tool_tip(cb, self.c.get(const.CONFIG_TOOLTIPS,
                                             "edit_rendered_markdown_tooltip"))
+        #
+        cb.setChecked(True)
+        cb.setDisabled(True)
 
         return self.put_elems_in_box((cb,), const.HBOX, const.WIDGET)
 
@@ -382,7 +395,7 @@ class ExtraButtons_Options(QtGui.QMenu):
         md_vbox.addLayout(self.markdown_skip_warning_option())
 
         # override disabled buttons in rendered Markdown
-        md_vbox.addLayout(self.override_disabled_buttons_rendered_markdown())
+        # md_vbox.addLayout(self.override_disabled_buttons_rendered_markdown())
 
 
         md_vbox.setSpacing(self.c.getint(const.CONFIG_QT, "spacing_buttons"))

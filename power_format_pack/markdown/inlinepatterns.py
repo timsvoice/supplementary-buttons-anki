@@ -49,7 +49,7 @@ import re
 try:  # pragma: no cover
     from ..urllib import parse
     from parse import urlparse, urlunparse
-except ImportError:  # pragma: no cover
+except Exception:  # pragma: no cover
     from urlparse import urlparse, urlunparse
 try:  # pragma: no cover
     from html import entities

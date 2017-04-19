@@ -344,28 +344,28 @@ blah
     # check_alignment
     def test_check_alignment_fails_when_input_is_not_unicode(self):
         s = ""
-        self.assertRaises(AssertionError, utility.check_alignment, s)
+        self.assertRaises(AssertionError, utility.get_alignment, s)
 
     def test_check_alignment_returns_center_when_input_is_colon_dash_colon(self):
         s = u":-:"
         expected = u"center"
-        actual = utility.check_alignment(s)
+        actual = utility.get_alignment(s)
         self.assertEqual(expected, actual)
 
     def test_check_alignment_returns_left_when_input_is_not_recognized_string(self):
         s = u"random"
         expected = u"left"
-        actual = utility.check_alignment(s)
+        actual = utility.get_alignment(s)
         self.assertEqual(expected, actual)
 
     def test_check_alignment_returns_left_when_input_is_empty_string(self):
         s = u""
         expected = u"left"
-        actual = utility.check_alignment(s)
+        actual = utility.get_alignment(s)
         self.assertEqual(expected, actual)
 
     def test_check_alignment_returns_left_when_input_is_none(self):
-        self.assertRaises(AssertionError, utility.check_alignment, None)
+        self.assertRaises(AssertionError, utility.get_alignment, None)
 
     # check_size_heading
     def test_check_size_heading_throws_assertion_error_when_input_not_unicode(self):
@@ -591,85 +591,85 @@ blah
     # convert_html_to_markdown
     def test_convert_html_to_markdown_throws_assertion_error_when_input_is_not_unicode(self):
         html = "<div>- aaa</div>"
-        self.assertRaises(AssertionError, utility.convert_html_to_markdown, html)
+        self.assertRaises(AssertionError, utility.strip_html_from_markdown, html)
 
     def test_convert_html_to_markdown_returns_empty_string_when_input_is_empty_string(self):
         html = u""
         expected = u""
-        actual = utility.convert_html_to_markdown(html)
+        actual = utility.strip_html_from_markdown(html)
         self.assertEqual(expected, actual)
 
     def test_convert_html_to_markdown_returns_empty_string_when_input_is_empty_string_and_keep_empty_lines_is_true(
             self):
         html = u""
         expected = u""
-        actual = utility.convert_html_to_markdown(html, True)
+        actual = utility.strip_html_from_markdown(html, True)
         self.assertEqual(expected, actual)
 
     def test_convert_html_to_markdown_does_not_escape_leading_dash(self):
         html = u"<div>- aaa</div>"
         expected = u"- aaa\n"
-        actual = utility.convert_html_to_markdown(html)
+        actual = utility.strip_html_from_markdown(html)
         self.assertEqual(expected, actual)
 
     def test_convert_html_to_markdown_does_not_escape_leading_plus_sign(self):
         html = u"<div>+ aaa</div>"
         expected = u"+ aaa\n"
-        actual = utility.convert_html_to_markdown(html)
+        actual = utility.strip_html_from_markdown(html)
         self.assertEqual(expected, actual)
 
     def test_convert_html_to_markdown_does_not_escape_backward_slash(self):
         html = u"<div>`:\`</div>"
         expected = u"`:\`\n"
-        actual = utility.convert_html_to_markdown(html)
+        actual = utility.strip_html_from_markdown(html)
         self.assertEqual(expected, actual)
 
     def test_convert_html_to_markdown_does_not_escape_backward_slash_followed_by_dash(self):
         html = u"\- one<div>\- two</div>"
         expected = u"\- one\n\- two\n"
-        actual = utility.convert_html_to_markdown(html)
+        actual = utility.strip_html_from_markdown(html)
         self.assertEqual(expected, actual)
 
     def test_convert_html_to_markdown_does_not_escape_backward_slash_followed_by_underscore(self):
         html = u"\_ one<div>\_ two</div>"
         expected = u"\_ one\n\_ two\n"
-        actual = utility.convert_html_to_markdown(html)
+        actual = utility.strip_html_from_markdown(html)
         self.assertEqual(expected, actual)
 
     def test_convert_html_to_markdown_does_not_escape_dots(self):
         html = u"1. one<div>2. two</div>"
         expected = u"1. one\n2. two\n"
-        actual = utility.convert_html_to_markdown(html)
+        actual = utility.strip_html_from_markdown(html)
         self.assertEqual(expected, actual)
 
     def test_convert_html_to_markdown_does_not_escape_dots_with_keep_empty_lines(self):
         html = u"1. one<div>2. two</div>"
         expected = u"1. one\n\n2. two\n"
-        actual = utility.convert_html_to_markdown(html, True)
+        actual = utility.strip_html_from_markdown(html, True)
         self.assertEqual(expected, actual)
 
     def test_convert_html_to_markdown_does_not_escape_curly_braces(self):
         html = u"{ and { and } and }"
         expected = u"{ and { and } and }\n"
-        actual = utility.convert_html_to_markdown(html)
+        actual = utility.strip_html_from_markdown(html)
         self.assertEqual(expected, actual)
 
     def test_convert_html_to_markdown_does_not_escape_curly_braces_in_divs(self):
         html = u"{ and<div>{ and</div><div>} and }</div>"
         expected = u"{ and\n{ and\n} and }\n"
-        actual = utility.convert_html_to_markdown(html)
+        actual = utility.strip_html_from_markdown(html)
         self.assertEqual(expected, actual)
 
     def test_convert_html_to_markdown_does_not_escape_inverted_comma(self):
         html = u"` and<div>`</div>"
         expected = u"` and\n`\n"
-        actual = utility.convert_html_to_markdown(html)
+        actual = utility.strip_html_from_markdown(html)
         self.assertEqual(expected, actual)
 
     def test_convert_html_to_markdown_does_not_escape_hash_sign(self):
         html = u"# one<div># two</div>"
         expected = u"# one\n# two\n"
-        actual = utility.convert_html_to_markdown(html)
+        actual = utility.strip_html_from_markdown(html)
         self.assertEqual(expected, actual)
 
     # convert_clean_md_to_html
@@ -882,7 +882,7 @@ blah
     def test_put_md_data_in_json_format_throws_assertion_error_when_md_is_not_unicode(self):
         md1 = ""
         self.assertRaises(AssertionError,
-                          utility.put_md_data_in_json_format,
+                          utility.markdown_data_to_json,
                           1,
                           True,
                           md1)
@@ -890,7 +890,7 @@ blah
     def test_put_md_data_in_json_format_returns_dict_when_md_contain_russian(self):
         md = u"один"
         expected = dict(id=1, isconverted=True, md=md, lastmodified="")
-        actual = utility.put_md_data_in_json_format(1, True, md)
+        actual = utility.markdown_data_to_json(1, True, md)
         self.assertEqual(expected.get("md"), actual.get("md"))
         self.assertNotIn("html", expected)
 

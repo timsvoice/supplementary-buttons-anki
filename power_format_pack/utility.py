@@ -28,9 +28,9 @@ import string
 import time
 
 import BeautifulSoup
-from PyQt4 import QtGui
 from anki.utils import intTime, json, isMac
 from aqt.utils import isWin
+from PyQt4 import QtGui
 
 import const
 import markdown
@@ -110,6 +110,9 @@ def create_pretty_sequence(sequence):
     Return an ordered string created from a key sequence that contains
     modifier and non-modifier keys. The returned order is ctrl, meta,
     shift, alt, non-modifier.
+    
+    >>> create_pretty_sequence(["meta", "alt", "ctrl", "i"])
+    u'ctrl+meta+alt+i'
     """
 
     if not sequence:
@@ -158,15 +161,21 @@ def get_keybinding(keybindings, name_of_key):
     """
     Return the keybinding indicated by `name_of_key`, and capitalize
     the name of each key before the delimiter `+`.
+    
+    >>> get_keybinding({u"test": u"ctrl+alt+esc"}, u"test")
+    u'Ctrl+Alt+Esc'
     """
-    keybinding = keybindings.get(name_of_key, "")
-    return string.capwords(keybinding, "+")
+    keybinding = keybindings.get(name_of_key, u"")
+    return string.capwords(keybinding, u"+")
 
 
-def convert_html_to_markdown(org_html, keep_empty_lines=False):
+def strip_html_from_markdown(org_html, keep_empty_lines=False):
     """
     Take an `org_html` string and return a Markdown string. Empty lines are
     removed from the result, unless `keep_empty_lines` is set to `True`.
+    
+    >>> strip_html_from_markdown(u"<p>this <strong>was</strong> a <em>triumph</em>!</p>")
+    u'this **was** a _triumph_!\\n'
     """
 
     if not org_html:
@@ -176,9 +185,9 @@ def convert_html_to_markdown(org_html, keep_empty_lines=False):
 
     # disable the escaping of Markdown-sensitive characters
     html2text.escape_md_section = escape_md_section_override
-    h = html2text.HTML2Text()
-    h.body_width = 0
-    md_text = h.handle(org_html)
+    h2t = html2text.HTML2Text()
+    h2t.body_width = 0
+    md_text = h2t.handle(org_html)
     clean_md = u""
     if keep_empty_lines:
         clean_md = md_text
@@ -216,8 +225,10 @@ def get_indices(haystack, needle, needle_end=u""):
     """
     Return a list of lists with the start and end positions of the
     needle(s).
-    >>> get_indices(u"`", u"just `a` sentence")
+    >>> get_indices(u"just `a` sentence", u"`")
     [[5, 7]]
+    >>> get_indices(u"another `sentence", u"`")
+    [[8, -1]]
     """
     positions = list()
     if not needle_end:
@@ -230,7 +241,7 @@ def get_indices(haystack, needle, needle_end=u""):
             break
         else:
             positions.append([start, end])
-            start = haystack.find(needle, end)
+            start = haystack.find(needle, end + 1)
     return positions
 
 
@@ -240,6 +251,12 @@ def filter_indices(positions1, positions3):
     a list of list with start and end points of inline code blocks
     [[0, 2], [5, 7]]. `positions3` is a list of lists with start and end
     point of fenced code blocks. Modifies `position1` in place. Return `None`.
+    
+    >>> positions1 = [[2, 5]]
+    >>> positions3 = [[5, 10]]
+    >>> filter_indices(positions1, positions3)
+    >>> positions1[0][1] == -1
+    True
     """
     for pos3 in positions3:
         for pos1 in positions1:
@@ -262,15 +279,11 @@ def replace_link_img_matches(regex, new, s):
     """
     Escape characters in Markdown image links that may break in regular HTML.
 
-    >>> replace_link_img_matches(re.compile(ur"\s+"),
-                                 u"&#32;",
-                                 u"[](i .jpg)")
-    u'[](i&#32;.jpg)'
+    >>> replace_link_img_matches(re.compile(ur"\s+"), u"&#32;", u"![](i .jpg)")
+    u'![](i&#32;.jpg)'
 
-    >>> replace_link_img_matches(re.compile(ur"\s+"),
-                                 u"&#32;",
-                                 u"[this `was a` triump](i am making)")
-    u'[this `was a` triumph](i&#32;am&#32;making)'
+    >>> replace_link_img_matches(re.compile(ur"\s+"), u"&#32;", u"![this `was a` triumph](i am making)")
+    u'![this `was a` triumph](i&#32;am&#32;making)'
     """
 
     assert isinstance(s, unicode), "Input `s` is not Unicode"
@@ -366,6 +379,10 @@ def convert_markdown_to_html(clean_md):
     """
     Take a string `clean_md` and return a string where the Markdown syntax is
     converted to HTML.
+    
+    >>> preferences.PREFS = {"markdown_classful_pygments": True, "markdown_syntax_style": "tango", "markdown_line_nums": False}
+    >>> convert_markdown_to_html(u"this **was** a triumph")
+    u'<p>this <strong>was</strong> a triumph</p>'
     """
 
     assert isinstance(clean_md, unicode), "Input `clean_md` is not Unicode"
@@ -404,6 +421,11 @@ def is_same_html(html_one, html_two):
 def is_same_markdown(md_one, md_two):
     """
     Return `True` when `md_one` is the same as `md_two`, `False` otherwise.
+    
+    >>> md_one = u"this **was** a triumph\\n"
+    >>> md_two = u"this   **was**   a   triumph   \\n"
+    >>> is_same_markdown(md_one, md_two)
+    True
     """
     assert isinstance(md_one, unicode), "Input `md_one` is not Unicode"
     assert isinstance(md_two, unicode), "Input `md_two` is not Unicode"
@@ -426,6 +448,9 @@ def remove_white_space(s):
     """
     Return a string that is equal to string `s`, but has all whitespace removed
     from it.
+    
+    >>> remove_white_space(u"this\\nwas\\ta    triumph")
+    u'thiswasatriumph'
     """
 
     assert isinstance(s, unicode), "Input `s` is not Unicode"
@@ -433,7 +458,7 @@ def remove_white_space(s):
     return u"".join(char for char in s if not char.isspace())
 
 
-def put_md_data_in_json_format(unique_id, isconverted, md):
+def markdown_data_to_json(unique_id, isconverted, md):
     """
     Return a dictionary with information that is needed for the database.
     """
@@ -454,6 +479,12 @@ def merge_dicts(existing, new):
     over the values from the `existing` dictionary where there are duplicate
     keys. Return a dictionary that contains the key-value pairs from both
     dicts.
+    
+    >>> a = {u"a": 1, u"b": 2}
+    >>> b = {u"b": -1, u"c": 3}
+    >>> ret = merge_dicts(a, b)
+    >>> ret["b"] == -1
+    True
     """
 
     return dict(existing.items() + new.items())
@@ -465,9 +496,9 @@ def json_dump_and_compress(data):
     in base64.
     """
 
-    ret = unicode(base64.b64encode(json.dumps(data)))
-    assert isinstance(ret, unicode), "Output `ret` is not Unicode"
-    return ret
+    encoded = unicode(base64.b64encode(json.dumps(data)))
+    assert isinstance(encoded, unicode), "Output `encoded` is not Unicode"
+    return encoded
 
 
 def decompress_and_json_load(data):
@@ -481,14 +512,14 @@ def decompress_and_json_load(data):
     assert isinstance(data, unicode), "Input `data` is not Unicode"
 
     try:
-        b64data = base64.b64decode(data)
+        decoded = base64.b64decode(data)
     except (TypeError, UnicodeEncodeError) as e:
         # `data` is not a valid base64-encoded string
         print e  # TODO: should be logged
         return "corrupted"
 
     try:
-        ret = json.loads(b64data)
+        ret = json.loads(decoded)
         return ret
     except ValueError as e:
         print e  # TODO: should be logged
@@ -505,23 +536,27 @@ def wrap_string(at_start, a_string, at_end):
     return at_start + a_string + at_end
 
 
-def append_data_to_string(html, wrapped_compr_data):
+def concat(a, b):
     """
-    Return a string that contains compressed data at the end. The data
-    is wrapped in a marker to signify it is data and not to be displayed
-    in the field.
+    Concatenate two Unicode strings to each other.
+    
+    >>> concat(u"a", u"b")
+    u'ab'
     """
-    return html + wrapped_compr_data
+    return a + b
 
 
-def make_data_ready_to_insert(unique_id, isconverted, md, html):
-    md_dict = put_md_data_in_json_format(
-            unique_id, isconverted, md)
+def insert_md_data(unique_id, isconverted, md, html):
+    """
+    Creates a HTML string that contains the Markdown data needed for reversion.
+    Returns the input `html` string with the Markdown data appended.
+    """
+    md_dict = markdown_data_to_json(unique_id, isconverted, md)
     md_dict_compr = json_dump_and_compress(md_dict)
     wrapped_md_dict_compr = wrap_string(const.START_HTML_MARKER,
                                         md_dict_compr,
                                         const.END_HTML_MARKER)
-    return append_data_to_string(html, wrapped_md_dict_compr)
+    return concat(html, wrapped_md_dict_compr)
 
 
 def get_md_data_from_string(html):
@@ -543,9 +578,18 @@ def get_md_data_from_string(html):
     return compr_str
 
 
-def counter(start=0, step=1):
+def create_counter(start=0, step=1):
     """
-    Generator that creates infinite numbers.
+    Generator that creates infinite numbers. `start` indicates the first
+    number that will be returned, `step` the number that should be added
+    or subtracted from the previous number on subsequent call to the
+    generator.
+    
+    >>> c = create_counter(10, 2)
+    >>> c.next()
+    10
+    >>> c.next()
+    12
     """
     num = start
     while True:
@@ -558,6 +602,8 @@ def escape_html_chars(s):
     Escape HTML characters in a string. Return a safe string.
     >>> escape_html_chars(u"this&that")
     u'this&amp;that'
+    >>> escape_html_chars(u"#lorem")
+    u'#lorem'
     """
     if not s:
         return u""
@@ -577,13 +623,17 @@ def escape_html_chars(s):
     return result
 
 
-def check_alignment(s):
+def get_alignment(s):
     """
     Return the alignment of a table based on input `s`. If `s` not in the
     list, return the default value.
-    >>> check_alignment(u":-")
+    >>> get_alignment(u":-")
     u'left'
-    >>> check_alignment(u"random text")
+    >>> get_alignment(u":-:")
+    u'center'
+    >>> get_alignment(u"-:")
+    u'right'
+    >>> get_alignment(u"random text")
     u'left'
     """
     assert isinstance(s, unicode), "Input is not Unicode"
@@ -597,7 +647,19 @@ def check_alignment(s):
 def check_size_heading(s):
     """
     Determine by counting the number of leading hashes in the string the
-    size of the heading. Return an int that is the length of the hashes.
+    size of the heading. Return an int that is the length of the hashes,
+    or -1 if no hashes were found at the beginning of the string.
+    
+    >>> check_size_heading(u"######heading")
+    6
+    >>> check_size_heading(u"lorem ipsum")
+    -1
+    >>> check_size_heading(u"lorem #ipsum")
+    -1
+    >>> check_size_heading(u"    ##lorem")
+    2
+    >>> check_size_heading(u"# # # #lorem")
+    1
     """
     assert isinstance(s, unicode), "Input is not Unicode"
     # HTML headers go from <h1> to <h6>
@@ -615,6 +677,19 @@ def strip_leading_whitespace(s):
     Remove leading whitespace from a string `s`. Whitespace is defined as
     a space, a tab, linefeed, return, formfeed, vertical tab or a
     non-breakable space.
+    
+    >>> strip_leading_whitespace(u" This")
+    u'This'
+    >>> strip_leading_whitespace(u"\\tThis")
+    u'This'
+    >>> strip_leading_whitespace(u"\\nThis")
+    u'This'
+    >>> strip_leading_whitespace(u"\\rThis")
+    u'This'
+    >>> strip_leading_whitespace(u"&nbsp;This")
+    u'This'
+    >>> strip_leading_whitespace(u"\\n\\t\\r      &nbsp;     And")
+    u'And'
     """
     assert isinstance(s, unicode), "Input is not Unicode"
     if not s:
@@ -640,6 +715,11 @@ def create_horizontal_rule():
 
 
 def unescape_html(html):
+    """
+    Unescapes escaped HTML sequences.
+    >>> unescape_html(u"&amp;")
+    u'&'
+    """
     return const.HTML_PARSER.unescape(html)
 
 
@@ -670,7 +750,7 @@ def remove_whitespace_before_abbreviation_definition(md):
     if not md:
         return md
     assert isinstance(md, unicode), "Input `md` is not Unicode"
-    regex = re.compile(r"( |\&nbsp;)+(\*\[.*?\]:)")
+    regex = re.compile(r"( |\&nbsp;)+(\*\[[^]]*\]:)")
     return re.sub(regex, r"\2", md)
 
 

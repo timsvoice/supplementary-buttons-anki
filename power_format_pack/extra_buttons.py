@@ -294,8 +294,7 @@ def wrap_in_tags(self, tag, class_name=None):
             # you're in luck!
             return
         else:
-            # nothing happened :( this is another Anki bug :( that has to do
-            # with <code> tags following <div> tags
+            # nothing happened :( this is a quirk that has to do with <code> tags following <div> tags
             return
 
     # Due to a bug in Anki or BeautifulSoup, we cannot use a simple
@@ -555,67 +554,44 @@ def toggleHyperlink(self):
 
 
 def toggleMarkdown(self):
-    utility.start_safe_block(const.MARKDOWN_PREFS)
     self.saveNow()
-    selected = self.web.selectedHtml()
     current_field = self.currentField
-    html_field = self.note.fields[self.currentField]
-    # if not isinstance(html_field, unicode):
-    #     html_field = unicode(html_field)
-    # if not isinstance(selected, unicode):
-    #     selected = unicode(selected)
+    html_field = self.note.fields[current_field]
     if not html_field:
         html_field = u""
-    if not selected:
-        selected = u""
-    markdowner = Markdowner(self, self.parentWindow, self.note,
-                            html_field, current_field, selected)
-    markdowner.apply_markdown()
-    self.saveNow()
+    markdowner = Markdowner(self, self.parentWindow, self.note, html_field, current_field)
+    markdowner.start()
+    # self.saveNow()
     self.web.setFocus()
     self.web.eval("focusField(%d);" % self.currentField)
-    utility.end_safe_block(const.MARKDOWN_PREFS)
 
 
-def on_focus_gained(self, note, field):
+def on_focus_gained(self, note, current_field_no):
+    """
+    Check if the current field contains Markdown. Change the appearance of
+    the field if it does, or do nothing if not.
+    """
 
-    tags = note.tags
-
-    if not preferences.PREFS.get(const.MARKDOWN_OVERRIDE_EDITING):
-        if const.MARKDOWN_PREFS.get("disable_buttons"):
-            # disable all buttons except for the Markdown toggle
-            self.disableButtons()
-            markdown_button = self._buttons.get(const.MARKDOWN)
-            if markdown_button:
-                # markdown_button.setChecked(True)
-                markdown_button.setEnabled(True)
-
-    if const.MARKDOWN_PREFS.get("safe_block"):
+    if not note.fields[current_field_no]:
         return
-    else:
-        utility.start_safe_block(const.MARKDOWN_PREFS)
-        try:
-            time.sleep(0.001)
-            self.saveNow()
-        except AttributeError as e:
-            print e  # TODO: log error
-        html_field = note.fields[field]
-        # if not isinstance(html_field, unicode):
-        #     html_field = unicode(html_field)
-        if not html_field:
-            html_field = u""
-        markdowner = Markdowner(self, self.parentWindow, note,
-                                html_field, field, u"")
-        markdowner.on_focus_gained()
-        self.web.setFocus()
-        self.web.eval("focusField(%d);" % self.currentField)
-        note.tags = tags
-        try:
-            time.sleep(0.001)
-            self.updateTags()
-        except AttributeError as e:
-            print e  # TODO: log error
-        utility.end_safe_block(const.MARKDOWN_PREFS)
+
+    Markdowner.manage_style(self, current_field_no)
+    self.web.eval("""
+    var field = $('#f%s');
+    if (field.html().indexOf('SBAdata:') > -1) {
+        var mdData = /<!----SBAdata:([a-zA-Z0-9+/]+=*)---->/.exec(field.html());
+        var json = JSON.parse(atob(mdData[1]));
+        if (json.isconverted) {
+            if (!field.hasClass('mdstyle')) {
+                field.addClass('mdstyle');
+            }
+            if (!$('#f%s + [class^=mdwarning]').length) {
+                field.after($('<div/>', {class: 'mdwarning', text: '%s'}));
+            }
+            field.attr('title', '%s');
+        }
+    }
+    """ % (current_field_no, current_field_no, markdown_warning_text, markdown_warning_text))
 
 
 def init_hook(self, mw, widget, parentWindow, addMode=False):
@@ -626,6 +602,9 @@ Preferences.init()
 if preferences.PREFS.get(const.MARKDOWN):
     editor.Editor.on_focus_gained = on_focus_gained
     editor.Editor.__init__ = wrap(editor.Editor.__init__, init_hook)
+
+config_parser = utility.get_config_parser()
+markdown_warning_text = config_parser.get(const.CONFIG_TOOLTIPS, "md_warning_editing_tooltip")
 
 editor.Editor.create_button = create_button
 editor.Editor.toggleMarkdown = toggleMarkdown

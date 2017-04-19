@@ -114,12 +114,6 @@ END_HTML_MARKER               = "---->"
 # change field to this background color
 MARKDOWN_BG_COLOR             = "#FFEDD3"
 
-# dictionary to store Markdown data
-MARKDOWN_PREFS                = dict(disable_buttons=False,
-                                     safe_block=False,
-                                     start_time=0.0,
-                                     isconverted=None)
-
 # max number of bytes read from preference file
 MAX_BYTES_PREFS               = 32768
 

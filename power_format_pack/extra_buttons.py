@@ -572,11 +572,14 @@ def on_focus_gained(self, note, current_field_no):
     the field if it does, or do nothing if not.
     """
 
-    Markdowner.manage_style(self)
+    if not note.fields[current_field_no]:
+        return
+
+    Markdowner.manage_style(self, current_field_no)
     self.web.eval("""
     var field = $('#f%s');
     if (field.html().indexOf('SBAdata:') > -1) {
-        var mdData = /<!----SBAdata:(\w+=*)---->/.exec(field.html());
+        var mdData = /<!----SBAdata:([a-zA-Z0-9+/]+=*)---->/.exec(field.html());
         var json = JSON.parse(atob(mdData[1]));
         if (json.isconverted) {
             if (!field.hasClass('mdstyle')) {

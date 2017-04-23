@@ -136,32 +136,36 @@ class Markdowner(object):
         """ % (field, json.dumps(unicode(markup))))
 
     @staticmethod
-    def manage_style(editor_instance):
+    def manage_style(editor_instance, field_no):
         editor_instance.web.eval("""
-        var mdstyleExists = false;
-        var mdwarningExists = false;
-        for (var i = 0, j = document.styleSheets.length; i < j; i++) {
-            for (var k = 0, l = document.styleSheets.item(i).cssRules.length; k < l; k++) {
-                var cssRule = document.styleSheets.item(i).cssRules[k].selectorText;
-                if (cssRule.indexOf('.mdstyle') > -1) {
-                    mdstyleExists = true;
-                }
-                if (cssRule.indexOf('.mdwarning') > -1) {
-                    mdwarningExists = true;
+        var field = $('#f%s');
+        if (field.html().indexOf('SBAdata:') > -1) {
+            var mdstyleExists = false;
+            var mdwarningExists = false;
+            for (var i = 0, j = document.styleSheets.length; i < j; i++) {
+                for (var k = 0, l = document.styleSheets.item(i).cssRules.length; k < l; k++) {
+                    var cssRule = document.styleSheets.item(i).cssRules[k].selectorText;
+                    console.log(cssRule);
+                    if (cssRule.indexOf('.mdstyle') > -1) {
+                        mdstyleExists = true;
+                    }
+                    if (cssRule.indexOf('.mdwarning') > -1) {
+                        mdwarningExists = true;
+                    }
                 }
             }
+            if (!mdstyleExists) {
+                document.styleSheets.item(0).insertRule('.mdstyle { background-color: %s !important; }', 0);
+            }
+            if (!mdwarningExists) {
+                document.styleSheets.item(0).insertRule('.mdwarning { margin: 10px 0px; }', 0);
+            }
         }
-        if (!mdstyleExists) {
-            document.styleSheets.item(0).insertRule('.mdstyle { background-color: %s !important; }', 0);
-        }
-        if (!mdwarningExists) {
-            document.styleSheets.item(0).insertRule('.mdwarning { margin: 10px 0px; }', 0);
-        }
-        """ % const.MARKDOWN_BG_COLOR)
+        """ % (field_no, const.MARKDOWN_BG_COLOR))
 
     def add_warning_msg(self, editor_instance, field_no):
         # make sure the .mdwarn CSS class exists
-        Markdowner.manage_style(editor_instance)
+        Markdowner.manage_style(editor_instance, field_no)
 
         markdown_warning_text = self.c.get(const.CONFIG_TOOLTIPS, "md_warning_editing_tooltip")
 

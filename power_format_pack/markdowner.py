@@ -37,20 +37,20 @@ class Markdowner(object):
 
     def __init__(self, other, parent_window, note, html, current_field):
         assert isinstance(html, unicode), "Input `html` is not Unicode"
-        self.c                              = utility.get_config_parser()
-        self.p                              = preferences.PREFS
-        self.editor                         = other
-        self.parent_window                  = parent_window
-        self.note                           = note
-        self.html                           = html
-        self.backup_html                    = ""
-        self.current_field                  = current_field
-        self.note_id_field      = str(self.note.id) + "-{:03}".format(self.current_field)
-        self._id                            = None
-        self.isconverted                    = None
-        self.md                             = None
-        self._lastmodified                  = None
-        self.has_data                       = self.get_data_from_field()
+        self.c              = utility.get_config_parser()
+        self.p              = preferences.PREFS
+        self.editor         = other
+        self.parent_window  = parent_window
+        self.note           = note
+        self.html           = html
+        self.backup_html    = ""
+        self.current_field  = current_field
+        self.note_id_field  = str(self.note.id) + "-{:03}".format(self.current_field)
+        self._id            = None
+        self.isconverted    = None
+        self.md             = None
+        self._lastmodified  = None
+        self.has_data       = self.get_data_from_field()
 
     # compare the Markdown that we can reverse engineer from the card's HTML
     # with the Markdown stored in the data structure
@@ -145,7 +145,6 @@ class Markdowner(object):
             for (var i = 0, j = document.styleSheets.length; i < j; i++) {
                 for (var k = 0, l = document.styleSheets.item(i).cssRules.length; k < l; k++) {
                     var cssRule = document.styleSheets.item(i).cssRules[k].selectorText;
-                    console.log(cssRule);
                     if (cssRule.indexOf('.mdstyle') > -1) {
                         mdstyleExists = true;
                     }

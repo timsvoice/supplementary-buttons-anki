@@ -87,16 +87,16 @@ def string_to_tokentype(s):
     """
     Convert a string into a token type::
 
-        >>> string_to_token('String.Double')
+        >>> string_to_tokentype('String.Double')
         Token.Literal.String.Double
-        >>> string_to_token('Token.Literal.Number')
+        >>> string_to_tokentype('Token.Literal.Number')
         Token.Literal.Number
-        >>> string_to_token('')
+        >>> string_to_tokentype('')
         Token
 
     Tokens that are already tokens are returned unchanged:
 
-        >>> string_to_token(String)
+        >>> string_to_tokentype(String)
         Token.Literal.String
     """
     if isinstance(s, _TokenType):

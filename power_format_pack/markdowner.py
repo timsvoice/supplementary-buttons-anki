@@ -34,92 +34,77 @@ class Markdowner(object):
     field. Revert to previous Markdown or overwrite the data when conflicts
     arise.
     """
-    # signal that we don't want the onEdit focus behavior
-    button_pressed = False
 
-    def __init__(self, other, parent_window, note, html,
-                 current_field, selected_html):
+    def __init__(self, other, parent_window, note, html, current_field):
         assert isinstance(html, unicode), "Input `html` is not Unicode"
-        assert isinstance(selected_html, unicode), "Input `selected_html` is not Unicode"
-        self.c                              = utility.get_config_parser()
-        self.p                              = preferences.PREFS
-        self.editor_instance                = other
-        self.parent_window                  = parent_window
-        self.col                            = mw.col
-        self.note                           = note
-        self.html                           = html
-        self.cancel_html                    = ""
-        self.current_field                  = current_field
-        self.selected_html                  = selected_html
-        self.current_note_id_and_field      = str(self.note.id) + \
-                                              "-{:03}".format(self.current_field)
-        self._id                            = None
-        self.isconverted                    = None
-        self.md                             = None
-        self._lastmodified                  = None
-        self.has_data                       = self.get_data_from_field()
-        if not self.has_data:
-            self.remove_warn_msg(self.editor_instance, self.current_field)
-        const.MARKDOWN_PREFS["isconverted"] = self.isconverted
+        self.c              = utility.get_config_parser()
+        self.p              = preferences.PREFS
+        self.editor         = other
+        self.parent_window  = parent_window
+        self.note           = note
+        self.html           = html
+        self.backup_html    = ""
+        self.current_field  = current_field
+        self.note_id_field  = str(self.note.id) + "-{:03}".format(self.current_field)
+        self._id            = None
+        self.isconverted    = None
+        self.md             = None
+        self._lastmodified  = None
+        self.has_data       = self.get_data_from_field()
 
-    def on_focus_gained(self):
-        if self.isconverted:
-            const.MARKDOWN_PREFS["disable_buttons"] = True
-            self.warn_about_changes(self.editor_instance,
-                                    self.current_field,
-                                    const.MARKDOWN_BG_COLOR)
-        else:
-            const.MARKDOWN_PREFS["disable_buttons"] = False
+    # compare the Markdown that we can reverse engineer from the card's HTML
+    # with the Markdown stored in the data structure
+    def start(self):
+        self.backup_html = self.html
 
-    def apply_markdown(self):
-        self.cancel_html = self.html
+        # definition lists have some quirks
         has_def_list = False
         if "<dl>" in self.html:
             has_def_list = True
             self.create_correct_md_for_def_list()
             self.html = self.note.fields[self.current_field]
-        clean_md = utility.convert_html_to_markdown(self.html)
+
+        # first, we reverse engineer the Markdown from the rendered card
+        clean_md = utility.strip_html_from_markdown(self.html)
+
         if has_def_list:
             clean_md = utility.remove_leading_whitespace_from_dd_element(clean_md)
-        clean_md = utility.remove_whitespace_before_abbreviation_definition(
-                clean_md)
+        clean_md = utility.remove_whitespace_before_abbreviation_definition(clean_md)
         clean_md_escaped = utility.escape_html_chars(clean_md)
+
         if not clean_md:
             return
-        # check for changed Markdown between the stored data and the current text
+
+        # HTML --> Markdown
         if self.has_data and self.isconverted == "True":
+            # check if the stored data and the current text differ from each other
             compare_md = utility.convert_markdown_to_html(self.md)
+            # handle quirks
             compare_md = utility.put_colons_in_html_def_list(compare_md)
-            compare_md = utility.convert_html_to_markdown(compare_md)
+            compare_md = utility.strip_html_from_markdown(compare_md)
             if has_def_list:
                 compare_md = utility.remove_leading_whitespace_from_dd_element(compare_md)
-            compare_md = utility.remove_whitespace_before_abbreviation_definition(
-                    compare_md)
-            if not any(x in compare_md for x in("&amp;", "&quot;", "&apos;",
-                                                "&gt;", "&lt;")):
-                compare_md_escaped = utility.escape_html_chars(compare_md)
-                compare_md = compare_md_escaped
-            if (utility.is_same_markdown(clean_md_escaped, compare_md) or
-                   self.p.get(const.MARKDOWN_ALWAYS_REVERT)):
+            compare_md = utility.remove_whitespace_before_abbreviation_definition(compare_md)
+
+            # escape HTML if we haven't done so already
+            if not any(x in compare_md for x in("&amp;", "&quot;", "&apos;", "&gt;", "&lt;")):
+                compare_md = utility.escape_html_chars(compare_md)
+            if utility.is_same_markdown(clean_md_escaped, compare_md) or self.p.get(const.MARKDOWN_ALWAYS_REVERT):
                 self.revert_to_stored_markdown()
             else:
                 self.handle_conflict()
+
+        # Markdown --> HTML
         else:
-            # make abbreviations behave correctly
             new_html = utility.convert_markdown_to_html(clean_md)
             # needed for proper display of images
             if "<img" in new_html:
                 new_html = utility.unescape_html(new_html)
-            html_with_data = utility.make_data_ready_to_insert(
-                    self.current_note_id_and_field, "True",
-                    clean_md_escaped, new_html)
-            self.insert_markup_in_field(
-                    html_with_data, self.editor_instance.currentField)
+            html_with_data = utility.insert_md_data(self.note_id_field, "True", clean_md_escaped, new_html)
+            self.insert_into_field(html_with_data, self.current_field)
+
+            # resolve quirks
             self.align_elements()
-            const.MARKDOWN_PREFS["disable_buttons"] = True
-            self.warn_about_changes(self.editor_instance,
-                                    self.current_field,
-                                    const.MARKDOWN_BG_COLOR)
 
     def get_data_from_field(self):
         """
@@ -142,61 +127,62 @@ class Markdowner(object):
             return True
         return False
 
-    def insert_markup_in_field(self, markup, field):
+    def insert_into_field(self, markup, field):
         """
         Put markup in the specified field.
         """
-        self.editor_instance.web.eval("""
+        self.editor.web.eval("""
             document.getElementById('f%s').innerHTML = %s;
         """ % (field, json.dumps(unicode(markup))))
 
-    def warn_about_changes(self, editor_instance, field, color):
-        """
-        Disable the specified contenteditable field.
-        """
-        if self.p.get(const.MARKDOWN_OVERRIDE_EDITING):
-            warning_text = self.c.get(const.CONFIG_TOOLTIPS,
-                                      "md_warning_editing_enabled_tooltip")
-        else:
-            warning_text = self.c.get(const.CONFIG_TOOLTIPS,
-                                      "md_warning_editing_disabled_tooltip")
+    @staticmethod
+    def manage_style(editor_instance, field_no):
         editor_instance.web.eval("""
-            if (document.getElementById('mdwarn%s') === null) {
-                var style_tag_list = document.getElementsByTagName('style');
-                if (style_tag_list.length === 0) {
-                    // there is no <style> element in the document
-                } else {
-                    var style_tag = style_tag_list[0];
-
-                    if (style_tag.innerHTML.indexOf('mdstyle') === -1) {
-                        style_tag.innerHTML +=
-                                '.mdstyle { background-color: %s !important; }\\n';
+        var field = $('#f%s');
+        if (field.html().indexOf('SBAdata:') > -1) {
+            var mdstyleExists = false;
+            var mdwarningExists = false;
+            for (var i = 0, j = document.styleSheets.length; i < j; i++) {
+                for (var k = 0, l = document.styleSheets.item(i).cssRules.length; k < l; k++) {
+                    var cssRule = document.styleSheets.item(i).cssRules[k].selectorText;
+                    if (cssRule.indexOf('.mdstyle') > -1) {
+                        mdstyleExists = true;
                     }
-
-                    var field = document.getElementById('f%s');
-                    field.setAttribute('title', '%s');
-                    field.classList.add('mdstyle');
-
-                    var warn_div = document.createElement('div');
-                    warn_div.id = 'mdwarn%s';
-                    warn_div.setAttribute('style', 'margin: 10px 0px;');
-                    var text = document.createTextNode('%s');
-                    warn_div.appendChild(text);
-                    field.parentNode.insertBefore(warn_div, field.nextSibling);
+                    if (cssRule.indexOf('.mdwarning') > -1) {
+                        mdwarningExists = true;
+                    }
                 }
             }
-        """ % (field, color, field, warning_text, field, warning_text))
+            if (!mdstyleExists) {
+                document.styleSheets.item(0).insertRule('.mdstyle { background-color: %s !important; }', 0);
+            }
+            if (!mdwarningExists) {
+                document.styleSheets.item(0).insertRule('.mdwarning { margin: 10px 0px; }', 0);
+            }
+        }
+        """ % (field_no, const.MARKDOWN_BG_COLOR))
+
+    def add_warning_msg(self, editor_instance, field_no):
+        # make sure the .mdwarn CSS class exists
+        Markdowner.manage_style(editor_instance, field_no)
+
+        markdown_warning_text = self.c.get(const.CONFIG_TOOLTIPS, "md_warning_editing_tooltip")
+
+        editor_instance.web.eval("""
+        var field = $('f%s');
+        field.addClass('mdstyle');
+        if (!$('#f%s + [class^=mdwarning]').length) {
+            field.after($('<div/>', {class: 'mdwarning', text: '%s'}));
+        }
+        field.attr('title', '%s');
+        """ % (field_no, field_no, markdown_warning_text, markdown_warning_text))
 
     @staticmethod
     def remove_warn_msg(editor_instance, field):
         editor_instance.web.eval("""
-            if (document.getElementById('mdwarn%s') !== null) {
-                var field = document.getElementById('f%s');
-                field.classList.remove('mdstyle');
-                field.removeAttribute('title');
-                var warn_msg = document.getElementById('mdwarn%s');
-                warn_msg.parentNode.removeChild(warn_msg);
-            }
+            $('#f%s').removeClass('mdstyle');
+            $('#f%s + [class^=mdwarning]').remove();
+            focusField(%s);
         """ % (field, field, field))
 
     def handle_conflict(self):
@@ -211,38 +197,29 @@ class Markdowner(object):
             # overwrite data
             self.overwrite_stored_data()
         else:
-            print "User canceled on warning dialog."
-            self.insert_markup_in_field(self.cancel_html, self.current_field)
+            self.insert_into_field(self.backup_html, self.current_field)
 
     def overwrite_stored_data(self):
         """
         Create new Markdown from the current HTML.
         """
-        clean_md = utility.convert_html_to_markdown(
-                self.html, keep_empty_lines=True)
-        clean_md = utility.remove_whitespace_before_abbreviation_definition(
-                clean_md)
+        clean_md = utility.strip_html_from_markdown(self.html, keep_empty_lines=True)
+        clean_md = utility.remove_whitespace_before_abbreviation_definition(clean_md)
         if "<dl" in self.html:
-            clean_md = utility.remove_leading_whitespace_from_dd_element(
-                    clean_md, add_newline=True)
+            clean_md = utility.remove_leading_whitespace_from_dd_element(clean_md, add_newline=True)
         if re.search(const.IS_LINK_OR_IMG_REGEX, clean_md):
             clean_md = utility.escape_html_chars(clean_md)
-        new_html = utility.convert_clean_md_to_html(clean_md,
-                                                    put_breaks=True)
-        self.insert_markup_in_field(new_html, self.current_field)
-        const.MARKDOWN_PREFS["disable_buttons"] = False
-        const.MARKDOWN_PREFS["isconverted"] = False
-        self.remove_warn_msg(self.editor_instance, self.current_field)
+        new_html = utility.convert_clean_md_to_html(clean_md, put_breaks=True)
+        self.insert_into_field(new_html, self.current_field)
+        self.remove_warn_msg(self.editor, self.current_field)
 
     def revert_to_stored_markdown(self):
         """
         Revert to the previous version of Markdown that was stored in the field.
         """
         new_html = utility.convert_clean_md_to_html(self.md, put_breaks=True)
-        self.insert_markup_in_field(new_html, self.current_field)
-        const.MARKDOWN_PREFS["disable_buttons"] = False
-        const.MARKDOWN_PREFS["isconverted"] = False
-        self.remove_warn_msg(self.editor_instance, self.current_field)
+        self.insert_into_field(new_html, self.current_field)
+        self.remove_warn_msg(self.editor, self.current_field)
 
     def show_overwrite_warning(self):
         """
@@ -275,36 +252,21 @@ class Markdowner(object):
         """
         # align text in code blocks to the left
         if not self.p.get(const.MARKDOWN_CLASSFUL_PYGMENTS):
-            self.editor_instance.web.eval("""
+            self.editor.web.eval("""
                 $('.codehilite').attr('align', 'left');
             """)
 
         # align the code block itself
         if self.p.get(const.MARKDOWN_CODE_DIRECTION) != const.LEFT:
-            self.editor_instance.web.eval("""
+            self.editor.web.eval("""
                 var table = '<table><tbody><tr><td></td></tr></tbody></table>';
                 $('.codehilite:not(.codehilitetable .codehilite)').wrap(table);
                 $('.codehilite').parents().filter('table').addClass('codehilitetable').attr('align', '%s');
             """ % self.p.get(const.MARKDOWN_CODE_DIRECTION))
 
-        # footnotes
-        self.editor_instance.web.eval("""
-            var elems = document.getElementsByTagName('*');
-            var regex = /fn:/;
-            for (var i = 0; i < elems.length; i++) {
-                var elem = elems[i].id;
-                if (regex.test(elem)) {
-                    elems[i].children[0].setAttribute('align', 'left');
-                }
-            }
-        """)
-
         # definition lists, lists
-        self.editor_instance.web.eval("""
-            var elems = document.querySelectorAll('dt,dd,li');
-            for (var i = 0; i < elems.length; i++) {
-                elems[i].setAttribute('align', 'left');
-            }
+        self.editor.web.eval("""
+            $('dt,dd,li').css('text-align', 'left');
         """)
 
     def create_correct_md_for_def_list(self):
@@ -312,7 +274,7 @@ class Markdowner(object):
         Change the input `md` to make sure it will transform to the
         correct HTML.
         """
-        self.editor_instance.web.eval("""\
+        self.editor.web.eval("""\
             var dds = document.getElementsByTagName('dd');
             for (var i = 0; i < dds.length; i++) {
                 var theDD = dds[i];
@@ -330,6 +292,6 @@ class Markdowner(object):
                 }
             }
         """)
-        self.editor_instance.web.setFocus()
-        self.editor_instance.web.eval("focusField(%d);" % self.current_field)
-        self.editor_instance.saveNow()
+        self.editor.web.setFocus()
+        self.editor.web.eval("focusField(%d);" % self.current_field)
+        self.editor.saveNow()

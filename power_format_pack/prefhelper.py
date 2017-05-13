@@ -90,7 +90,7 @@ class PrefHelper(object):
                 const.MARKDOWN_CODE_DIRECTION:      "left",
                 const.MARKDOWN_LINE_NUMS:           False,
                 const.MARKDOWN_ALWAYS_REVERT:       False,
-                const.MARKDOWN_OVERRIDE_EDITING:    False,
+                const.MARKDOWN_OVERRIDE_EDITING:    True,
                 const.MARKDOWN_CLASSFUL_PYGMENTS:   False,
                 const.BUTTON_PLACEMENT:             "adjacent",
                 const.CODE:                         True,

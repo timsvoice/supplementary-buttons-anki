@@ -107,8 +107,8 @@ class Table(object):
             num_columns = columnSpinBox.value()
             num_rows = rowSpinBox.value() - 1
 
-            num_header = utility.counter(start=1, step=1)
-            num_data = utility.counter(start=1, step=1)
+            num_header = utility.create_counter(start=1, step=1)
+            num_data = utility.create_counter(start=1, step=1)
 
             # set width of each column equal
             width = 100 / num_columns
@@ -176,7 +176,7 @@ class Table(object):
                 align_line += [u"-"] * (max_num_cols - len_align_line)
             alignments = list()
             for elem in second[1]:
-                alignments.append(utility.check_alignment(elem))
+                alignments.append(utility.get_alignment(elem))
         else:
             alignments = [u"left"] * max_num_cols
             start = 1

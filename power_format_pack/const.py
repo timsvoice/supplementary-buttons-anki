@@ -28,7 +28,7 @@ import time
 ##################################################
 
 PROGRAM_NAME  = "Power Format Pack"
-VERSION       = "0.8.8.3"
+VERSION       = "0.8.8.4"
 YEAR_START    = 2014
 YEAR_LAST     = time.strftime("%Y")
 ANKIWEB_URL   = "https://ankiweb.net/shared/info/162313389"
@@ -113,12 +113,6 @@ END_HTML_MARKER               = "---->"
 
 # change field to this background color
 MARKDOWN_BG_COLOR             = "#FFEDD3"
-
-# dictionary to store Markdown data
-MARKDOWN_PREFS                = dict(disable_buttons=False,
-                                     safe_block=False,
-                                     start_time=0.0,
-                                     isconverted=None)
 
 # max number of bytes read from preference file
 MAX_BYTES_PREFS               = 32768

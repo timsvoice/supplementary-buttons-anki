@@ -41,7 +41,7 @@ class LuaLexer(RegexLexer):
 
             >>> from pygments.lexers._lua_builtins import MODULES
             >>> MODULES.keys()
-            ['string', 'coroutine', 'modules', 'io', 'basic', ...]
+            ['string', 'io', 'basic', 'debug', 'os', 'table', 'coroutine', 'modules', 'math']
     """
 
     name = 'Lua'

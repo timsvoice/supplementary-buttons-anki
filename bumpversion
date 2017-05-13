@@ -3,34 +3,24 @@
 set -o errexit
 set -o nounset
 
-set -xv
-
 FOLDER_NAME=power_format_pack
 
-quit() {
-    echo "Need an argument. Exiting..."
-    exit 1
+usage() {
+    echo >&2 "usage: $(basename "$0") <version number>"
+}
+
+die() {
+    echo >&2 "$1"
+    exit "$2"
 }
 
 check_version_format() {
-    if [ -z "$1" ]; then
-        quit
-    fi
-
     version="$1"
 
     if [[ ! "$version" =~ ^[0-9.]+[0-9]$ ]]; then
-        echo "Version string '$version' is not formatted correctly. Exiting..."
-        exit 1
+        die "Version string '$version' is not formatted correctly. Exiting..." 2
     fi
 }
-
-if [ -z "$1" ]; then
-    quit
-else
-    check_version_format "$1"
-    NEW_VERSION="$1"
-fi
 
 remove_backup_file() {
     if [ -z "$1" ]; then
@@ -38,10 +28,18 @@ remove_backup_file() {
     else
         file="$1"
         if [ -f "$file".bak ]; then
-            rm -v "$file".bak
+            rm "$file".bak
         fi
     fi
 }
+
+if [[ "${1:-unset}" == unset ]]; then
+    usage
+    exit 1
+else
+    check_version_format "$1"
+    NEW_VERSION="$1"
+fi
 
 FILES=("$FOLDER_NAME"/const.py "$FOLDER_NAME"/docs/_version.py)
 

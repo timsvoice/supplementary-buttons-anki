@@ -344,23 +344,7 @@ def unlink(self):
 
 
 def toggleUnorderedList(self):
-    self.web.eval("""
-        document.execCommand('insertUnorderedList');
-        var ulElem = window.getSelection().focusNode.parentNode;
-        if (ulElem !== null) {
-            var setAttrs = true;
-            while (ulElem.toString() !== "[object HTMLUListElement]") {
-                ulElem = ulElem.parentNode;
-                if (ulElem === null) {
-                    setAttrs = false;
-                    break;
-                }
-            }
-            if (setAttrs) {
-                ulElem.style.marginLeft = "20px";
-            }
-        }
-    """)
+    self.web.eval("document.execCommand('insertUnorderedList');")
 
 
 def toggleOrderedList(self):

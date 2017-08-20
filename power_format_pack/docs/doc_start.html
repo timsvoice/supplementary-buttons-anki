@@ -321,42 +321,11 @@ will always override the previously defined attribute. Consider the following:</
 attributes) can be found on the <a href="https://pythonhosted.org/Markdown/extensions/attr_list.html">Python Markdown
 project</a>.</p>
 <h2 class="heading" id="custom-user-defined-keybindings">Custom user-defined keybindings</h2>
-<p>You can change the default keybindings by editing the <code>keybinding.json</code> file in
-your <code>Anki/addons/power_format_pack</code> folder.  Please keep in mind that there is no
-check for duplicate keybindings. This means that when a keybinding is already
-taken by either your OS, Anki, this addon, or some other running program, the
-result is undefined.</p>
-<p>This file needs to contain valid JSON. Basically this means that the key-value
-pairs should be enclosed in double quotes:</p>
-<pre><code>"key": "value"
-</code></pre>
-<p>The opening and closing braces in the file <code>{</code> and <code>}</code> are mandatory. Each
-key-value pair should contain a colon <code>:</code> and should end with a comma, except
-for the last pair. See the file for valid examples.</p>
-<p>Invalid JSON cannot be parsed and will result in the use of the default
-keybindings. If you find that your new keybindings don't work
-(i.e. they don't show up in Anki, despite you changing this file),
-please use a JSON validator to check for faulty JSON.</p>
-<p>Modifier keys that can be used include: the function keys (<code>F1</code> through <code>F12</code>),
-<code>Ctrl</code>, <code>Alt</code>, <code>Shift</code>, ASCII alphanumeric characters, and ASCII punctuation
-characters. For Mac OS X, be advised that <code>Ctrl</code> maps to the <kbd>Cmd</kbd>
-key (or "Apple key"), NOT to <kbd>Ctrl</kbd>. If you want to use the
-<kbd>Ctrl</kbd> key on Mac OS X, use <code>Meta</code> instead. So, <code>Ctrl+Shift+[</code> on Linux
-or Windows maps to <code>Meta+Shift+[</code> on Mac OS X. The string <code>Ctrl+Shift+[</code> on Mac
-OS X will require you to type <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>[</kbd> in
-Anki. Please make sure you understand this before opening bug reports.</p>
-<p>The use of an invalid key sequence will silently revert the sequence to the
-default setting. For example, invalid sequences are:</p>
-<ul>
-<li>only modifier keys: <code>Ctrl+Shift</code></li>
-<li>empty sequence</li>
-<li>non-existing modifier keys: <code>Ctrl+Iota+j</code></li>
-</ul>
-<p>The order or case of the string sequence is unimportant. <code>Ctrl+Alt+p</code> is the
-same as <code>ALT+CTRL+P</code> or even <code>p+Ctrl+Alt</code>.</p>
-<p>If you want to revert your changes to the default keybindings provided by
-Power Format Pack, please remove the keybindings JSON file in your
-addon folder.</p>
+<p>You can change the default keybindings to your liking by going to <em>Tools &gt; Power Format Pack add-on (options) &gt; Keybindings...</em> You will be presented with a table view of all available functionality on the left and the associated keyboard shortcuts on the right. To change a particular keybinding, double click on the shortcut and press the desired keyboard combination.</p>
+<p>Be aware that all keyboard combinations will be accepted, although some of them won't actually work in practice. If you assign the keyboard shortcut 'A' to a certain functionality, for example, the shortcut won't actually do anything.</p>
+<p>Also keep in mind that there is no check for duplicate keybindings. This means that when a keybinding is already taken by either your OS, Anki, this add-on, or some other running program, the result is undefined.</p>
+<p>You can sort either on functionality ('Action') or keybindings by clicking on the appropriate header columns.</p>
+<p>If you want to revert to the default keybindings provided by Power Format Pack, click the 'Restore Defaults' button. You can undo any changes you made and keep the dialog window open by pressing the 'Reset' button. 'Cancel' will do the same but will also close the window. Lastly, when you click 'Save', the dialog window will close and your changes will be applied.</p>
 <h2 class="heading" id="disabling-unused-buttons">Disabling unused buttons</h2>
 <p id="disabling-unused-buttons-content">The buttons can be enabled or disabled individually in <em>Tools &gt; Power Format Pack add-on (options)</em>, so feel free to disable the buttons you don't use.</p>
 <h2 class="heading" id="installation">Installation</h2>

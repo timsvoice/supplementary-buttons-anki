@@ -18,16 +18,17 @@
 # with Power Format Pack. If not, see http://www.gnu.org/licenses/.
 
 
-import base64
 import codecs
-import const
 import copy
 import os
-import utility
+import pickle
+
 from PyQt4 import QtGui
 
 from anki.utils import json, isMac
 from aqt import mw as main_window
+from power_format_pack import const
+from power_format_pack.python_modules import ConfigParser
 
 
 class PrefHelper(object):
@@ -35,21 +36,25 @@ class PrefHelper(object):
     Static methods related to preference handling.
     """
 
+    CONFIG = None
+
     @staticmethod
     def get_preference_path():
+        c = PrefHelper.get_config()
         return os.path.join(PrefHelper.get_addons_folder(),
-                            const.FOLDER_NAME,
-                            ".extra_buttons_prefs")
+                            c.get(const.CONFIG_DEFAULT, "FOLDER_NAME"),
+                            c.get(const.CONFIG_FILENAMES, "PREFERENCES_FILENAME"))
 
     @staticmethod
     def get_keybindings_path():
+        c = PrefHelper.get_config()
         if isMac:
-            filename = "keybindings_macosx"
+            filename = c.get(const.CONFIG_FILENAMES, "KEYBINDINGS_MACOSX")
         else:
-            filename = "keybindings_linux_windows"
+            filename = c.get(const.CONFIG_FILENAMES, "KEYBINDINGS_LINUX_WINDOWS")
 
         return os.path.join(PrefHelper.get_addons_folder(),
-                            const.FOLDER_NAME,
+                            c.get(const.CONFIG_DEFAULT, "FOLDER_NAME"),
                             filename)
 
     @staticmethod
@@ -121,36 +126,36 @@ class PrefHelper(object):
         # the default keybindings that are used when no custom keybindings
         # are found, or when the user keybindings are corrupted
         _default_keybindings_linux_windows = {
-                const.CODE:                         u"ctrl+,",
-                const.UNORDERED_LIST:               u"ctrl+[",
-                const.ORDERED_LIST:                 u"ctrl+]",
-                const.STRIKETHROUGH:                u"alt+shift+5",
-                const.PRE:                          u"ctrl+.",
-                const.HORIZONTAL_RULE:              u"ctrl+shift+alt+_",
-                const.INDENT:                       u"ctrl+shift+]",
-                const.OUTDENT:                      u"ctrl+shift+[",
-                const.DEFINITION_LIST:              u"ctrl+shift+d",
-                const.TABLE:                        u"ctrl+shift+3",
-                const.KEYBOARD:                     u"ctrl+shift+k",
-                const.HYPERLINK:                    u"ctrl+shift+h",
-                const.REMOVE_HYPERLINK:             u"ctrl+shift+alt+h",
-                const.BACKGROUND_COLOR:             u"ctrl+shift+b",
-                const.BACKGROUND_COLOR_CHANGE:      u"ctrl+shift+n",
-                const.BLOCKQUOTE:                   u"ctrl+shift+y",
-                const.TEXT_ALLIGN_FLUSH_LEFT:       u"ctrl+shift+alt+l",
-                const.TEXT_ALLIGN_FLUSH_RIGHT:      u"ctrl+shift+alt+r",
-                const.TEXT_ALLIGN_JUSTIFIED:        u"ctrl+shift+alt+s",
-                const.TEXT_ALLIGN_CENTERED:         u"ctrl+shift+alt+b",
-                const.HEADING:                      u"ctrl+alt+1",
-                const.ABBREVIATION:                 u"shift+alt+a",
-                const.MARKDOWN:                     u"ctrl+shift+0"
+                const.CODE:                         QtGui.QKeySequence(u"ctrl+,"),
+                const.UNORDERED_LIST:               QtGui.QKeySequence(u"ctrl+["),
+                const.ORDERED_LIST:                 QtGui.QKeySequence(u"ctrl+]"),
+                const.STRIKETHROUGH:                QtGui.QKeySequence(u"alt+shift+5"),
+                const.PRE:                          QtGui.QKeySequence(u"ctrl+."),
+                const.HORIZONTAL_RULE:              QtGui.QKeySequence(u"ctrl+shift+alt+_"),
+                const.INDENT:                       QtGui.QKeySequence(u"ctrl+shift+]"),
+                const.OUTDENT:                      QtGui.QKeySequence(u"ctrl+shift+["),
+                const.DEFINITION_LIST:              QtGui.QKeySequence(u"ctrl+shift+d"),
+                const.TABLE:                        QtGui.QKeySequence(u"ctrl+shift+3"),
+                const.KEYBOARD:                     QtGui.QKeySequence(u"ctrl+shift+k"),
+                const.HYPERLINK:                    QtGui.QKeySequence(u"ctrl+shift+h"),
+                const.REMOVE_HYPERLINK:             QtGui.QKeySequence(u"ctrl+shift+alt+h"),
+                const.BACKGROUND_COLOR:             QtGui.QKeySequence(u"ctrl+shift+b"),
+                const.BACKGROUND_COLOR_CHANGE:      QtGui.QKeySequence(u"ctrl+shift+n"),
+                const.BLOCKQUOTE:                   QtGui.QKeySequence(u"ctrl+shift+y"),
+                const.TEXT_ALLIGN_FLUSH_LEFT:       QtGui.QKeySequence(u"ctrl+shift+alt+l"),
+                const.TEXT_ALLIGN_FLUSH_RIGHT:      QtGui.QKeySequence(u"ctrl+shift+alt+r"),
+                const.TEXT_ALLIGN_JUSTIFIED:        QtGui.QKeySequence(u"ctrl+shift+alt+s"),
+                const.TEXT_ALLIGN_CENTERED:         QtGui.QKeySequence(u"ctrl+shift+alt+b"),
+                const.HEADING:                      QtGui.QKeySequence(u"ctrl+alt+1"),
+                const.ABBREVIATION:                 QtGui.QKeySequence(u"shift+alt+a"),
+                const.MARKDOWN:                     QtGui.QKeySequence(u"ctrl+shift+0")
         }
         # Mac OS keybindings are the same as Linux/Windows bindings,
         # except for the following
         _default_keybindings_macosx = \
             copy.deepcopy(_default_keybindings_linux_windows)
-        _default_keybindings_macosx[const.CODE] = u"ctrl+shift+,"
-        _default_keybindings_macosx[const.PRE] = u"ctrl+shift+."
+        _default_keybindings_macosx[const.CODE] = QtGui.QKeySequence(u"ctrl+shift+,")
+        _default_keybindings_macosx[const.PRE] = QtGui.QKeySequence(u"ctrl+shift+.")
 
         if isMac:
             return _default_keybindings_macosx
@@ -167,34 +172,13 @@ class PrefHelper(object):
     @staticmethod
     def save_prefs(prefs):
         """
-        Save the preferences to disk, base64 encoded.
+        Save the preferences to disk.
         """
-        encoded_prefs = base64.b64encode(json.dumps(prefs))
         with codecs.open(PrefHelper.get_preference_path(), "w", encoding="utf8") as f:
-            f.write(encoded_prefs)
-
-    # @staticmethod
-    # def get_current_preferences():
-    #     prefs = None
-    #     try:
-    #         with codecs.open(PrefHelper.get_preference_path(), encoding="utf8") as f:
-    #             encoded_prefs = f.read(const.MAX_BYTES_PREFS)
-    #             decoded_prefs = base64.b64decode(encoded_prefs)
-    #             prefs = json.loads(decoded_prefs)
-    #     except:
-    #         # file does not exist or is corrupted: fall back to default
-    #         with codecs.open(PrefHelper.get_preference_path(), "w", encoding="utf8") as f:
-    #             prefs = PrefHelper.get_default_preferences()
-    #             json.dump(prefs, f)
-    #     else:
-    #         prefs = PrefHelper.normalize_user_prefs(
-    #                 PrefHelper.get_default_preferences(), prefs)
-    #         PrefHelper.save_prefs(prefs)
-
-    #     return prefs
+            json.dump(prefs, f, indent=4, sort_keys=True)
 
     @staticmethod
-    def load_preferences_from_disk():
+    def get_preferences():
         """
         Load the current preferences from disk. If no preferences file is
         found, or if it is corrupted, return the default preferences.
@@ -202,9 +186,7 @@ class PrefHelper(object):
         prefs = None
         try:
             with codecs.open(PrefHelper.get_preference_path(), encoding="utf8") as f:
-                encoded_prefs = f.read(const.MAX_BYTES_PREFS)
-                decoded_prefs = base64.b64decode(encoded_prefs)
-                prefs = json.loads(decoded_prefs)
+                prefs = json.load(f)
         except:
             prefs = PrefHelper.get_default_preferences()
         else:
@@ -214,86 +196,70 @@ class PrefHelper(object):
         return prefs
 
     @staticmethod
-    def are_prefs_changed(current, new):
+    def are_dicts_different(one, other):
         """
-        Return `True` if `current` and `new` contain different values for the
+        Return `True` if `one` and `other` contain different values for the
         same key, `False` if all values for the same keys are equal.
         """
-        for k, v in current.iteritems():
-            if current.get(k) != new.get(k):
+        for k, v in one.iteritems():
+            if one.get(k) != other.get(k):
                 return True
         return False
 
     @staticmethod
-    def get_current_keybindings():
-        keybindings = None
-        try:
-            with codecs.open(PrefHelper.get_keybindings_path(), encoding="utf8") as f:
-                # validate JSON
-                result_json = u""
-                for line in f:
-                    line = line.strip()
-                    if line == u"":
-                        continue
-                    # strip out comments from keybindings file
-                    if line.startswith(u"//"):
-                        continue
-                    else:
-                        result_json += line
-                keybindings = json.loads(result_json)
-        except (ValueError, IOError) as e:
-            # file is missing or is not valid JSON: revert to default bindings
-            # and create a keybindings file if it doesn't exist
-            print e  # TODO: log error
-            if not os.path.exists(PrefHelper.get_keybindings_path()):
-                PrefHelper.create_keybindings_file()
-            return PrefHelper.get_default_keybindings()
-        else:
-            # keybindings loaded from file should have exactly as many
-            # key-value pairs as in the default keybindings
-            default_keybindings = PrefHelper.get_default_keybindings()
-            keybindings = PrefHelper.normalize_user_prefs(
-                    default_keybindings, keybindings)
-            keybindings = utility.check_user_keybindings(
-                    default_keybindings, keybindings, const.PLATFORM)
-
-        return keybindings
+    def save_keybindings(keybindings):
+        """
+        Pickle the provided keybindings into a binary file. `keybindings` should
+        be a hashmap containing Unicode strings as key and `QtGui.QKeySequence`s
+        as value.
+        """
+        with codecs.open(PrefHelper.get_keybindings_path(), mode="wb") as f:
+            pickle.dump(keybindings, f)
 
     @staticmethod
-    def create_keybindings_file():
+    def get_keybindings():
         """
-        Create a default keybindings file with comments. This function is
-        called when Power Format Pack cannot find an existing
-        keybindings file. Override any changes made to an existing file.
+        Unpickle keybindings from a binary file. Return a hashmap that contains keys
+        of type Unicode string and values of type `QtGui.QKeySequence`.
         """
-
-        config_path = os.path.join(PrefHelper.get_addons_folder(),
-                                   const.FOLDER_NAME,
-                                   const.CONFIG_FILENAME)
-        c = utility.get_config_parser(config_path)
-
-        contents = c.get(const.CONFIG_KEYBINDINGS, "help_text")
-        contents += u"\n\n{\n"
-
-        for key, value in sorted(PrefHelper.get_default_keybindings().iteritems()):
-            contents += u"    \"{}\": \"{}\",\n".format(key, value)
-
-        contents += u"    \"_version\": \"{}\"\n".format(const.VERSION)
-        contents += u"}"
-
+        keybindings = None
         try:
-            with codecs.open(PrefHelper.get_keybindings_path(), "w", encoding="utf8") as f:
-                f.write(contents)
-        except IOError as e:
-            raise e
+            with codecs.open(PrefHelper.get_keybindings_path(), mode="rb") as f:
+                keybindings = pickle.load(f)
+        except IOError:
+            return PrefHelper.get_default_keybindings()
+        else:
+            default_keybindings = PrefHelper.get_default_keybindings()
+            return PrefHelper.normalize_user_prefs(default_keybindings, keybindings)
 
     @staticmethod
     def set_icon(button, name):
         """
         Define the path for the icon the corresponding button should have.
         """
+        c = PrefHelper.get_config()
         icon_path = os.path.join(PrefHelper.get_addons_folder(),
-                                 const.FOLDER_NAME,
+                                 c.get(const.CONFIG_DEFAULT, "FOLDER_NAME"),
                                  "icons",
                                  "{}.png".format(name))
         button.setIcon(QtGui.QIcon(icon_path))
+
+    @staticmethod
+    def get_config():
+        """
+        Return a RawConfigParser for the specified path.
+        """
+        if PrefHelper.CONFIG is not None:
+            return PrefHelper.CONFIG
+
+        path = os.path.join(PrefHelper.get_addons_folder(),
+                            "power_format_pack",
+                            "config.ini")
+        config_parser = ConfigParser.ConfigParser()
+        successfully_read_files = config_parser.read(path)
+        if not successfully_read_files:
+            raise Exception("Could not read config file {!r}".format(path))
+
+        PrefHelper.CONFIG = config_parser
+
+        return config_parser

@@ -22,33 +22,18 @@ Utility module with helper functions that are needed throughout the addon.
 """
 
 import base64
-import os
 import re
 import string
 import time
 
 import BeautifulSoup
-from anki.utils import intTime, json, isMac
-from aqt.utils import isWin
 from PyQt4 import QtGui
 
 import const
-import markdown
-import preferences
+from anki.utils import intTime, json, isMac
+from aqt.utils import isWin
 from html2text import html2text
 from html2text_overrides import escape_md_section_override
-from markdown.extensions.abbr import AbbrExtension
-from markdown.extensions.attr_list import AttrListExtension
-from markdown.extensions.codehilite import CodeHiliteExtension
-from markdown.extensions.def_list import DefListExtension
-from markdown.extensions.fenced_code import FencedCodeExtension
-from markdown.extensions.footnotes import FootnoteExtension
-from markdown.extensions.nl2br import Nl2BrExtension
-from markdown.extensions.sane_lists import SaneListExtension
-from markdown.extensions.smart_strong import SmartEmphasisExtension
-from markdown.extensions.tables import TableExtension
-from power_format_pack.python_modules import ConfigParser
-from prefhelper import PrefHelper
 
 
 def validate_key_sequence(sequence, platform=u""):
@@ -373,40 +358,6 @@ def convert_clean_md_to_html(md, put_breaks=False):
 
     assert isinstance(result, unicode), "Result `result` is not Unicode"
     return result
-
-
-def convert_markdown_to_html(clean_md):
-    """
-    Take a string `clean_md` and return a string where the Markdown syntax is
-    converted to HTML.
-    
-    >>> preferences.PREFS = {"markdown_classful_pygments": True, "markdown_syntax_style": "tango", "markdown_line_nums": False}
-    >>> convert_markdown_to_html(u"this **was** a triumph")
-    u'<p>this <strong>was</strong> a triumph</p>'
-    """
-
-    assert isinstance(clean_md, unicode), "Input `clean_md` is not Unicode"
-
-    new_html = markdown.markdown(clean_md, output_format="xhtml1",
-        extensions=[
-            SmartEmphasisExtension(),
-            FencedCodeExtension(),
-            FootnoteExtension(),
-            AttrListExtension(),
-            DefListExtension(),
-            TableExtension(),
-            AbbrExtension(),
-            Nl2BrExtension(),
-            CodeHiliteExtension(
-                noclasses=not preferences.PREFS.get(const.MARKDOWN_CLASSFUL_PYGMENTS),
-                pygments_style=preferences.PREFS.get(const.MARKDOWN_SYNTAX_STYLE),
-                linenums=preferences.PREFS.get(const.MARKDOWN_LINE_NUMS)),
-            SaneListExtension()
-        ], lazy_ol=False)
-
-    assert isinstance(new_html, unicode)
-
-    return new_html
 
 
 def is_same_html(html_one, html_two):
@@ -829,24 +780,38 @@ def downArrow():
     return u"▾"
 
 
-def get_config_parser(path=None):
-    """
-    Return a RawConfigParser for the specified path.
-    """
-    if path is None:
-        path = os.path.join(PrefHelper.get_addons_folder(),
-                            const.FOLDER_NAME,
-                            const.CONFIG_FILENAME)
-    config = ConfigParser.ConfigParser()
-    ret = config.read(path)
-    if not ret:
-        raise Exception("Could not read config file {!r}".format(path))
-    return config
-
-
 def set_tool_tip(elem, tip):
     """
     Set a "rich-text" tool tip for `elem`, as that will trigger automatic
     word-wrap in Qt.
     """
     elem.setToolTip("<font>" + tip + "</font>")
+
+
+def prettify_option_name(s):
+    """
+    Replace the underscore in the option name with a space and capitalize
+    the resulting string.
+
+    >>> prettify_option_name(u"this_is_text")
+    u'This is text'
+    """
+    return s.replace(u"_", u" ").capitalize()
+
+
+def deprettify_option_name(s):
+    """
+    Replace the space in the option name with an underscore and make the
+    resultant string lowercase.
+
+    >>> deprettify_option_name(u"This is text")
+    u'this_is_text'
+    """
+    return s.replace(u" ", u"_").lower()
+
+
+def key_to_text(key_sequence):
+    """
+    Return a text representation of a `QtGui.QKeySequence`.
+    """
+    return key_sequence.toString(QtGui.QKeySequence.NativeText)

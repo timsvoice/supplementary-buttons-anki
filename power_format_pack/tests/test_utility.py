@@ -5,6 +5,8 @@ import base64
 import json
 import sys
 
+import power_format_pack.markdowner
+
 if "/usr/share/anki/" not in sys.path:
     sys.path.append("/usr/share/anki/")
 from power_format_pack import utility
@@ -753,7 +755,7 @@ blah
     # convert_markdown_to_html
     def test_convert_markdown_to_html_throws_assertion_error_when_input_is_not_unicode(self):
         s = ""
-        self.assertRaises(AssertionError, utility.convert_markdown_to_html, s)
+        self.assertRaises(AssertionError, power_format_pack.markdowner.Markdowner.convert_markdown_to_html, s)
 
     # get_md_data_from_string
     def test_get_md_data_from_string_throws_assertion_error_when_input_is_not_unicode(self):

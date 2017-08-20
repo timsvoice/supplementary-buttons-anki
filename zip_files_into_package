@@ -55,9 +55,8 @@ check_return_value $?
 grep -P "^warnings\.simplefilter" "$FOLDER_NAME"/extra_buttons.py
 check_return_value $?
 
-zip -r --exclude=*.pyc* --exclude=*__pycache__* ~/Desktop/power_format_pack_"$(date +%s)".zip \
+zip -r --exclude=@zip_exclude.lst power_format_pack_"$(date +%s)".zip \
     "Power Format Pack.py" \
-    "$FOLDER_NAME"/__init__.py \
     "$FOLDER_NAME"/*.py \
     "$FOLDER_NAME"/config.ini \
     "$FOLDER_NAME"/anki_modules/* \
@@ -65,13 +64,12 @@ zip -r --exclude=*.pyc* --exclude=*__pycache__* ~/Desktop/power_format_pack_"$(d
     "$FOLDER_NAME"/docs/_version.py \
     "$FOLDER_NAME"/docs/doc_start.html \
     "$FOLDER_NAME"/docs/github-markdown.css \
-    "$FOLDER_NAME"/heading.py \
-    "$FOLDER_NAME"/html2text/* \
-    "$FOLDER_NAME"/html2text_overrides.py \
-    "$FOLDER_NAME"/icons/* \
-    "$FOLDER_NAME"/markdown/* \
-    "$FOLDER_NAME"/pygments/* \
-    "$FOLDER_NAME"/python_modules/* \
+    "$FOLDER_NAME"/html2text \
+    "$FOLDER_NAME"/icons \
+    "$FOLDER_NAME"/markdown \
+    "$FOLDER_NAME"/pygments \
+    "$FOLDER_NAME"/python_modules \
+    "$FOLDER_NAME"/qt
 
 # reinsert asserts and warnings comments
 for file in "$FOLDER_NAME"/*.bak; do

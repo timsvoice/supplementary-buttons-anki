@@ -10,15 +10,16 @@
 
 # other files #
 ###############
-power_format_pack/keybindings_linux_windows.json
 todo
 .noseids
 .coverage
+*.zip
 
 # preference file #
 ###################
-power_format_pack/.extra_buttons_prefs
-power_format_pack/keybindings_linux_windows
+power_format_pack/.extra_buttons_prefs.json
+power_format_pack/keybindings_linux_windows.pkl
+power_format_pack/keybindings_macosx.pkl
 
 # PyCharm files #
 #################

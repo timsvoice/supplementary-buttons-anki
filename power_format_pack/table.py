@@ -20,9 +20,10 @@
 import json
 
 from PyQt4 import QtGui, QtCore
-import utility
+
 import const
 import preferences
+import utility
 
 
 class Table(object):
@@ -34,7 +35,7 @@ class Table(object):
         self.editor_instance    = other
         self.parent_window      = parent_window
         self.selected_text      = selected_text
-        self.c                  = utility.get_config_parser()
+        self.c                  = preferences.CONFIG
         self.p                  = preferences.PREFS
 
         if self.p.get(const.STYLE_TABLE):

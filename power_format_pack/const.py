@@ -21,20 +21,9 @@ import HTMLParser
 import re
 import string
 import sys
-import time
-
 
 # Constants
 ##################################################
-
-PROGRAM_NAME  = "Power Format Pack"
-VERSION       = "0.8.8.4"
-YEAR_START    = 2014
-YEAR_LAST     = time.strftime("%Y")
-ANKIWEB_URL   = "https://ankiweb.net/shared/info/162313389"
-GITHUB_URL    = "https://github.com/Neftas/supplementary-buttons-anki"
-EMAIL         = "neftas@protonmail.com"
-FOLDER_NAME   = "power_format_pack"
 
 OPERATING_SYSTEMS = {
     "linux2": "Linux",
@@ -123,6 +112,7 @@ IS_LINK_OR_IMG_REGEX = re.compile(r"!\[[^\]]*\](\(.*?(?<!\\)\))")
 HTML_PARSER                   = HTMLParser.HTMLParser()
 
 # config file
+CONFIG_DEFAULT                = "DEFAULT"
 CONFIG_FILENAME               = "config.ini"
 CONFIG_LABELS                 = "Labels"
 CONFIG_TOOLTIPS               = "ToolTips"
@@ -134,6 +124,7 @@ CONFIG_KEYBINDINGS            = "Keybindings"
 CONFIG_WARNINGS               = "Warnings"
 CONFIG_QT                     = "Qt"
 CONFIG_FORMAT_SETTINGS        = "FormatSettings"
+CONFIG_FILENAMES              = "Filenames"
 
 # stylesheet for QGroupBox
 QGROUPBOX_STYLE = """

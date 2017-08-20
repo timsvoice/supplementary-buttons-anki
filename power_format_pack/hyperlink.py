@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU General Public License along
 # with Power Format Pack. If not, see http://www.gnu.org/licenses/.
 
-# import re
 import json
 
 from PyQt4 import QtGui
@@ -84,25 +83,21 @@ class Hyperlink(object):
 
         dialog.exec_()
 
-    def enable_ok_button(self, button, url, text):
+    @staticmethod
+    def enable_ok_button(button, url, text):
         if url and text:
             button.setEnabled(True)
         else:
             button.setEnabled(False)
 
-    def create_anchor(self, url, text):
+    @staticmethod
+    def create_anchor(url, text):
         """
         Create a hyperlink string, where `url` is the hyperlink reference
         and `text` the content of the tag.
         """
         assert isinstance(url, unicode), "Input `url` is not Unicode"
         assert isinstance(text, unicode), "Input `text` is not Unicode"
-
-        # uncomment to check for and force `http` prefix
-        # pattern = re.compile(r"(?i)https?://")
-        # match = re.match(pattern, url)
-        # if not match:
-        #     url = u"http://" + url
 
         text = utility.escape_html_chars(text)
 

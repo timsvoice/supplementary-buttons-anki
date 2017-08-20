@@ -8,9 +8,9 @@ from aqt.utils import shortcut
 
 import aqt
 from BeautifulSoup import BeautifulSoup
-from ... import const
-from ... import preferences
-from ...prefhelper import PrefHelper
+from power_format_pack import const
+from power_format_pack import preferences
+from power_format_pack.prefhelper import PrefHelper
 
 
 def onHtmlEdit(self):
@@ -66,7 +66,7 @@ def create_button(self, name, func, key=None, tip=None, size=True, text="",
         button.setAutoDefault(False)
 
     if key:
-        button.setShortcut(QKeySequence(key))
+        button.setShortcut(key)
 
     if tip:
         button.setToolTip(shortcut(tip))

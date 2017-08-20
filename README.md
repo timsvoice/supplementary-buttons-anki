@@ -331,48 +331,29 @@ attributes) can be found on the [Python Markdown
 project](https://pythonhosted.org/Markdown/extensions/attr_list.html).
 
 ## Custom user-defined keybindings
-You can change the default keybindings by editing the `keybinding.json` file
-in your `Anki/addons/power_format_pack` folder. Please keep in mind that
-there is no check for duplicate keybindings. This means that when a keybinding
-is already taken by either your OS, Anki, this add-on, or some other running
-program, the result is undefined.
 
-This file needs to contain valid JSON. Basically this means that the key-value
-pairs should be enclosed in double quotes:
+You can change the default keybindings to your liking by going to _Tools >
+Power Format Pack add-on (options) > Keybindings..._ You will be presented
+with a table view of all available functionality on the left and the associated
+keyboard shortcuts on the right. To change a particular keybinding, double click
+on the shortcut and press the desired keyboard combination.
 
-    "key": "value"
+Be aware that all keyboard combinations will be accepted, although some of them
+won't actually work in practice. If you assign the keyboard shortcut 'A' to a
+certain functionality, for example, the shortcut won't actually do anything. 
 
-The opening and closing braces in the file `{` and `}` are mandatory. Each
-key-value pair should contain a colon `:` and should end with a comma, except
-for the last pair. See the file for valid examples.
+Also keep in mind that there is no check for duplicate keybindings. This means
+that when a keybinding is already taken by either your OS, Anki, this add-on, or
+some other running program, the result is undefined.
 
-Invalid JSON cannot be parsed and will result in the use of the default
-keybindings. If you find that your new keybindings don't work
-(i.e. they don't show up in Anki, despite you changing this file),
-please use a JSON validator to check for faulty JSON.
+You can sort either on functionality ('Action') or keybindings by clicking on
+the appropriate header columns.
 
-Modifier keys that can be used include: the function keys (`F1` through `F12`),
-`Ctrl`, `Alt`, `Shift`, ASCII alphanumeric characters, and ASCII punctuation
-characters. For Mac OS X, be advised that `Ctrl` maps to the <kbd>Cmd</kbd>
-key (or "Apple key"), NOT to <kbd>Ctrl</kbd>. If you want to use the
-<kbd>Ctrl</kbd> key on Mac OS X, use `Meta` instead. So, `Ctrl+Shift+[` on Linux
-or Windows maps to `Meta+Shift+[` on Mac OS X. The string `Ctrl+Shift+[` on Mac
-OS X will require you to type <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>\[</kbd> in
-Anki. Please make sure you understand this before opening bug reports.
-
-The use of an invalid key sequence will silently revert the sequence to the
-default setting. For example, invalid sequences are:
-
-* only modifier keys: `Ctrl+Shift`
-* empty sequence
-* non-existing modifier keys: `Ctrl+Iota+j`
-
-The order or case of the string sequence is unimportant. `Ctrl+Alt+p` is the
-same as `ALT+CTRL+P` or even `p+Ctrl+Alt`.
-
-If you want to revert your changes to the default keybindings provided by
-Power Format Pack, please remove the keybindings JSON file in your
-add-on folder.
+If you want to revert to the default keybindings provided by Power Format Pack,
+click the 'Restore Defaults' button. You can undo any changes you made and keep
+the dialog window open by pressing the 'Reset' button. 'Cancel' will do the same
+but will also close the window. Lastly, when you click 'Save', the dialog window
+will close and your changes will be applied.
 
 ## Disabling unused buttons
 The buttons can be enabled or disabled individually in *Tools > Power Format

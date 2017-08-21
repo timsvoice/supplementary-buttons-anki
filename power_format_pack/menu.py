@@ -18,23 +18,26 @@
 # with Power Format Pack. If not, see http://www.gnu.org/licenses/.
 
 import os
-import utility
-import const
-import preferences
-from prefhelper import PrefHelper
 
 from PyQt4 import QtGui, QtCore, QtWebKit
 
-class ExtraButtons_Options(QtGui.QMenu):
+import const
+import preferences
+import utility
+from power_format_pack.qt.controllers.keybindings import FormKeyBindings
+from prefhelper import PrefHelper
+
+
+class Options(QtGui.QMenu):
     """
     Display the various options in the main menu.
     """
 
-    def __init__(self, main_window, preferences):
-        super(ExtraButtons_Options, self).__init__()
+    def __init__(self, main_window):
+        super(Options, self).__init__()
         self.main_window = main_window
         self.radio_buttons = list()
-        self.c = utility.get_config_parser()
+        self.c = preferences.CONFIG
 
     @staticmethod
     def button_switch(state, name, callback=None):
@@ -49,27 +52,6 @@ class ExtraButtons_Options(QtGui.QMenu):
         if callback is not None:
             callback()
 
-    @staticmethod
-    def prettify_option_name(s):
-        """
-        Replace the underscore in the option name with a space and capitalize
-        the resulting string.
-        
-        >>> ExtraButtons_Options.prettify_option_name(u"this_is_text")
-        u'This is text'
-        """
-        return s.replace(u"_", u" ").capitalize()
-
-    @staticmethod
-    def deprettify_option_name(s):
-        """
-        Replace the space in the option name with an underscore and make the
-        resultant string lowercase.
-        
-        >>> ExtraButtons_Options.deprettify_option_name(u"This is text")
-        u'this_is_text'
-        """
-        return s.replace(u" ", u"_").lower()
 
     def show_markdown_dialog(self):
         mess = QtGui.QMessageBox(self.main_window)
@@ -114,19 +96,28 @@ class ExtraButtons_Options(QtGui.QMenu):
                 self.main_window)
         options_action.triggered.connect(self.show_option_dialog)
 
-        about_action = QtGui.QAction(
-                self.c.get(const.CONFIG_MENU_NAMES, "about_action"),
+        keybindings_action = QtGui.QAction(
+                self.c.get(const.CONFIG_MENU_NAMES, "keybindings_action"),
                 self.main_window)
-        about_action.triggered.connect(self.show_about_dialog)
+        keybindings_action.triggered.connect(self.show_keybindings_dialog)
 
         doc_action = QtGui.QAction(
-                self.c.get(const.CONFIG_MENU_NAMES, "doc_action"),
-                self.main_window)
+            self.c.get(const.CONFIG_MENU_NAMES, "doc_action"),
+            self.main_window)
         doc_action.triggered.connect(self.show_doc_dialog)
 
+        about_action = QtGui.QAction(
+            self.c.get(const.CONFIG_MENU_NAMES, "about_action"),
+            self.main_window)
+        about_action.triggered.connect(self.show_about_dialog)
+
         sub_menu.addAction(options_action)
-        sub_menu.addAction(about_action)
+        sub_menu.addAction(keybindings_action)
         sub_menu.addAction(doc_action)
+        sub_menu.addAction(about_action)
+
+    def show_keybindings_dialog(self):
+        dialog = FormKeyBindings(self.main_window, preferences.KEYS)
 
     def show_doc_dialog(self):
         dialog = QtGui.QDialog(self)
@@ -134,7 +125,7 @@ class ExtraButtons_Options(QtGui.QMenu):
                                          "doc_dialog"))
 
         filename = os.path.join(PrefHelper.get_addons_folder(),
-                                const.FOLDER_NAME,
+                                self.c.get(const.CONFIG_DEFAULT, "FOLDER_NAME"),
                                 "docs",
                                 "doc_start.html")
 
@@ -289,7 +280,7 @@ class ExtraButtons_Options(QtGui.QMenu):
         md_style_combo.setEnabled(not const.MARKDOWN_CLASSFUL_PYGMENTS)
         md_style_combo.setMinimumWidth(const.MIN_COMBOBOX_WIDTH)
         md_style_files = os.listdir(os.path.join(PrefHelper.get_addons_folder(),
-                                                 const.FOLDER_NAME,
+                                                 self.c.get(const.CONFIG_DEFAULT, "FOLDER_NAME"),
                                                  "pygments",
                                                  "styles"))
 
@@ -298,13 +289,13 @@ class ExtraButtons_Options(QtGui.QMenu):
             if filename.startswith("_") or filename.endswith(".pyc"):
                 continue
             (style, _) = os.path.splitext(filename)
-            style = self.prettify_option_name(style)
+            style = utility.prettify_option_name(style)
             md_style_combo.addItem(style)
 
         all_items_in_combo = \
             [md_style_combo.itemText(i) for i in xrange(md_style_combo.count())]
         current_style = preferences.PREFS.get(const.MARKDOWN_SYNTAX_STYLE)
-        current_style = self.prettify_option_name(current_style)
+        current_style = utility.prettify_option_name(current_style)
         if current_style and current_style in all_items_in_combo:
             index_current_style = all_items_in_combo.index(current_style)
             md_style_combo.setCurrentIndex(index_current_style)
@@ -312,7 +303,7 @@ class ExtraButtons_Options(QtGui.QMenu):
         md_style_combo.currentIndexChanged[str].connect(
                 lambda: self.value_comparison_event_handler(
                     const.MARKDOWN_SYNTAX_STYLE,
-                    self.deprettify_option_name(md_style_combo.currentText())))
+                    utility.deprettify_option_name(md_style_combo.currentText())))
 
         hbox = self.put_elems_in_box((md_style_label, md_style_combo),
                                      const.HBOX,
@@ -425,7 +416,7 @@ class ExtraButtons_Options(QtGui.QMenu):
 
         # go through the keys in the prefs and make QCheckBoxes for them
         for index, option in enumerate(sorted(l)):
-            pretty_option = self.prettify_option_name(option)
+            pretty_option = utility.prettify_option_name(option)
             checkbox = self.create_checkbox(option, pretty_option)
             if index >= num_items:
                 col = 1
@@ -567,8 +558,6 @@ class ExtraButtons_Options(QtGui.QMenu):
         if option_dialog.exec_() == QtGui.QDialog.Accepted:
             PrefHelper.save_prefs(preferences.PREFS)
         else:
-            if PrefHelper.are_prefs_changed(
-                    preferences.PREFS,
-                    PrefHelper.load_preferences_from_disk()):
+            if PrefHelper.are_dicts_different(preferences.PREFS, PrefHelper.get_preferences()):
                 print "Reverting preferences..."
-                preferences.PREFS = PrefHelper.load_preferences_from_disk()
+                preferences.PREFS = PrefHelper.get_preferences()

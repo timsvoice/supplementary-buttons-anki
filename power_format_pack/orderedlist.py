@@ -17,13 +17,10 @@
 # You should have received a copy of the GNU General Public License along
 # with Power Format Pack. If not, see http://www.gnu.org/licenses/.
 
-import os
-
 from PyQt4 import QtGui, QtCore
-import preferences
-from prefhelper import PrefHelper
+
 import const
-import utility
+import preferences
 
 
 class OrderedList(QtGui.QDialog):
@@ -33,10 +30,7 @@ class OrderedList(QtGui.QDialog):
     def __init__(self, other, parent_window, fixed=False):
         super(OrderedList, self).__init__(parent_window)
         self.editor_instance = other
-        config_path = os.path.join(PrefHelper.get_addons_folder(),
-                                   const.FOLDER_NAME,
-                                   const.CONFIG_FILENAME)
-        self.c = utility.get_config_parser(config_path)
+        self.c = preferences.CONFIG
 
         if not fixed:
             self.show_dialog_window()

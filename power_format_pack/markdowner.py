@@ -19,13 +19,21 @@
 
 import re
 
-from anki.utils import json
-from aqt import mw
 from PyQt4 import QtGui
 
 import utility
-import const
-import preferences
+from anki.utils import json
+from power_format_pack import markdown, preferences, const
+from power_format_pack.markdown.extensions.abbr import AbbrExtension
+from power_format_pack.markdown.extensions.attr_list import AttrListExtension
+from power_format_pack.markdown.extensions.codehilite import CodeHiliteExtension
+from power_format_pack.markdown.extensions.def_list import DefListExtension
+from power_format_pack.markdown.extensions.fenced_code import FencedCodeExtension
+from power_format_pack.markdown.extensions.footnotes import FootnoteExtension
+from power_format_pack.markdown.extensions.nl2br import Nl2BrExtension
+from power_format_pack.markdown.extensions.sane_lists import SaneListExtension
+from power_format_pack.markdown.extensions.smart_strong import SmartEmphasisExtension
+from power_format_pack.markdown.extensions.tables import TableExtension
 
 
 class Markdowner(object):
@@ -37,7 +45,7 @@ class Markdowner(object):
 
     def __init__(self, other, parent_window, note, html, current_field):
         assert isinstance(html, unicode), "Input `html` is not Unicode"
-        self.c              = utility.get_config_parser()
+        self.c              = preferences.CONFIG
         self.p              = preferences.PREFS
         self.editor         = other
         self.parent_window  = parent_window
@@ -78,7 +86,7 @@ class Markdowner(object):
         # HTML --> Markdown
         if self.has_data and self.isconverted == "True":
             # check if the stored data and the current text differ from each other
-            compare_md = utility.convert_markdown_to_html(self.md)
+            compare_md = Markdowner.convert_markdown_to_html(self.md)
             # handle quirks
             compare_md = utility.put_colons_in_html_def_list(compare_md)
             compare_md = utility.strip_html_from_markdown(compare_md)
@@ -96,7 +104,7 @@ class Markdowner(object):
 
         # Markdown --> HTML
         else:
-            new_html = utility.convert_markdown_to_html(clean_md)
+            new_html = Markdowner.convert_markdown_to_html(clean_md)
             # needed for proper display of images
             if "<img" in new_html:
                 new_html = utility.unescape_html(new_html)
@@ -295,3 +303,37 @@ class Markdowner(object):
         self.editor.web.setFocus()
         self.editor.web.eval("focusField(%d);" % self.current_field)
         self.editor.saveNow()
+
+    @staticmethod
+    def convert_markdown_to_html(clean_md):
+        """
+        Take a string `clean_md` and return a string where the Markdown syntax is
+        converted to HTML.
+
+        >>> preferences.PREFS = {"markdown_classful_pygments": True, "markdown_syntax_style": "tango", "markdown_line_nums": False}
+        >>> convert_markdown_to_html(u"this **was** a triumph")
+        u'<p>this <strong>was</strong> a triumph</p>'
+        """
+
+        assert isinstance(clean_md, unicode), "Input `clean_md` is not Unicode"
+
+        new_html = markdown.markdown(clean_md, output_format="xhtml1",
+            extensions=[
+                SmartEmphasisExtension(),
+                FencedCodeExtension(),
+                FootnoteExtension(),
+                AttrListExtension(),
+                DefListExtension(),
+                TableExtension(),
+                AbbrExtension(),
+                Nl2BrExtension(),
+                CodeHiliteExtension(
+                    noclasses=not preferences.PREFS.get(const.MARKDOWN_CLASSFUL_PYGMENTS),
+                    pygments_style=preferences.PREFS.get(const.MARKDOWN_SYNTAX_STYLE),
+                    linenums=preferences.PREFS.get(const.MARKDOWN_LINE_NUMS)),
+                SaneListExtension()
+            ], lazy_ol=False)
+
+        assert isinstance(new_html, unicode)
+
+        return new_html

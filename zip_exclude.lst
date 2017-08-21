@@ -1,0 +1,3 @@
+*.pyc
+*__pycache__
+power_format_pack/qt/designer/*

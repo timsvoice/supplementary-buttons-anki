@@ -18,6 +18,6 @@ done
 let max+=10
 
 for file in "${files[@]}"; do
-    printf '%-*s' "$max" "$file"
-    sed -rn 's/^.*version.*\=\s*"?(([0-9]+\.){3}[0-9]+)"?/\1/pi' "$file"
+    version=$(sed -rn 's/^.*version.*\=\s*"?(([0-9]+\.)+[0-9]+)"?/\1/pi' "$file")
+    printf '%-*s%s\n' "$max" "$file" "${version:-(not found)}"
 done

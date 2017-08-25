@@ -44,6 +44,7 @@ from deflist import DefList
 from table import Table
 from blockquote import Blockquote
 from heading import Heading
+from hilite_color import HiliteColor
 
 # Overrides
 ##################################################
@@ -181,10 +182,11 @@ def setup_buttons(self):
                                 check=False)
 
     if preferences.PREFS.get(const.BACKGROUND_COLOR):
+        hilite_color = HiliteColor(self, preferences)
         shortcut = preferences.KEYS.get(const.BACKGROUND_COLOR)
         text = u"Set background color ({})".format(utility.key_to_text(shortcut))
         b1 = self.create_button(const.BACKGROUND_COLOR,
-                                self.on_background,
+                                hilite_color.apply_color,
                                 shortcut,
                                 _(text),
                                 text=" ")
@@ -193,7 +195,8 @@ def setup_buttons(self):
         shortcut = preferences.KEYS.get(const.BACKGROUND_COLOR_CHANGE)
         text = u"Change color ({})".format(utility.key_to_text(shortcut))
         b2 = self.create_button(const.BACKGROUND_COLOR_CHANGE,
-                                self.on_change_col, shortcut,
+                                hilite_color.change_color,
+                                shortcut,
                                 _(text),
                                 # space is needed to center the arrow
                                 text=utility.downArrow() + " ")
@@ -423,66 +426,6 @@ def toggleTable(self):
     Table(self, self.parentWindow, selection if selection else None)
 
 
-def setup_background_button(self, but):
-    self.background_frame = QtGui.QFrame()
-    self.background_frame.setAutoFillBackground(True)
-    self.background_frame.setFocusPolicy(QtCore.Qt.NoFocus)
-    self.bg_color = preferences.PREFS.get("last_bg_color", "#00f")
-    self.on_bg_color_changed()
-    hbox = QtGui.QHBoxLayout()
-    hbox.addWidget(self.background_frame)
-    hbox.setMargin(5)
-    but.setLayout(hbox)
-
-
-# use last background color
-def on_background(self):
-    self._wrap_with_bg_color(self.bg_color)
-
-
-# choose new color
-def on_change_col(self):
-    new = QtGui.QColorDialog.getColor(QtGui.QColor(self.bg_color), None)
-    # native dialog doesn't refocus us for some reason
-    self.parentWindow.activateWindow()
-    if new.isValid():
-        self.bg_color = new.name()
-        self.on_bg_color_changed()
-        self._wrap_with_bg_color(self.bg_color)
-
-
-def _update_background_button(self):
-    self.background_frame.setPalette(QtGui.QPalette(QtGui.QColor(self.bg_color)))
-
-
-def on_bg_color_changed(self):
-    self._update_background_button()
-    preferences.PREFS["last_bg_color"] = self.bg_color
-    PrefHelper.save_prefs(preferences.PREFS)
-
-
-def _wrap_with_bg_color(self, color):
-    """Wrap the selected text in an appropriate tag with a background color."""
-    # On Linux, the standard 'hiliteColor' method works. On Windows and OSX
-    # the formatting seems to get filtered out by Anki itself
-
-    self.web.eval("""
-        if (!setFormat('hiliteColor', '%s')) {
-            setFormat('backcolor', '%s');
-        }
-        """ % (color, color))
-
-    if isWin or isMac:
-        # remove all Apple style classes thus enabling
-        # text highlighting for other platforms besides Linux
-        self.web.eval("""
-        var matches = document.querySelectorAll(".Apple-style-span");
-        for (var i = 0; i < matches.length; i++) {
-            matches[i].removeAttribute("class");
-        }
-        """)
-
-
 def power_remove_format(self):
     """Remove formatting from selected text."""
     # For Windows and OS X we need to override the standard removeFormat
@@ -620,6 +563,7 @@ def on_focus_gained(self, note, current_field_no):
 def init_hook(self, mw, widget, parentWindow, addMode=False):
     addHook("editFocusGained", self.on_focus_gained)
 
+
 Preferences.init()
 
 if preferences.PREFS.get(const.MARKDOWN):
@@ -641,12 +585,6 @@ editor.Editor.justifyLeft = justifyLeft
 editor.Editor.justifyCenter = justifyCenter
 editor.Editor.toggleBlockquote = toggleBlockquote
 editor.Editor.removeFormat = power_remove_format
-editor.Editor.on_background = on_background
-editor.Editor.setup_background_button = setup_background_button
-editor.Editor.on_bg_color_changed = on_bg_color_changed
-editor.Editor._update_background_button = _update_background_button
-editor.Editor.on_change_col = on_change_col
-editor.Editor._wrap_with_bg_color = _wrap_with_bg_color
 editor.Editor.wrap_in_tags = wrap_in_tags
 editor.Editor.toggleOrderedList = toggleOrderedList
 editor.Editor.toggleUnorderedList = toggleUnorderedList

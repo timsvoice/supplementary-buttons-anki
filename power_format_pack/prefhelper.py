@@ -58,6 +58,15 @@ class PrefHelper(object):
                             filename)
 
     @staticmethod
+    def get_qtdesigner_path(filename=""):
+        c = PrefHelper.get_config()
+        return os.path.join(PrefHelper.get_addons_folder(),
+                            c.get(const.CONFIG_DEFAULT, "FOLDER_NAME"),
+                            "qt",
+                            "designer",
+                            filename)
+
+    @staticmethod
     def normalize_user_prefs(default_prefs, user_prefs):
         """
         Check if the user preferences are compatible with the currently used
@@ -90,7 +99,8 @@ class PrefHelper(object):
         _default_conf = {
                 const.CODE_CLASS:                   const.CODE_AND_PRE_CLASS,
                 const.LAST_BG_COLOR:                "#00f",
-                const.FIXED_OL_TYPE:                "",
+                const.FIXED_OL_TYPE:                "1.",
+                const.FIXED_UL_TYPE:                "disc",
                 const.MARKDOWN_SYNTAX_STYLE:        "tango",
                 const.MARKDOWN_CODE_DIRECTION:      "left",
                 const.MARKDOWN_LINE_NUMS:           False,

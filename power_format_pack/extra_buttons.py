@@ -21,30 +21,29 @@
 # import warnings
 # warnings.simplefilter("ignore", UserWarning)
 
-from anki.utils import json
-from aqt import editor, mw
-from anki.hooks import wrap, addHook
-from anki.utils import isWin, isMac
-from PyQt4 import QtGui, QtCore
 import BeautifulSoup
+from PyQt4 import QtGui
 
-import utility
 import const
 import preferences
-from preferences import Preferences
-from prefhelper import PrefHelper
-from menu import Options
-from markdowner import Markdowner
+import utility
+from abbreviation import Abbreviation
+from anki.hooks import wrap, addHook
+from anki.utils import isWin, isMac
 from anki_modules.aqt import editor as myeditor
 from anki_modules.aqt.editor import create_button
-from abbreviation import Abbreviation
-from orderedlist import OrderedList
-from hyperlink import Hyperlink
-from deflist import DefList
-from table import Table
+from aqt import editor, mw
 from blockquote import Blockquote
+from deflist import DefList
 from heading import Heading
 from hilite_color import HiliteColor
+from hyperlink import Hyperlink
+from markdowner import Markdowner
+from menu import Options
+from orderedlist import OrderedList
+from power_format_pack.unorderedlist import UnorderedList
+from preferences import Preferences
+from table import Table
 
 # Overrides
 ##################################################
@@ -57,7 +56,6 @@ editor.Editor._filterHTML = myeditor._filterHTML
 
 
 def setup_buttons(self):
-
     button_placement_pref = preferences.PREFS.get(const.BUTTON_PLACEMENT)
 
     self.supp_buttons_hbox = QtGui.QHBoxLayout()
@@ -66,8 +64,7 @@ def setup_buttons(self):
         shortcut = preferences.KEYS.get(const.CODE)
         text = u"Code format text ({})".format(utility.key_to_text(shortcut))
         b = self.create_button(const.CODE,
-                               lambda: self.wrap_in_tags("code",
-                               preferences.PREFS.get(const.CODE_CLASS)),
+                               lambda: utility.wrap_in_tags(self, "code", preferences.PREFS.get(const.CODE_CLASS)),
                                shortcut,
                                _(text),
                                check=False)
@@ -76,7 +73,7 @@ def setup_buttons(self):
         shortcut = preferences.KEYS.get(const.UNORDERED_LIST)
         text = u"Create unordered list ({})".format(utility.key_to_text(shortcut))
         b = self.create_button(const.UNORDERED_LIST,
-                               self.toggleUnorderedList,
+                               lambda: toggleUnorderedList(self),
                                shortcut,
                                _(text),
                                check=False)
@@ -369,24 +366,9 @@ def unlink(self):
     self.web.eval("setFormat('unlink')")
 
 
-def toggleUnorderedList(self):
-    self.web.eval("""
-        document.execCommand('insertUnorderedList');
-        var ulElem = window.getSelection().focusNode.parentNode;
-        if (ulElem !== null) {
-            var setAttrs = true;
-            while (ulElem.toString() !== "[object HTMLUListElement]") {
-                ulElem = ulElem.parentNode;
-                if (ulElem === null) {
-                    setAttrs = false;
-                    break;
-                }
-            }
-            if (setAttrs) {
-                ulElem.style.marginLeft = "20px";
-            }
-        }
-    """)
+def toggleUnorderedList(editor):
+    fixed_type = preferences.PREFS.get("fixed_ul_type")
+    UnorderedList(editor, fixed_type if fixed_type else "")
 
 
 def toggleOrderedList(self):
@@ -563,7 +545,6 @@ def on_focus_gained(self, note, current_field_no):
 def init_hook(self, mw, widget, parentWindow, addMode=False):
     addHook("editFocusGained", self.on_focus_gained)
 
-
 Preferences.init()
 
 if preferences.PREFS.get(const.MARKDOWN):
@@ -587,7 +568,6 @@ editor.Editor.toggleBlockquote = toggleBlockquote
 editor.Editor.removeFormat = power_remove_format
 editor.Editor.wrap_in_tags = wrap_in_tags
 editor.Editor.toggleOrderedList = toggleOrderedList
-editor.Editor.toggleUnorderedList = toggleUnorderedList
 editor.Editor.toggleStrikeThrough = toggleStrikeThrough
 editor.Editor.togglePre = togglePre
 editor.Editor.toggleHorizontalLine = toggleHorizontalLine

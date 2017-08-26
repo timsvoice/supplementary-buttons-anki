@@ -38,47 +38,39 @@ class Options(QtGui.QMenu):
         self.main_window = main_window
         self.radio_buttons = list()
         self.c = preferences.CONFIG
+        self.p = preferences.PREFS
 
-    @staticmethod
-    def button_switch(state, name, callback=None):
+    def button_switch(self, new_state, name):
         """
         Puts a button either on or off. Reverses current state.
         """
-        current_state = preferences.PREFS.get(name)
+        current_state = self.p.get(name)
         if current_state is None:
             raise Exception("{!r} not in preferences".format(name))
-        if bool(state) != current_state:
-            preferences.PREFS[name] = not current_state
-        if callback is not None:
-            callback()
+        if new_state != current_state:
+            self.p[name] = not current_state
 
-    def show_markdown_dialog(self):
-        mess = QtGui.QMessageBox(self.main_window)
-        mess.setIcon(QtGui.QMessageBox.Warning)
+    def show_markdown_toggled_dialog(self, is_enabled):
+        msg_box = QtGui.QMessageBox(self.main_window)
+        msg_box.setIcon(QtGui.QMessageBox.Warning)
         # because the preferences are already changed by clicking the
         # checkbox, we change the behavior here to something counter-intuitive
-        if preferences.PREFS.get(const.MARKDOWN):
-            mess.setWindowTitle(self.c.get(const.CONFIG_WINDOW_TITLES,
-                                           "md_enable"))
-            mess.setText(self.c.get(const.CONFIG_WARNINGS,
-                                    "md_enable"))
+        if is_enabled:
+            msg_box.setWindowTitle(self.c.get(const.CONFIG_WINDOW_TITLES, "md_enable"))
+            msg_box.setText(self.c.get(const.CONFIG_WARNINGS, "md_enable"))
         else:
-            mess.setWindowTitle(self.c.get(const.CONFIG_WINDOW_TITLES,
-                                           "md_disable"))
-            mess.setText(self.c.get(const.CONFIG_WARNINGS,
-                                    "md_disable"))
-        mess.setInformativeText(self.c.get(const.CONFIG_WARNINGS,
-                                           "md_additional"))
-        mess.setStandardButtons(QtGui.QMessageBox.Ok)
-        mess.setDefaultButton(QtGui.QMessageBox.Ok)
-        return mess.exec_()
+            msg_box.setWindowTitle(self.c.get(const.CONFIG_WINDOW_TITLES, "md_disable"))
+            msg_box.setText(self.c.get(const.CONFIG_WARNINGS, "md_disable"))
+        msg_box.setInformativeText(self.c.get(const.CONFIG_WARNINGS, "md_additional"))
+        msg_box.setStandardButtons(QtGui.QMessageBox.Ok)
+        msg_box.setDefaultButton(QtGui.QMessageBox.Ok)
+        return msg_box.exec_()
 
-    def create_checkbox(self, name, pretty_name=None, label=None, callback=None):
+    def create_checkbox(self, name, pretty_name=None, label=None):
         checkbox = QtGui.QCheckBox(pretty_name or label or name, self)
-        if preferences.PREFS.get(name):
+        if self.p.get(name):
             checkbox.setChecked(True)
-        checkbox.stateChanged.connect(
-                lambda: self.button_switch(checkbox.isChecked(), name, callback))
+        checkbox.stateChanged.connect(lambda: self.button_switch(checkbox.isChecked(), name))
         return checkbox
 
     @staticmethod
@@ -159,17 +151,17 @@ class Options(QtGui.QMenu):
                 rb.setEnabled(True)
                 # set chosen type to the selected radio button
                 if rb.isChecked():
-                    preferences.PREFS[prefname] = rb.text()
+                    self.p[prefname] = rb.text()
         else:
             # set chosen type to the empty string
-            preferences.PREFS[prefname] = ""
+            self.p[prefname] = ""
             # disable radiobuttons
             for rb in radiobuttons:
                 rb.setEnabled(False)
 
     def value_comparison_event_handler(self, key, new_value):
-        if new_value != preferences.PREFS.get(key):
-            preferences.PREFS[key] = new_value
+        if new_value != self.p.get(key):
+            self.p[key] = new_value
 
     def put_elems_in_box(self, elems, type_box, type_elem):
         """
@@ -205,7 +197,7 @@ class Options(QtGui.QMenu):
 
     def fixed_lists_radio_button_event_handler(self, prefname):
         source = self.sender()
-        preferences.PREFS[prefname] = source.text()
+        self.p[prefname] = source.text()
 
     def create_fixed_list_options(self, config_prop_name, tooltip_prop_name, prefname, types_iter):
         check_box = QtGui.QCheckBox(self.c.get(const.CONFIG_LABELS, config_prop_name), self)
@@ -213,7 +205,7 @@ class Options(QtGui.QMenu):
         utility.set_tool_tip(check_box, self.c.get(const.CONFIG_TOOLTIPS, tooltip_prop_name))
 
         # preference value is empty string when False, otherwise len > 0
-        check_box.setChecked(bool(preferences.PREFS.get(prefname)))
+        check_box.setChecked(bool(self.p.get(prefname)))
 
         radio_buttons = list()
         for type_symbol in types_iter:
@@ -223,7 +215,7 @@ class Options(QtGui.QMenu):
 
         check_box.stateChanged.connect(lambda: self.enable_radio_buttons(check_box, radio_buttons, prefname))
 
-        list_type = preferences.PREFS.get(prefname)
+        list_type = self.p.get(prefname)
         if not list_type:
             radio_buttons[0].toggle()
         else:
@@ -266,7 +258,7 @@ class Options(QtGui.QMenu):
     def markdown_syntax_styles_option(self):
         md_style_label = QtGui.QLabel(self.c.get(const.CONFIG_LABELS, "md_style_label"), self)
         md_style_combo = QtGui.QComboBox(self)
-        md_style_combo.setEnabled(not const.MARKDOWN_CLASSFUL_PYGMENTS)
+        md_style_combo.setEnabled(not self.p.get(const.MARKDOWN_CLASSFUL_PYGMENTS))
         md_style_combo.setMinimumWidth(const.MIN_COMBOBOX_WIDTH)
         md_style_files = os.listdir(os.path.join(PrefHelper.get_addons_folder(),
                                                  self.c.get(const.CONFIG_DEFAULT, "FOLDER_NAME"),
@@ -283,7 +275,7 @@ class Options(QtGui.QMenu):
 
         all_items_in_combo = \
             [md_style_combo.itemText(i) for i in xrange(md_style_combo.count())]
-        current_style = preferences.PREFS.get(const.MARKDOWN_SYNTAX_STYLE)
+        current_style = self.p.get(const.MARKDOWN_SYNTAX_STYLE)
         current_style = utility.prettify_option_name(current_style)
         if current_style and current_style in all_items_in_combo:
             index_current_style = all_items_in_combo.index(current_style)
@@ -304,11 +296,11 @@ class Options(QtGui.QMenu):
     def markdown_code_align_option(self):
         code_align_label = QtGui.QLabel(self.c.get(const.CONFIG_LABELS, "code_align_label"))
         code_align_combo = QtGui.QComboBox(self)
-        code_align_combo.setEnabled(not const.MARKDOWN_CLASSFUL_PYGMENTS)
+        code_align_combo.setEnabled(not self.p.get(const.MARKDOWN_CLASSFUL_PYGMENTS))
         code_align_combo.setMinimumWidth(const.MIN_COMBOBOX_WIDTH)
         for direction in const.CODE_DIRECTIONS:
             code_align_combo.addItem(direction)
-        current_direction = preferences.PREFS.get(
+        current_direction = self.p.get(
                 const.MARKDOWN_CODE_DIRECTION)
         code_align_combo.setCurrentIndex(
                 const.CODE_DIRECTIONS.index(current_direction))
@@ -325,42 +317,36 @@ class Options(QtGui.QMenu):
 
         return hbox
 
-    def markdown_switch_between_classes_and_inline(self, *widgets):
-        cb = self.create_checkbox(const.MARKDOWN_CLASSFUL_PYGMENTS,
-                                  None,
-                                  self.c.get(const.CONFIG_LABELS, "markdown_classful_pygments_label"),
-                                  lambda: self.switch_user_style_sheet_inline_on_off(*widgets))
-
-        return self.put_elems_in_box((cb,), const.HBOX, const.WIDGET)
+    @staticmethod
+    def toggle_markdown_controls(enabled, *widgets):
+        for widget in widgets:
+            widget.setEnabled(enabled)
 
     def init_markdown_option(self):
-        md_groupbox = QtGui.QGroupBox(
-                self.c.get(const.CONFIG_LABELS, "md_groupbox"),
-                self)
-        md_groupbox.setStyleSheet(const.QGROUPBOX_STYLE)
-        md_groupbox.setCheckable(True)
-        md_groupbox.setChecked(preferences.PREFS.get(const.MARKDOWN))
-
-        md_groupbox.toggled.connect(
-                lambda: self.button_switch(md_groupbox.isChecked(),
-                                           const.MARKDOWN,
-                                           self.show_markdown_dialog))
-
         md_vbox = QtGui.QVBoxLayout()
 
+        # Markdown switch between user style sheet and inline styling
+        classes_or_inline_cb = \
+            self.create_checkbox(const.MARKDOWN_CLASSFUL_PYGMENTS,
+                                 None,
+                                 self.c.get(const.CONFIG_LABELS, "markdown_classful_pygments_label"))
+        classes_or_inline_cb.toggled.connect(
+            lambda: self.toggle_markdown_controls(not classes_or_inline_cb.isChecked(),
+                                                  syntax_styles_combo,
+                                                  code_align_combo))
+        classes_or_inline_hbox = self.put_elems_in_box((classes_or_inline_cb,), const.HBOX, const.WIDGET)
+
+        md_vbox.addLayout(classes_or_inline_hbox)
+
         # Markdown syntax highlighting
-        markdown_syntax_styles_hbox = self.markdown_syntax_styles_option()
-        md_vbox.addLayout(markdown_syntax_styles_hbox)
-        markdown_syntax_styles_combo = markdown_syntax_styles_hbox.itemAt(2).widget()
+        syntax_styles_hbox = self.markdown_syntax_styles_option()
+        md_vbox.addLayout(syntax_styles_hbox)
+        syntax_styles_combo = syntax_styles_hbox.itemAt(2).widget()
 
         # Markdown code align
-        markdown_code_align_hbox = self.markdown_code_align_option()
-        md_vbox.addLayout(markdown_code_align_hbox)
-        markdown_code_align_combo = markdown_code_align_hbox.itemAt(2).widget()
-
-        # Markdown switch between user style sheet and inline styling
-        md_vbox.insertLayout(0, self.markdown_switch_between_classes_and_inline(
-                markdown_syntax_styles_combo, markdown_code_align_combo))
+        code_align_hbox = self.markdown_code_align_option()
+        md_vbox.addLayout(code_align_hbox)
+        code_align_combo = code_align_hbox.itemAt(2).widget()
 
         md_vbox.addWidget(utility.create_horizontal_rule())
 
@@ -371,11 +357,20 @@ class Options(QtGui.QMenu):
         # and skip the warning dialog
         md_vbox.addLayout(self.markdown_skip_warning_option())
 
-        # override disabled buttons in rendered Markdown
-        # md_vbox.addLayout(self.override_disabled_buttons_rendered_markdown())
-
-
         md_vbox.setSpacing(self.c.getint(const.CONFIG_QT, "spacing_buttons"))
+
+        md_groupbox = QtGui.QGroupBox(self.c.get(const.CONFIG_LABELS, "md_groupbox"), self)
+        md_groupbox.setStyleSheet(const.QGROUPBOX_STYLE)
+        md_groupbox.setCheckable(True)
+        md_groupbox.setChecked(self.p.get(const.MARKDOWN))
+
+        md_groupbox.toggled.connect(
+            lambda: self.button_switch(md_groupbox.isChecked(), const.MARKDOWN))
+        md_groupbox.toggled.connect(
+            lambda: self.toggle_markdown_controls(md_groupbox.isChecked() and not classes_or_inline_cb.isChecked(),
+                                                  syntax_styles_combo,
+                                                  code_align_combo))
+        md_groupbox.toggled[bool].connect(self.show_markdown_toggled_dialog)
 
         md_groupbox.setLayout(md_vbox)
 
@@ -383,21 +378,19 @@ class Options(QtGui.QMenu):
 
     def init_button_options(self):
         grid = QtGui.QGridLayout()
-        l = [k for k in preferences.PREFS.keys() if k not in (
-                                                const.CODE_CLASS,
-                                                const.LAST_BG_COLOR,
-                                                const.FIXED_OL_TYPE,
-                                                const.FIXED_UL_TYPE,
-                                                const.MARKDOWN_SYNTAX_STYLE,
-                                                const.MARKDOWN_LINE_NUMS,
-                                                const.MARKDOWN_ALWAYS_REVERT,
-                                                const.MARKDOWN_CODE_DIRECTION,
-                                                const.BUTTON_PLACEMENT,
-                                                const.MARKDOWN_OVERRIDE_EDITING,
-                                                const.MARKDOWN,
-                                                const.STYLE_TABLE,
-                                                const.MARKDOWN_CLASSFUL_PYGMENTS
-                                            )]
+        l = [k for k in self.p.keys() if k not in (const.CODE_CLASS,
+                                                   const.LAST_BG_COLOR,
+                                                   const.FIXED_OL_TYPE,
+                                                   const.FIXED_UL_TYPE,
+                                                   const.MARKDOWN_SYNTAX_STYLE,
+                                                   const.MARKDOWN_LINE_NUMS,
+                                                   const.MARKDOWN_ALWAYS_REVERT,
+                                                   const.MARKDOWN_CODE_DIRECTION,
+                                                   const.BUTTON_PLACEMENT,
+                                                   const.MARKDOWN_OVERRIDE_EDITING,
+                                                   const.MARKDOWN,
+                                                   const.STYLE_TABLE,
+                                                   const.MARKDOWN_CLASSFUL_PYGMENTS)]
         num_items = len(l) / 2.0
         num_items = num_items + 0.5 if (num_items % 1.0 > 0.0) else num_items
 
@@ -419,7 +412,7 @@ class Options(QtGui.QMenu):
         label = QtGui.QLabel(
             self.c.get(const.CONFIG_LABELS, "code_pre_label"), self)
         utility.set_tool_tip(label, self.c.get(const.CONFIG_TOOLTIPS, "code_pre_tooltip"))
-        text = QtGui.QLineEdit(preferences.PREFS.get(const.CODE_CLASS), self)
+        text = QtGui.QLineEdit(self.p.get(const.CODE_CLASS), self)
         text.editingFinished.connect(
                 lambda: self.value_comparison_event_handler(
                     const.CODE_CLASS, text.text()))
@@ -432,7 +425,7 @@ class Options(QtGui.QMenu):
         combo.setMinimumWidth(const.MIN_COMBOBOX_WIDTH)
         for placement in const.PLACEMENT_POSITIONS:
             combo.addItem(placement)
-        current_placement = preferences.PREFS.get(const.BUTTON_PLACEMENT)
+        current_placement = self.p.get(const.BUTTON_PLACEMENT)
         combo.setCurrentIndex(
                 const.PLACEMENT_POSITIONS.index(current_placement))
         combo.currentIndexChanged[str].connect(
@@ -510,8 +503,7 @@ class Options(QtGui.QMenu):
         markdown_tab = QtGui.QWidget()
 
         markdown_qgroupbox = self.init_markdown_option()
-        markdown_vbox = self.put_elems_in_box(
-                (markdown_qgroupbox,), const.VBOX, const.WIDGET)
+        markdown_vbox = self.put_elems_in_box((markdown_qgroupbox,), const.VBOX, const.WIDGET)
         markdown_vbox.addStretch(1)
 
         markdown_tab.setLayout(markdown_vbox)
@@ -530,8 +522,7 @@ class Options(QtGui.QMenu):
         markdown_tab = self.create_markdown_tab()
         tab_widget.addTab(markdown_tab, "Markdown")
 
-        button_box = QtGui.QDialogButtonBox(
-                QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel)
+        button_box = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel)
         button_box.accepted.connect(option_dialog.accept)
         button_box.rejected.connect(option_dialog.reject)
 
@@ -541,7 +532,8 @@ class Options(QtGui.QMenu):
         option_dialog.setLayout(dialog_vbox)
 
         if option_dialog.exec_() == QtGui.QDialog.Accepted:
-            PrefHelper.save_prefs(preferences.PREFS)
+            PrefHelper.save_prefs(self.p)
         else:
-            if PrefHelper.are_dicts_different(preferences.PREFS, PrefHelper.get_preferences()):
-                preferences.PREFS = PrefHelper.get_preferences()
+            default_prefs = PrefHelper.get_default_preferences()
+            if PrefHelper.are_dicts_different(self.p, default_prefs):
+                self.p = default_prefs

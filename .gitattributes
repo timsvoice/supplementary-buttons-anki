@@ -1,0 +1,14 @@
+.gitignore export-ignore
+.gitattributes export-ignore
+*.png diff=exif
+README.md export-ignore
+bumpversion export-ignore
+getversion export-ignore
+zip_exclude.lst export-ignore
+zip_files_into_package export-ignore
+power_format_pack/docs/README.md export-ignore
+power_format_pack/docs/create_docs export-ignore
+power_format_pack/docs/doc_template.html export-ignore
+power_format_pack/docs/htmlforankiweb.py export-ignore
+power_format_pack/tests/ export-ignore
+power_format_pack/qt/designer/ export-ignore

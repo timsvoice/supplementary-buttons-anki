@@ -294,11 +294,9 @@ def toggleUnorderedList(editor):
     UnorderedList(editor, fixed_type if fixed_type else "")
 
 
-def toggleOrderedList(self):
-    if preferences.PREFS.get("fixed_ol_type"):
-        OrderedList(self, self.parentWindow, True)
-    else:
-        OrderedList(self, self.parentWindow)
+def toggleOrderedList(editor):
+    fixed_type = preferences.PREFS.get("fixed_ol_type")
+    OrderedList(editor, preferences, fixed_type if fixed_type else "")
 
 
 def toggleStrikeThrough(self):

@@ -1,24 +1,22 @@
 from PyQt4 import QtGui, QtCore
 
 from power_format_pack import const
+from power_format_pack.list import List
 from power_format_pack.qt.views.unordered_list_types import Ui_unordered_list_dialog
 
 
-class UnorderedList(QtGui.QDialog):
+class UnorderedList(List):
     """
     Create an unordered list.
     """
 
     def __init__(self, editor, fixed_type=""):
-        super(UnorderedList, self).__init__(editor.web)
-        self.editor = editor
-        self.setProperty("fixed_type", fixed_type)
+        super(UnorderedList, self).__init__(editor, fixed_type)
         self.ui = None
-        self.editor.web.page().mainFrame().addToJavaScriptWindowObject("unorderedList", self)
-        self._start()
+        self._start("insertUnorderedList")
 
     @QtCore.pyqtSlot()
-    def show_types_window(self):
+    def show_dialog(self):
         """
         Create and display a dialog window displaying options for the unordered list.
         """
@@ -68,28 +66,4 @@ class UnorderedList(QtGui.QDialog):
             }
         """ % list_type)
 
-    def _start(self):
-        """
-        Begin the process of creating the unordered list. If the cursor is currectly
-        inside a list, the list will be removed. If not, create a new list.
-        """
-        self.editor.web.eval("""
-            var orgNode = window.getSelection().focusNode;
-            node = orgNode;
-            var insideList = false;
-            while (node = node.parentNode) {
-                if (["OL", "UL", "LI"].indexOf(node.tagName) > -1) {
-                    insideList = true;
-                    document.execCommand('insertUnorderedList');
-                    break;
-                }
-            }
-            if (!insideList) {
-                if (unorderedList.fixed_type) {
-                    unorderedList._apply(unorderedList.fixed_type);
-                } else {
-                    unorderedList.show_types_window();
-                }
-            }
-        """)
 

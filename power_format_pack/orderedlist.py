@@ -20,34 +20,27 @@
 from PyQt4 import QtGui, QtCore
 
 import const
-import preferences
+from power_format_pack.list import List
 
 
-class OrderedList(QtGui.QDialog):
+class OrderedList(List):
     """
     Create an ordered list.
     """
-    def __init__(self, other, parent_window, fixed=False):
-        super(OrderedList, self).__init__(parent_window)
-        self.editor_instance = other
+    def __init__(self, editor, preferences, fixed_type=""):
+        super(OrderedList, self).__init__(editor, fixed_type)
         self.c = preferences.CONFIG
+        self._start("insertOrderedList")
 
-        if not fixed:
-            self.show_dialog_window()
-        else:
-            self.insert_ordered_list(
-                    preferences.PREFS["fixed_ol_type"][0], 1)
-
-    def show_dialog_window(self):
-        self.setWindowTitle(self.c.get(const.CONFIG_WINDOW_TITLES,
-                                       "ordered_list"))
+    @QtCore.pyqtSlot()
+    def show_dialog(self):
+        self.setWindowTitle(self.c.get(const.CONFIG_WINDOW_TITLES, "ordered_list"))
 
         groupbox = QtGui.QGroupBox(
                 self.c.get(const.CONFIG_LABELS, "ordered_list_type_label"),
                 self)
         groupbox.setStyleSheet(const.QGROUPBOX_STYLE)
 
-        # stylesheet for the radio buttons
         self.setStyleSheet("QRadioButton { font-weight: bold; }")
 
         radio_button1 = QtGui.QRadioButton("1.", self)
@@ -85,7 +78,6 @@ class OrderedList(QtGui.QDialog):
         spinbox = QtGui.QSpinBox(self)
         spinbox.setMinimum(1)
         spinbox.setMaximum(100)
-        # get value with .value()
 
         spinbox_vbox = QtGui.QVBoxLayout()
         spinbox_vbox.addWidget(start_label)
@@ -117,19 +109,19 @@ class OrderedList(QtGui.QDialog):
                     5: "i"
             }
 
-            choice = type_of_list.get(
-                    radio_button_group.id(
-                        radio_button_group.checkedButton()), "1")
+            selected_radio_button_id = radio_button_group.id(radio_button_group.checkedButton())
+            choice = type_of_list.get(selected_radio_button_id, "1")
 
-            self.insert_ordered_list(choice, spinbox.value())
+            self._apply(choice, spinbox.value())
 
-    def insert_ordered_list(self, type_of_list, start_num):
+    @QtCore.pyqtSlot(str)
+    def _apply(self, type_of_list="1", start_num=1):
         """
         Create a new ordered list based on the input of the user.
         `type_of_list` is a string ("1", "A", "a", "I", "i") and
         `start_num` is an integer.
         """
-        self.editor_instance.web.eval("""
+        self.editor.web.eval("""
             document.execCommand('insertOrderedList');
             var olElem = window.getSelection().focusNode.parentNode;
             if (olElem !== null) {
@@ -146,5 +138,4 @@ class OrderedList(QtGui.QDialog):
                     olElem.setAttribute("start", "%s");
                 }
             }
-            """ % (type_of_list, str(start_num))
-        )
+        """ % (type_of_list[0], str(start_num)))

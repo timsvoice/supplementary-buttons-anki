@@ -17,6 +17,8 @@
 # You should have received a copy of the GNU General Public License along
 # with Power Format Pack. If not, see http://www.gnu.org/licenses/.
 
+from anki.utils import json
+
 
 class Blockquote(object):
 
@@ -34,10 +36,12 @@ class Blockquote(object):
         len_delim = len(start_delim)
         start = self.selected_html.find(start_delim)
         end = self.selected_html.find(end_delim, start + 1)
+        replacement = "<blockquote>{}</blockquote>".format(self.selected_html)
+        command = "document.execCommand('insertHTML', false, {});".format(json.dumps(replacement))
         if start > -1 and end > -1:
             author = self.selected_html[(start+len_delim):end]
             self.editor_instance.web.eval("""
-                document.execCommand('formatBlock', false, 'blockquote');
+                %s
                 var bq = window.getSelection().focusNode.parentNode;
                 if (bq.toString() !== "[object HTMLQuoteElement]"
                     && bq.toString() !== "[object HTMLBlockquoteElement]") {
@@ -49,7 +53,7 @@ class Blockquote(object):
                 authorParagraph.style.fontStyle = "italic";
                 authorParagraph.innerHTML = "%s"
                 bq.appendChild(authorParagraph);
-            """ % (author, author))
+            """ % (command, author, author))
         else:
-            self.editor_instance.web.eval("setFormat('formatBlock', 'blockquote');")
+            self.editor_instance.web.eval(command)
 

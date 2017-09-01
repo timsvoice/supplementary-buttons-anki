@@ -242,17 +242,6 @@ class PrefHelper(object):
             default_keybindings = PrefHelper.get_default_keybindings()
             return PrefHelper.normalize_user_prefs(default_keybindings, keybindings)
 
-    @staticmethod
-    def set_icon(button, name):
-        """
-        Define the path for the icon the corresponding button should have.
-        """
-        c = PrefHelper.get_config()
-        icon_path = os.path.join(PrefHelper.get_addons_folder(),
-                                 c.get(const.CONFIG_DEFAULT, "FOLDER_NAME"),
-                                 "icons",
-                                 "{}.png".format(name))
-        button.setIcon(QtGui.QIcon(icon_path))
 
     @staticmethod
     def get_config():

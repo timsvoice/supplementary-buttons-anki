@@ -21,7 +21,6 @@
 # import warnings
 # warnings.simplefilter("ignore", UserWarning)
 
-import BeautifulSoup
 from PyQt4 import QtGui
 
 import const
@@ -29,10 +28,9 @@ import preferences
 import utility
 from abbreviation import Abbreviation
 from anki.hooks import wrap, addHook
-from anki.utils import isWin, isMac
+from anki.utils import isMac
 from anki_modules.aqt import editor as myeditor
-from anki_modules.aqt.editor import create_button
-from aqt import editor, mw
+from aqt import editor as anki_editor, mw
 from blockquote import Blockquote
 from deflist import DefList
 from heading import Heading
@@ -41,401 +39,309 @@ from hyperlink import Hyperlink
 from markdowner import Markdowner
 from menu import Options
 from orderedlist import OrderedList
+from power_format_pack.button import Button
 from power_format_pack.unorderedlist import UnorderedList
 from preferences import Preferences
 from table import Table
 
+# Preferences
+##################################################
+Preferences.init()
+
+
 # Overrides
 ##################################################
-editor.Editor.onHtmlEdit = myeditor.onHtmlEdit
-editor.Editor._filterHTML = myeditor._filterHTML
+anki_editor.Editor.onHtmlEdit = myeditor.onHtmlEdit
 
 
 # Buttons
 ##################################################
 
+def place_button(editor, button):
+    const.BUTTONS.append(button)
 
-def setup_buttons(self):
     button_placement_pref = preferences.PREFS.get(const.BUTTON_PLACEMENT)
 
-    self.supp_buttons_hbox = QtGui.QHBoxLayout()
+    if button_placement_pref == "adjacent":
+        editor.iconsBox.addWidget(button)
+    else:
+        editor.supp_buttons_hbox.addWidget(button)
 
-    if preferences.PREFS.get(const.CODE):
+
+def setup_buttons(editor):
+    const.BUTTONS = list()
+
+    p = preferences.PREFS
+
+    button_placement_pref = p.get(const.BUTTON_PLACEMENT)
+
+    editor.supp_buttons_hbox = QtGui.QHBoxLayout()
+
+    if p.get(const.CODE):
         shortcut = preferences.KEYS.get(const.CODE)
-        text = u"Code format text ({})".format(utility.key_to_text(shortcut))
-        b = self.create_button(const.CODE,
-                               lambda: utility.wrap_in_tags(self, "code", preferences.PREFS.get(const.CODE_CLASS)),
-                               shortcut,
-                               _(text),
-                               check=False)
+        tooltip = u"Code format text ({})".format(utility.key_to_text(shortcut))
+        callback = lambda: utility.wrap_in_tags(editor, "code", p.get(const.CODE_CLASS))
+        button = Button(const.CODE, shortcut, tooltip, callback)
+        place_button(editor, button)
 
-    if preferences.PREFS.get(const.UNORDERED_LIST):
+    if p.get(const.UNORDERED_LIST):
         shortcut = preferences.KEYS.get(const.UNORDERED_LIST)
-        text = u"Create unordered list ({})".format(utility.key_to_text(shortcut))
-        b = self.create_button(const.UNORDERED_LIST,
-                               lambda: toggleUnorderedList(self),
-                               shortcut,
-                               _(text),
-                               check=False)
+        tooltip = u"Create unordered list ({})".format(utility.key_to_text(shortcut))
+        callback = lambda: toggle_unordered_list(editor)
+        button = Button(const.UNORDERED_LIST, shortcut, tooltip, callback)
+        place_button(editor, button)
 
-    if preferences.PREFS.get(const.ORDERED_LIST):
+    if p.get(const.ORDERED_LIST):
         shortcut = preferences.KEYS.get(const.ORDERED_LIST)
-        text = u"Create ordered list ({})".format(utility.key_to_text(shortcut))
-        b = self.create_button(const.ORDERED_LIST,
-                               self.toggleOrderedList,
-                               shortcut,
-                               _(text),
-                               check=False)
+        tooltip = u"Create ordered list ({})".format(utility.key_to_text(shortcut))
+        callback = lambda: toggle_ordered_list(editor)
+        button = Button(const.ORDERED_LIST, shortcut, tooltip, callback)
+        place_button(editor, button)
 
-    if preferences.PREFS.get(const.STRIKETHROUGH):
+    if p.get(const.STRIKETHROUGH):
         shortcut = preferences.KEYS.get(const.STRIKETHROUGH)
-        text = u"Strikethrough text ({})".format(utility.key_to_text(shortcut))
-        b = self.create_button(const.STRIKETHROUGH,
-                               self.toggleStrikeThrough,
-                               shortcut,
-                               _(text),
-                               check=True)
+        tooltip = u"Strikethrough text ({})".format(utility.key_to_text(shortcut))
+        button = Button(const.STRIKETHROUGH, shortcut, tooltip, editor.toggle_strikethrough)
+        place_button(editor, button)
 
-    # FIXME: think of better symbol to represent a <pre> block
-    if preferences.PREFS.get(const.PRE):
+    # FIXME (neftas): think of better symbol to represent a <pre> block
+    if p.get(const.PRE):
         shortcut = preferences.KEYS.get(const.PRE)
-        text = u"Create a code block ({})".format(utility.key_to_text(shortcut))
-        b = self.create_button(const.PRE,
-                               lambda: self.wrap_in_tags("pre", preferences.PREFS.get(const.CODE_CLASS)),
-                               shortcut,
-                               tip=_(text),
-                               check=False)
+        tooltip = u"Create a code block ({})".format(utility.key_to_text(shortcut))
+        callback = lambda: utility.wrap_in_tags(editor, "pre", p.get(const.CODE_CLASS))
+        button = Button(const.PRE, shortcut, tooltip, callback)
+        place_button(editor, button)
 
-    if preferences.PREFS.get(const.HORIZONTAL_RULE):
+    if p.get(const.HORIZONTAL_RULE):
         shortcut = preferences.KEYS.get(const.HORIZONTAL_RULE)
-        text = u"Create a horizontal rule ({})".format(utility.key_to_text(shortcut))
-        b = self.create_button(const.HORIZONTAL_RULE,
-                               self.toggleHorizontalLine,
-                               shortcut,
-                               tip=_(text),
-                               check=False)
+        tooltip = u"Create a horizontal rule ({})".format(utility.key_to_text(shortcut))
+        button = Button(const.HORIZONTAL_RULE, shortcut, tooltip, editor.toggle_horizontal_line)
+        place_button(editor, button)
 
-    if preferences.PREFS.get(const.INDENT):
+    if p.get(const.INDENT):
         shortcut = preferences.KEYS.get(const.INDENT)
-        text = u"Indent text or list ({})".format(utility.key_to_text(shortcut))
-        b = self.create_button(const.INDENT,
-                               self.toggleIndent,
-                               shortcut,
-                               _(text),
-                               check=False)
+        tooltip = u"Indent text or list ({})".format(utility.key_to_text(shortcut))
+        button = Button(const.INDENT, shortcut, tooltip, editor.toggle_indent)
+        place_button(editor, button)
 
-    if preferences.PREFS.get(const.OUTDENT):
+    if p.get(const.OUTDENT):
         shortcut = preferences.KEYS.get(const.OUTDENT)
-        text = u"Outdent text or list ({})".format(utility.key_to_text(shortcut))
-        b = self.create_button(const.OUTDENT,
-                               self.toggleOutdent,
-                               shortcut,
-                               _(text),
-                               check=False)
+        tooltip = u"Outdent text or list ({})".format(utility.key_to_text(shortcut))
+        button = Button(const.OUTDENT, shortcut, tooltip, editor.toggle_outdent)
+        place_button(editor, button)
 
-    # FIXME: better symbol for <dl>
-    if preferences.PREFS.get(const.DEFINITION_LIST):
+    # FIXME (neftas): better symbol for <dl>
+    if p.get(const.DEFINITION_LIST):
         shortcut = preferences.KEYS.get(const.DEFINITION_LIST)
-        text = u"Create definition list ({})".format(utility.key_to_text(shortcut))
-        b = self.create_button(const.DEFINITION_LIST,
-                               self.toggleDefList,
-                               shortcut,
-                               _(text),
-                               check=False)
+        tooltip = u"Create definition list ({})".format(utility.key_to_text(shortcut))
+        button = Button(const.DEFINITION_LIST, shortcut, tooltip, editor.toggle_definition_list)
+        place_button(editor, button)
 
-    if preferences.PREFS.get(const.TABLE):
+    if p.get(const.TABLE):
         shortcut = preferences.KEYS.get(const.TABLE)
-        text = u"Create a table ({})".format(utility.key_to_text(shortcut))
-        b = self.create_button(const.TABLE,
-                               self.toggleTable,
-                               shortcut,
-                               _(text),
-                               check=False)
+        tooltip = u"Create a table ({})".format(utility.key_to_text(shortcut))
+        button = Button(const.TABLE, shortcut, tooltip, editor.toggle_table)
+        place_button(editor, button)
 
-    if preferences.PREFS.get(const.KEYBOARD):
+    if p.get(const.KEYBOARD):
         shortcut = preferences.KEYS.get(const.KEYBOARD)
-        text = u"Create a keyboard button ({})".format(utility.key_to_text(shortcut))
-        b = self.create_button(const.KEYBOARD,
-                               lambda: self.wrap_in_tags("kbd"),
-                               shortcut,
-                               _(text),
-                               check=False)
+        tooltip = u"Create a keyboard button ({})".format(utility.key_to_text(shortcut))
+        callback = lambda: utility.wrap_in_tags(editor, "kbd")
+        button = Button(const.KEYBOARD, shortcut, tooltip, callback)
+        place_button(editor, button)
 
-    if preferences.PREFS.get(const.HYPERLINK):
+    if p.get(const.HYPERLINK):
         shortcut = preferences.KEYS.get(const.HYPERLINK)
-        text = u"Insert link ({})".format(utility.key_to_text(shortcut))
-        b1 = self.create_button(const.HYPERLINK,
-                                self.toggleHyperlink,
-                                shortcut,
-                                _(text),
-                                check=False)
+        tooltip = u"Insert link ({})".format(utility.key_to_text(shortcut))
+        button1 = Button(const.HYPERLINK, shortcut, tooltip, editor.toggle_hyperlink)
+        place_button(editor, button1)
 
         shortcut = preferences.KEYS.get(const.REMOVE_HYPERLINK)
-        text = u"Unlink ({})".format(utility.key_to_text(shortcut))
-        b2 = self.create_button(const.REMOVE_HYPERLINK,
-                                self.unlink,
-                                shortcut,
-                                _(text),
-                                check=False)
+        tooltip = u"Unlink ({})".format(utility.key_to_text(shortcut))
+        button2 = Button(const.REMOVE_HYPERLINK, shortcut, tooltip, editor.unlink)
+        place_button(editor, button2)
 
-    if preferences.PREFS.get(const.BACKGROUND_COLOR):
-        hilite_color = HiliteColor(self, preferences)
+    if p.get(const.BACKGROUND_COLOR):
+        hilite_color = HiliteColor(editor, preferences)
         shortcut = preferences.KEYS.get(const.BACKGROUND_COLOR)
-        text = u"Set background color ({})".format(utility.key_to_text(shortcut))
-        b1 = self.create_button(const.BACKGROUND_COLOR,
-                                hilite_color.apply_color,
-                                shortcut,
-                                _(text),
-                                text=" ")
-        self.setup_background_button(b1)
+        tooltip = u"Set background color ({})".format(utility.key_to_text(shortcut))
+        button1 = Button(const.BACKGROUND_COLOR, shortcut, tooltip, hilite_color.apply_color, text=" ")
+        hilite_color.setup_background_button(button1)
+        place_button(editor, button1)
 
         shortcut = preferences.KEYS.get(const.BACKGROUND_COLOR_CHANGE)
-        text = u"Change color ({})".format(utility.key_to_text(shortcut))
-        b2 = self.create_button(const.BACKGROUND_COLOR_CHANGE,
-                                hilite_color.change_color,
-                                shortcut,
-                                _(text),
-                                # space is needed to center the arrow
-                                text=utility.downArrow() + " ")
-        b2.setFixedWidth(12)
+        tooltip = u"Change color ({})".format(utility.key_to_text(shortcut))
+        button2 = Button(const.BACKGROUND_COLOR_CHANGE,
+                         shortcut,
+                         tooltip,
+                         hilite_color.change_color,
+                         # space is needed to center the arrow
+                         text=utility.downArrow())
+        button2.setFixedWidth(12)
+        place_button(editor, button2)
 
-    if preferences.PREFS.get(const.BLOCKQUOTE):
+    if p.get(const.BLOCKQUOTE):
         shortcut = preferences.KEYS.get(const.BLOCKQUOTE)
-        text = u"Insert blockquote ({})".format(utility.key_to_text(shortcut))
-        b = self.create_button(const.BLOCKQUOTE,
-                               self.toggleBlockquote,
-                               shortcut,
-                               _(text),
-                               check=False)
+        tooltip = u"Insert blockquote ({})".format(utility.key_to_text(shortcut))
+        button = Button(const.BLOCKQUOTE, shortcut, tooltip, editor.toggle_blockquote)
+        place_button(editor, button)
 
-    if preferences.PREFS.get(const.TEXT_ALLIGN):
+    if p.get(const.TEXT_ALLIGN):
         shortcut = preferences.KEYS.get(const.TEXT_ALLIGN_FLUSH_LEFT)
-        text = u"Align text left ({})".format(utility.key_to_text(shortcut))
-        b1 = self.create_button(const.TEXT_ALLIGN_FLUSH_LEFT,
-                                self.justifyLeft,
-                                shortcut,
-                                _(text),
-                                check=False)
+        tooltip = u"Align text left ({})".format(utility.key_to_text(shortcut))
+        button1 = Button(const.TEXT_ALLIGN_FLUSH_LEFT, shortcut, tooltip, editor.justify_left)
+        place_button(editor, button1)
 
         shortcut = preferences.KEYS.get(const.TEXT_ALLIGN_CENTERED)
-        text = u"Align text center ({})".format(utility.key_to_text(shortcut))
-        b2 = self.create_button(const.TEXT_ALLIGN_CENTERED,
-                                self.justifyCenter,
-                                shortcut,
-                                _(text),
-                                check=False)
+        tooltip = u"Align text center ({})".format(utility.key_to_text(shortcut))
+        button2 = Button(const.TEXT_ALLIGN_CENTERED, shortcut, tooltip, editor.justify_center)
+        place_button(editor, button2)
 
         shortcut = preferences.KEYS.get(const.TEXT_ALLIGN_FLUSH_RIGHT)
-        text = u"Align text right ({})".format(utility.key_to_text(shortcut))
-        b3 = self.create_button(const.TEXT_ALLIGN_FLUSH_RIGHT,
-                                self.justifyRight,
-                                shortcut,
-                                _(text),
-                                check=False)
+        tooltip = u"Align text right ({})".format(utility.key_to_text(shortcut))
+        button3 = Button(const.TEXT_ALLIGN_FLUSH_RIGHT, shortcut, tooltip, editor.justify_right)
+        place_button(editor, button3)
 
         shortcut = preferences.KEYS.get(const.TEXT_ALLIGN_JUSTIFIED)
-        text = u"Justify text ({})".format(utility.key_to_text(shortcut))
-        b4 = self.create_button(const.TEXT_ALLIGN_JUSTIFIED,
-                                self.justifyFull,
-                                shortcut,
-                                _(text),
-                                check=False)
+        tooltip = u"Justify text ({})".format(utility.key_to_text(shortcut))
+        button4 = Button(const.TEXT_ALLIGN_JUSTIFIED, shortcut, tooltip, editor.justify_full)
+        place_button(editor, button4)
 
-    if preferences.PREFS.get(const.HEADING):
+    if p.get(const.HEADING):
         shortcut = preferences.KEYS.get(const.HEADING)
-        text = u"Insert heading ({})".format(utility.key_to_text(shortcut))
-        b = self.create_button(const.HEADING,
-                               self.toggleHeading,
-                               shortcut,
-                               _(text),
-                               check=False)
+        tooltip = u"Insert heading ({})".format(utility.key_to_text(shortcut))
+        button = Button(const.HEADING, shortcut, tooltip, editor.toggle_heading)
+        place_button(editor, button)
 
-    if preferences.PREFS.get(const.ABBREVIATION):
+    if p.get(const.ABBREVIATION):
         shortcut = preferences.KEYS.get(const.ABBREVIATION)
-        text = u"Insert abbreviation ({})".format(utility.key_to_text(shortcut))
-        b = self.create_button(const.ABBREVIATION,
-                               self.toggleAbbreviation,
-                               shortcut,
-                               _(text),
-                               check=False)
+        tooltip = u"Insert abbreviation ({})".format(utility.key_to_text(shortcut))
+        button = Button(const.ABBREVIATION, shortcut, tooltip, editor.toggle_abbreviation)
+        place_button(editor, button)
 
-    if preferences.PREFS.get(const.MARKDOWN):
+    if p.get(const.MARKDOWN):
         shortcut = preferences.KEYS.get(const.MARKDOWN)
-        text = u"Toggle Markdown ({})".format(utility.key_to_text(shortcut))
-        b = self.create_button(const.MARKDOWN,
-                               self.toggleMarkdown,
-                               shortcut,
-                               _(text),
-                               check=False)
+        tooltip = u"Toggle Markdown ({})".format(utility.key_to_text(shortcut))
+        button = Button(const.MARKDOWN, shortcut, tooltip, editor.toggle_markdown)
+        place_button(editor, button)
+
+    for button in const.BUTTONS:
+        if editor.plastiqueStyle:
+            button.setStyle(editor.plastiqueStyle)
+        editor._buttons[button.name] = button
 
     if button_placement_pref != "adjacent":
-        self.supp_buttons_hbox.insertStretch(0, 1)
+        editor.supp_buttons_hbox.insertStretch(0, 1)
         if not isMac:
-            self.supp_buttons_hbox.setMargin(6)
-            self.supp_buttons_hbox.setSpacing(0)
+            editor.supp_buttons_hbox.setMargin(6)
+            editor.supp_buttons_hbox.setSpacing(0)
         else:
-            self.supp_buttons_hbox.setMargin(0)
-            self.supp_buttons_hbox.setSpacing(14)
+            editor.supp_buttons_hbox.setMargin(0)
+            editor.supp_buttons_hbox.setSpacing(14)
 
         if button_placement_pref == "below":
-            self.outerLayout.insertLayout(1, self.supp_buttons_hbox)
+            editor.outerLayout.insertLayout(1, editor.supp_buttons_hbox)
         elif button_placement_pref == "above":
-            self.outerLayout.insertLayout(0, self.supp_buttons_hbox)
-
-
+            editor.outerLayout.insertLayout(0, editor.supp_buttons_hbox)
 
 
 def unlink(self):
     self.web.eval("setFormat('unlink')")
 
 
-def toggleUnorderedList(editor):
+def toggle_unordered_list(editor):
     fixed_type = preferences.PREFS.get("fixed_ul_type")
     UnorderedList(editor, fixed_type if fixed_type else "")
 
 
-def toggleOrderedList(editor):
+def toggle_ordered_list(editor):
     fixed_type = preferences.PREFS.get("fixed_ol_type")
     OrderedList(editor, preferences, fixed_type if fixed_type else "")
 
 
-def toggleStrikeThrough(self):
-    self.web.eval("setFormat('strikeThrough')")
+def toggle_strikethrough(editor):
+    editor.web.eval("setFormat('strikeThrough')")
 
 
-def togglePre(self):
-    self.web.eval("setFormat('formatBlock', 'pre')")
+def toggle_pre(editor):
+    editor.web.eval("setFormat('formatBlock', 'pre')")
 
 
-def toggleHorizontalLine(self):
-    self.web.eval("setFormat('insertHorizontalRule')")
+def toggle_horizontal_line(editor):
+    editor.web.eval("setFormat('insertHorizontalRule')")
 
 
-def toggleIndent(self):
-    self.web.eval("setFormat('indent')")
+def toggle_indent(editor):
+    editor.web.eval("setFormat('indent')")
 
 
-def toggleOutdent(self):
-    self.web.eval("setFormat('outdent')")
+def toggle_outdent(editor):
+    editor.web.eval("setFormat('outdent')")
 
 
-def toggleDefList(self):
-    selection = self.web.selectedText()
-    DefList(self, self.parentWindow, selection if selection else None)
+def toggle_definition_list(editor):
+    selection = editor.web.selectedText()
+    DefList(editor, editor.parentWindow, selection if selection else None)
 
 
-def toggleTable(self):
-    selection = self.web.selectedText()
-    Table(self, self.parentWindow, selection if selection else None)
+def toggle_table(editor):
+    selection = editor.web.selectedText()
+    Table(editor, editor.parentWindow, selection if selection else None, preferences)
 
 
-def power_remove_format(self):
-    """Remove formatting from selected text."""
-    # For Windows and OS X we need to override the standard removeFormat
-    # method, because it currently doesn't work as it should in (Anki 2.0.31).
-    # Specifically, the background-color <span> gives trouble. This method
-    # should work fine in all but a few rare cases that are easily avoided,
-    # such as a <pre> at the beginning of the HTML.
-
-    selection = self.web.selectedText()
-
-    # normal removeFormat method
-    self.web.eval("setFormat('removeFormat');")
-
-    self.web.eval("setFormat('selectAll')")
-    complete_sel = self.web.selectedText()
-
-    # if we have selected the complete card, we can remove more thoroughly
-    if selection == complete_sel:
-        self.remove_garbage()
-
-    # deselect all text
-    self.web.eval("window.getSelection().removeAllRanges();")
-
-    # on Linux just refocus the field
-    if not isWin and not isMac:
-        # refocus on the field we're editing
-        self.web.eval("focusField(%d);" % self.currentField)
-        return
-
-    # reload the note: this is needed on OS X and possibly Windows to
-    # display in the editor that the markup is indeed gone
-    self.loadNote()
-
-    self.saveNow()
-    self.web.setFocus()
-    self.web.eval("focusField(%d);" % self.currentField)
+def toggle_blockquote(editor):
+    selected = editor.web.selectedHtml()
+    Blockquote(editor, selected)
 
 
-def remove_garbage(self):
-    """
-    Remove HTML that doesn't get deleted automatically.
-    """
-    self.saveNow()
-    self.web.setFocus()
-    self.web.eval("focusField(%d);" % self.currentField)
-
-    html = self.note.fields[self.currentField]
-    soup = BeautifulSoup.BeautifulSoup(html)
-
-    for tag in const.HEADING_TAGS + const.HTML_TAGS:
-        for match in soup.findAll(tag):
-            match.replaceWithChildren()
-
-    self.note.fields[self.currentField] = unicode(soup)
-    self.loadNote()
+def justify_center(editor):
+    editor.web.eval("setFormat('justifyCenter');")
 
 
-def toggleBlockquote(self):
-    selected = self.web.selectedHtml()
-    Blockquote(self, selected)
+def justify_left(editor):
+    editor.web.eval("setFormat('justifyLeft');")
 
 
-def justifyCenter(self):
-    self.web.eval("setFormat('justifyCenter');")
+def justify_right(editor):
+    editor.web.eval("setFormat('justifyRight');")
 
 
-def justifyLeft(self):
-    self.web.eval("setFormat('justifyLeft');")
+def justify_full(editor):
+    editor.web.eval("setFormat('justifyFull');")
 
 
-def justifyRight(self):
-    self.web.eval("setFormat('justifyRight');")
+def toggle_heading(editor):
+    selected = editor.web.selectedText()
+    Heading(editor, editor.parentWindow, selected)
 
 
-def justifyFull(self):
-    self.web.eval("setFormat('justifyFull');")
+def toggle_abbreviation(editor):
+    selected = editor.web.selectedText()
+    Abbreviation(editor, editor.parentWindow, selected)
 
 
-def toggleHeading(self):
-    selected = self.web.selectedText()
-    Heading(self, self.parentWindow, selected)
+def toggle_hyperlink(editor):
+    selected = editor.web.selectedText()
+    Hyperlink(editor, editor.parentWindow, selected)
 
 
-def toggleAbbreviation(self):
-    selected = self.web.selectedText()
-    Abbreviation(self, self.parentWindow, selected)
-
-
-def toggleHyperlink(self):
-    selected = self.web.selectedText()
-    Hyperlink(self, self.parentWindow, selected)
-
-
-def toggleMarkdown(self):
-    self.saveNow()
-    current_field = self.currentField
-    html_field = self.note.fields[current_field]
+def toggle_markdown(editor):
+    editor.saveNow()
+    current_field = editor.currentField
+    html_field = editor.note.fields[current_field]
     if not html_field:
         html_field = u""
-    markdowner = Markdowner(self, self.parentWindow, self.note, html_field, current_field)
+    markdowner = Markdowner(editor, editor.parentWindow, editor.note, html_field, current_field, preferences)
     markdowner.start()
-    # self.saveNow()
-    self.web.setFocus()
-    self.web.eval("focusField(%d);" % self.currentField)
+    editor.web.setFocus()
+    editor.web.eval("focusField(%d);" % editor.currentField)
 
 
-def on_focus_gained(self, note, current_field_no):
+def init_hook(editor, mw, widget, parentWindow, addMode=False):
+    addHook("editFocusGained", editor.on_focus_gained)
+
+
+def on_focus_gained(editor, note, current_field_no):
     """
     Check if the current field contains Markdown. Change the appearance of
     the field if it does, or do nothing if not.
@@ -444,58 +350,50 @@ def on_focus_gained(self, note, current_field_no):
     if not note.fields[current_field_no]:
         return
 
-    Markdowner.manage_style(self, current_field_no)
-    self.web.eval("""
-    var field = $('#f%s');
-    if (field.html().indexOf('SBAdata:') > -1) {
-        var mdData = /<!----SBAdata:([a-zA-Z0-9+/]+=*)---->/.exec(field.html());
-        var json = JSON.parse(atob(mdData[1]));
-        if (json.isconverted) {
-            if (!field.hasClass('mdstyle')) {
-                field.addClass('mdstyle');
+    markdown_warning_text = preferences.CONFIG.get(const.CONFIG_TOOLTIPS, "md_warning_editing_tooltip")
+
+    Markdowner.manage_style(editor, current_field_no)
+    editor.web.eval("""
+        var field = $('#f%s');
+        if (field.html().indexOf('SBAdata:') > -1) {
+            var mdData = /<!----SBAdata:([a-zA-Z0-9+/]+=*)---->/.exec(field.html());
+            var json = JSON.parse(atob(mdData[1]));
+            if (json.isconverted) {
+                if (!field.hasClass('mdstyle')) {
+                    field.addClass('mdstyle');
+                }
+                if (!$('#f%s + [class^=mdwarning]').length) {
+                    field.after($('<div/>', {class: 'mdwarning', text: '%s'}));
+                }
+                field.attr('title', '%s');
             }
-            if (!$('#f%s + [class^=mdwarning]').length) {
-                field.after($('<div/>', {class: 'mdwarning', text: '%s'}));
-            }
-            field.attr('title', '%s');
         }
-    }
     """ % (current_field_no, current_field_no, markdown_warning_text, markdown_warning_text))
 
 
-def init_hook(self, mw, widget, parentWindow, addMode=False):
-    addHook("editFocusGained", self.on_focus_gained)
-
-Preferences.init()
-
 if preferences.PREFS.get(const.MARKDOWN):
-    editor.Editor.on_focus_gained = on_focus_gained
-    editor.Editor.__init__ = wrap(editor.Editor.__init__, init_hook)
+    anki_editor.Editor.on_focus_gained = on_focus_gained
+    anki_editor.Editor.__init__ = wrap(anki_editor.Editor.__init__, init_hook)
 
-markdown_warning_text = preferences.CONFIG.get(const.CONFIG_TOOLTIPS, "md_warning_editing_tooltip")
 
-editor.Editor.create_button = create_button
-editor.Editor.toggleMarkdown = toggleMarkdown
-editor.Editor.toggleHeading = toggleHeading
-editor.Editor.toggleAbbreviation = toggleAbbreviation
-editor.Editor.toggleHyperlink = toggleHyperlink
-editor.Editor.remove_garbage = remove_garbage
-editor.Editor.unlink = unlink
-editor.Editor.justifyFull = justifyFull
-editor.Editor.justifyRight = justifyRight
-editor.Editor.justifyLeft = justifyLeft
-editor.Editor.justifyCenter = justifyCenter
-editor.Editor.toggleBlockquote = toggleBlockquote
-editor.Editor.removeFormat = power_remove_format
-editor.Editor.toggleOrderedList = toggleOrderedList
-editor.Editor.toggleStrikeThrough = toggleStrikeThrough
-editor.Editor.togglePre = togglePre
-editor.Editor.toggleHorizontalLine = toggleHorizontalLine
-editor.Editor.toggleIndent = toggleIndent
-editor.Editor.toggleOutdent = toggleOutdent
-editor.Editor.toggleDefList = toggleDefList
-editor.Editor.toggleTable = toggleTable
-editor.Editor.setupButtons = wrap(editor.Editor.setupButtons, setup_buttons)
+anki_editor.Editor.toggle_markdown = toggle_markdown
+anki_editor.Editor.toggle_heading = toggle_heading
+anki_editor.Editor.toggle_abbreviation = toggle_abbreviation
+anki_editor.Editor.toggle_hyperlink = toggle_hyperlink
+anki_editor.Editor.unlink = unlink
+anki_editor.Editor.justify_full = justify_full
+anki_editor.Editor.justify_right = justify_right
+anki_editor.Editor.justify_left = justify_left
+anki_editor.Editor.justify_center = justify_center
+anki_editor.Editor.toggle_blockquote = toggle_blockquote
+anki_editor.Editor.toggle_strikethrough = toggle_strikethrough
+anki_editor.Editor.toggle_pre = toggle_pre
+anki_editor.Editor.toggle_horizontal_line = toggle_horizontal_line
+anki_editor.Editor.toggle_indent = toggle_indent
+anki_editor.Editor.toggle_outdent = toggle_outdent
+anki_editor.Editor.toggle_definition_list = toggle_definition_list
+anki_editor.Editor.toggle_table = toggle_table
+anki_editor.Editor.setupButtons = wrap(anki_editor.Editor.setupButtons, setup_buttons)
 
 mw.ExtraButtons_Options = Options(mw)
 mw.ExtraButtons_Options.setup_power_format_pack_options()

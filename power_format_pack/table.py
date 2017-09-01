@@ -22,7 +22,6 @@ import json
 from PyQt4 import QtGui, QtCore
 
 import const
-import preferences
 import utility
 
 
@@ -31,7 +30,7 @@ class Table(object):
     Create a table.
     """
 
-    def __init__(self, other, parent_window, selected_text):
+    def __init__(self, other, parent_window, selected_text, preferences):
         self.editor_instance    = other
         self.parent_window      = parent_window
         self.selected_text      = selected_text

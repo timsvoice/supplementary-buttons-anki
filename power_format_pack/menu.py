@@ -83,24 +83,28 @@ class Options(QtGui.QMenu):
         sub_menu = self.main_window.form.menuTools.addMenu(sub_menu_title)
 
         options_action = QtGui.QAction(
-                self.c.get(const.CONFIG_MENU_NAMES, "options_action"),
-                self.main_window)
-        options_action.triggered.connect(self.show_option_dialog)
+            self.c.get(const.CONFIG_MENU_NAMES, "options_action"),
+            self.main_window,
+            triggered=self.show_option_dialog
+        )
 
         keybindings_action = QtGui.QAction(
-                self.c.get(const.CONFIG_MENU_NAMES, "keybindings_action"),
-                self.main_window)
-        keybindings_action.triggered.connect(self.show_keybindings_dialog)
+            self.c.get(const.CONFIG_MENU_NAMES, "keybindings_action"),
+            self.main_window,
+            triggered=self.show_keybindings_dialog
+        )
 
         doc_action = QtGui.QAction(
             self.c.get(const.CONFIG_MENU_NAMES, "doc_action"),
-            self.main_window)
-        doc_action.triggered.connect(self.show_doc_dialog)
+            self.main_window,
+            triggered=self.show_doc_dialog
+        )
 
         about_action = QtGui.QAction(
             self.c.get(const.CONFIG_MENU_NAMES, "about_action"),
-            self.main_window)
-        about_action.triggered.connect(self.show_about_dialog)
+            self.main_window,
+            triggered=self.show_about_dialog
+        )
 
         sub_menu.addAction(options_action)
         sub_menu.addAction(keybindings_action)

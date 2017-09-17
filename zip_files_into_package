@@ -1,9 +1,15 @@
 #!/bin/bash
+#
+# Creates a zip package suitable for publication on AnkiWeb. When invoked
+# without any arguments, this script will run all available unit tests first,
+# and after their successful completion, create the package. To skip the unit
+# test, any command-line argument will do, for example:
+#
+# $ ./zip_files_into_package override_unit_tests
+#
 
 set -o errexit
 set -o nounset
-
-set -xv
 
 FOLDER_NAME=power_format_pack
 
@@ -14,15 +20,15 @@ if [ -d "$FOLDER_NAME" ]; then
             echo "PYTHONPATH already contains the needed path..."
             ;;
         *)
-            extra_path="$(pwd)"/"$FOLDER_NAME"
-            export PYTHONPATH="${PYTHONPATH}:$extra_path"
-            echo "Added '$extra_path' to PYTHONPATH..."
+            new_path="$(pwd)"/"$FOLDER_NAME"
+            export PYTHONPATH="${PYTHONPATH}:$new_path"
+            echo "Added '$new_path' to PYTHONPATH..."
             ;;
     esac
 fi
 
 # override unit testing
-override="${1:-}"
+override_unit_tests="${1:-}"
 
 check_return_value() {
     if [ "$1" -ne 0 ]; then
@@ -31,7 +37,7 @@ check_return_value() {
     fi
 }
 
-if [[ ${override:-unset} != unset ]]; then
+if [[ ${override_unit_tests:-unset} != unset ]]; then
     echo "Not running unit tests..."
 else
     # run tests before creating zip
@@ -55,23 +61,12 @@ check_return_value $?
 grep -P "^warnings\.simplefilter" "$FOLDER_NAME"/extra_buttons.py
 check_return_value $?
 
-zip -r --exclude=@zip_exclude.lst power_format_pack_"$(date +%s)".zip \
-    "Power Format Pack.py" \
-    "$FOLDER_NAME"/*.py \
-    "$FOLDER_NAME"/config.ini \
-    "$FOLDER_NAME"/anki_modules/* \
-    "$FOLDER_NAME"/docs/__init__.py \
-    "$FOLDER_NAME"/docs/_version.py \
-    "$FOLDER_NAME"/docs/doc_start.html \
-    "$FOLDER_NAME"/docs/github-markdown.css \
-    "$FOLDER_NAME"/html2text \
-    "$FOLDER_NAME"/icons \
-    "$FOLDER_NAME"/markdown \
-    "$FOLDER_NAME"/pygments \
-    "$FOLDER_NAME"/python_modules \
-    "$FOLDER_NAME"/qt
+# create out file based on tags
+tag=$(git describe HEAD --tags --abbrev=0)
+out_file="power_format_pack_$tag.zip"
+git archive --format zip --output "$out_file" "$tag"
 
 # reinsert asserts and warnings comments
 for file in "$FOLDER_NAME"/*.bak; do
-    mv -v "$file" "${file%.*}"
+    mv "$file" "${file%.*}"
 done

@@ -23,7 +23,7 @@ from PyQt4 import QtGui
 
 import utility
 from anki.utils import json
-from power_format_pack import markdown, preferences, const
+from power_format_pack import markdown, const
 from power_format_pack.markdown.extensions.abbr import AbbrExtension
 from power_format_pack.markdown.extensions.attr_list import AttrListExtension
 from power_format_pack.markdown.extensions.codehilite import CodeHiliteExtension
@@ -43,11 +43,11 @@ class Markdowner(object):
     arise.
     """
 
-    def __init__(self, other, parent_window, note, html, current_field):
+    def __init__(self, editor, parent_window, note, html, current_field, preferences):
         assert isinstance(html, unicode), "Input `html` is not Unicode"
         self.c              = preferences.CONFIG
         self.p              = preferences.PREFS
-        self.editor         = other
+        self.editor         = editor
         self.parent_window  = parent_window
         self.note           = note
         self.html           = html
@@ -86,7 +86,7 @@ class Markdowner(object):
         # HTML --> Markdown
         if self.has_data and self.isconverted == "True":
             # check if the stored data and the current text differ from each other
-            compare_md = Markdowner.convert_markdown_to_html(self.md)
+            compare_md = self.convert_markdown_to_html(self.md)
             # handle quirks
             compare_md = utility.put_colons_in_html_def_list(compare_md)
             compare_md = utility.strip_html_from_markdown(compare_md)
@@ -104,7 +104,7 @@ class Markdowner(object):
 
         # Markdown --> HTML
         else:
-            new_html = Markdowner.convert_markdown_to_html(clean_md)
+            new_html = self.convert_markdown_to_html(clean_md)
             # needed for proper display of images
             if "<img" in new_html:
                 new_html = utility.unescape_html(new_html)
@@ -144,30 +144,30 @@ class Markdowner(object):
         """ % (field, json.dumps(unicode(markup))))
 
     @staticmethod
-    def manage_style(editor_instance, field_no):
-        editor_instance.web.eval("""
-        var field = $('#f%s');
-        if (field.html().indexOf('SBAdata:') > -1) {
-            var mdstyleExists = false;
-            var mdwarningExists = false;
-            for (var i = 0, j = document.styleSheets.length; i < j; i++) {
-                for (var k = 0, l = document.styleSheets.item(i).cssRules.length; k < l; k++) {
-                    var cssRule = document.styleSheets.item(i).cssRules[k].selectorText;
-                    if (cssRule.indexOf('.mdstyle') > -1) {
-                        mdstyleExists = true;
-                    }
-                    if (cssRule.indexOf('.mdwarning') > -1) {
-                        mdwarningExists = true;
+    def manage_style(editor, field_no):
+        editor.web.eval("""
+            var field = $('#f%s');
+            if (field.html().indexOf('SBAdata:') > -1) {
+                var mdstyleExists = false;
+                var mdwarningExists = false;
+                for (var i = 0, j = document.styleSheets.length; i < j; i++) {
+                    for (var k = 0, l = document.styleSheets.item(i).cssRules.length; k < l; k++) {
+                        var cssRule = document.styleSheets.item(i).cssRules[k].selectorText;
+                        if (cssRule.indexOf('.mdstyle') > -1) {
+                            mdstyleExists = true;
+                        }
+                        if (cssRule.indexOf('.mdwarning') > -1) {
+                            mdwarningExists = true;
+                        }
                     }
                 }
+                if (!mdstyleExists) {
+                    document.styleSheets.item(0).insertRule('.mdstyle { background-color: %s !important; }', 0);
+                }
+                if (!mdwarningExists) {
+                    document.styleSheets.item(0).insertRule('.mdwarning { margin: 10px 0px; }', 0);
+                }
             }
-            if (!mdstyleExists) {
-                document.styleSheets.item(0).insertRule('.mdstyle { background-color: %s !important; }', 0);
-            }
-            if (!mdwarningExists) {
-                document.styleSheets.item(0).insertRule('.mdwarning { margin: 10px 0px; }', 0);
-            }
-        }
         """ % (field_no, const.MARKDOWN_BG_COLOR))
 
     def add_warning_msg(self, editor_instance, field_no):
@@ -177,12 +177,12 @@ class Markdowner(object):
         markdown_warning_text = self.c.get(const.CONFIG_TOOLTIPS, "md_warning_editing_tooltip")
 
         editor_instance.web.eval("""
-        var field = $('f%s');
-        field.addClass('mdstyle');
-        if (!$('#f%s + [class^=mdwarning]').length) {
-            field.after($('<div/>', {class: 'mdwarning', text: '%s'}));
-        }
-        field.attr('title', '%s');
+            var field = $('f%s');
+            field.addClass('mdstyle');
+            if (!$('#f%s + [class^=mdwarning]').length) {
+                field.after($('<div/>', {class: 'mdwarning', text: '%s'}));
+            }
+            field.attr('title', '%s');
         """ % (field_no, field_no, markdown_warning_text, markdown_warning_text))
 
     @staticmethod
@@ -237,20 +237,17 @@ class Markdowner(object):
         the Markdown, 1 for overwriting the data, and QMessageBox.Cancel for
         no action.
         """
-        mess = QtGui.QMessageBox(self.parent_window)
-        mess.setIcon(QtGui.QMessageBox.Warning)
-        mess.setWindowTitle(self.c.get(const.CONFIG_WINDOW_TITLES,
-                                       "md_overwrite_warning"))
-        mess.setText(self.c.get(const.CONFIG_WARNINGS,
-                                "md_overwrite_warning_text"))
-        mess.setInformativeText(self.c.get(const.CONFIG_WARNINGS,
-                                "md_overwrite_warning_additional_text"))
-        replace_button = QtGui.QPushButton("&Replace", mess)
-        mess.addButton(replace_button, QtGui.QMessageBox.ApplyRole)
-        mess.addButton("&Overwrite", QtGui.QMessageBox.ApplyRole)
-        mess.setStandardButtons(QtGui.QMessageBox.Cancel)
-        mess.setDefaultButton(replace_button)
-        return mess.exec_()
+        warn_msg = QtGui.QMessageBox(self.parent_window)
+        warn_msg.setIcon(QtGui.QMessageBox.Warning)
+        warn_msg.setWindowTitle(self.c.get(const.CONFIG_WINDOW_TITLES, "md_overwrite_warning"))
+        warn_msg.setText(self.c.get(const.CONFIG_WARNINGS, "md_overwrite_warning_text"))
+        warn_msg.setInformativeText(self.c.get(const.CONFIG_WARNINGS, "md_overwrite_warning_additional_text"))
+        replace_button = QtGui.QPushButton("&Replace", warn_msg)
+        warn_msg.addButton(replace_button, QtGui.QMessageBox.ApplyRole)
+        warn_msg.addButton("&Overwrite", QtGui.QMessageBox.ApplyRole)
+        warn_msg.setStandardButtons(QtGui.QMessageBox.Cancel)
+        warn_msg.setDefaultButton(replace_button)
+        return warn_msg.exec_()
 
     def align_elements(self):
         """
@@ -304,14 +301,13 @@ class Markdowner(object):
         self.editor.web.eval("focusField(%d);" % self.current_field)
         self.editor.saveNow()
 
-    @staticmethod
-    def convert_markdown_to_html(clean_md):
+    def convert_markdown_to_html(self, clean_md):
         """
         Take a string `clean_md` and return a string where the Markdown syntax is
         converted to HTML.
 
-        >>> preferences.PREFS = {"markdown_classful_pygments": True, "markdown_syntax_style": "tango", "markdown_line_nums": False}
-        >>> convert_markdown_to_html(u"this **was** a triumph")
+        >>> self.p = {"markdown_classful_pygments": True, "markdown_syntax_style": "tango", "markdown_line_nums": False}
+        >>> self.convert_markdown_to_html(u"this **was** a triumph")
         u'<p>this <strong>was</strong> a triumph</p>'
         """
 
@@ -328,12 +324,13 @@ class Markdowner(object):
                 AbbrExtension(),
                 Nl2BrExtension(),
                 CodeHiliteExtension(
-                    noclasses=not preferences.PREFS.get(const.MARKDOWN_CLASSFUL_PYGMENTS),
-                    pygments_style=preferences.PREFS.get(const.MARKDOWN_SYNTAX_STYLE),
-                    linenums=preferences.PREFS.get(const.MARKDOWN_LINE_NUMS)),
+                    noclasses=not self.p.get(const.MARKDOWN_CLASSFUL_PYGMENTS),
+                    pygments_style=self.p.get(const.MARKDOWN_SYNTAX_STYLE),
+                    linenums=self.p.get(const.MARKDOWN_LINE_NUMS)),
                 SaneListExtension()
             ], lazy_ol=False)
 
         assert isinstance(new_html, unicode)
 
         return new_html
+

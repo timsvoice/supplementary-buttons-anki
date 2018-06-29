@@ -174,9 +174,7 @@ Markdown yet, have a look at [this tutorial](http://markdowntutorial.com/).
 
 ##### Enable Markdown
 
-Markdown is disabled by default, to keep this add-on as modularised as
-possible. To enable it, go to settings and tick the checkbox next to
-"Markdown". Restart Anki to complete the process.
+Markdown is disabled by default, to keep this add-on as modularised as possible. To enable it, go to *Tools > Power Format Pack add-on (options) > Options... > Markdown* and tick the checkbox next to "Markdown". Restart Anki to complete the process.
 
 ##### Using Markdown
 
